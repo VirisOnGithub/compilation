@@ -40,8 +40,8 @@ public  class PrimitiveType extends Type {
 
     @Override
     public boolean equals(Object t) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'equals'");
+        return t instanceof PrimitiveType
+                && type.equals(((PrimitiveType)t).type);
     }
 
     @Override

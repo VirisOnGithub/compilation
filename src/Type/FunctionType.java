@@ -1,6 +1,7 @@
 package src.Type;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.function.Function;
 
 public class FunctionType extends Type {
     private Type returnType;
@@ -61,8 +62,9 @@ public class FunctionType extends Type {
 
     @Override
     public boolean equals(Object t) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'equals'");
+        return t instanceof FunctionType
+                && returnType.equals(((FunctionType) t).returnType)
+                && argsTypes.equals(((FunctionType) t).argsTypes);
     }
 
     @Override
