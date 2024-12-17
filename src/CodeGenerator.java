@@ -4,10 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
-import src.Asm.Instruction;
-import src.Asm.Mem;
-import src.Asm.Program;
-import src.Asm.UAL;
+import src.Asm.*;
 import src.Type.Type;
 import src.Type.UnknownType;
 
@@ -183,18 +180,20 @@ public class CodeGenerator  extends AbstractParseTreeVisitor<Program> implements
 
     @Override
     public Program visitDecl_fct(grammarTCLParser.Decl_fctContext ctx) {
+        //decl_fct: type VAR '(' (type VAR (',' type VAR)*)? ')' core_fct;
         Program fonction = new Program();
         int nbChilds = ctx.getChildCount();
         int nbArguments = ((nbChilds - 5) == 0 ? 0 : (nbChilds - 4)/2);
-        for(int i = 0; i < nbArguments; i++) {
-            Instruction depile = new Mem(Mem.Op.ST, nextRegister, SP);
+        for(int i = 0; i < nbArguments; i++) { //the arguments are stacked before the call so we unstack them
+            Instruction depile = new Mem(Mem.Op.LD, nextRegister, SP);
             nextRegister++;
             if(i == 0) {
-                depile.setLabel(ctx.getChild(2).toString());
+                depile.setLabel(ctx.getChild(2).toString()); //function label for later CALL
             }
             fonction.addInstruction(depile);
-
+            fonction.addInstruction(new UALi(UALi.Op.SUB, SP, SP, 1));
         }
+        fonction.addInstructions(visit(ctx.getChild(nbChilds - 1))); //core_fct
         return fonction;
     }
 
@@ -202,12 +201,16 @@ public class CodeGenerator  extends AbstractParseTreeVisitor<Program> implements
     public Program visitMain(grammarTCLParser.MainContext ctx) {
         //main: decl_fct* 'int main()' core_fct EOF
         Program main = new Program();
-        main.addInstruction(new UAL(UAL.Op.XOR, 0, 0, 0));
+        main.addInstruction(new UAL(UAL.Op.XOR, 0, 0, 0)); //initialize SP
+        main.addInstruction(new JumpCall(JumpCall.Op.JMP, "main")); //call main
         int nbChilds = ctx.getChildCount();
         for(int i = 0; i < nbChilds - 3; i++) { //decl_fct*
             main.addInstructions(visit(ctx.getChild(i)));
         }
-        main.addInstructions(visit(ctx.getChild(nbChilds - 2))); //core_fct
+        Program inMain = visit(ctx.getChild(nbChilds - 2)); //core_fct
+        inMain.getInstructions().getFirst().setLabel("main"); //main label
+        main.addInstructions(inMain);
+        main.addInstruction(new Stop()); //STOP
         return main;
     }
 }
