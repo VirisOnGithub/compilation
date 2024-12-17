@@ -5,6 +5,8 @@ import java.util.Map;
 
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
 
+import org.antlr.v4.runtime.tree.ParseTree;
+import src.Type.PrimitiveType;
 import src.Type.Type;
 import src.Type.UnknownType;
 
@@ -19,7 +21,12 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
     @Override
     public Type visitNegation(grammarTCLParser.NegationContext ctx) {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitNegation'");
+        ParseTree p1 = ctx.getChild(1);
+        Type t = visit(p1);
+        if (t instanceof PrimitiveType && ((PrimitiveType) t).getType() != Type.Base.BOOL) {
+            throw new Error("Type error: negation of non-boolean");
+        }
+        return null;
     }
 
     @Override
@@ -36,8 +43,12 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitOpposite(grammarTCLParser.OppositeContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitOpposite'");
+        ParseTree p1 = ctx.getChild(1);
+        Type t = visit(p1);
+        if (t instanceof PrimitiveType && ((PrimitiveType) t).getType() != Type.Base.INT) {
+            throw new Error("Type error: opposite of non-integer");
+        }
+        return null;
     }
 
     @Override
@@ -90,8 +101,16 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitEquality(grammarTCLParser.EqualityContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitEquality'");
+        ParseTree p1 = ctx.getChild(0);
+        Type t1 = visit(p1);
+        ParseTree p3 = ctx.getChild(2);
+        Type t3 = visit(p3);
+        if (!t1.equals(t3)) {
+            throw new Error("Type error: equality between different types");
+        }
+        UnknownType ut = new UnknownType();
+        types.putAll(t1.unify(t3));
+        return new PrimitiveType(Type.Base.BOOL);
     }
 
     @Override
@@ -145,7 +164,14 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
     @Override
     public Type visitIf(grammarTCLParser.IfContext ctx) {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitIf'");
+        ParseTree p3 = ctx.getChild(2);
+        Type t3 = visit(p3);
+        if (t3 instanceof PrimitiveType && ((PrimitiveType) t3).getType() != Type.Base.BOOL) {
+            throw new Error("Type error: if condition is not a boolean");
+        }
+        ParseTree p5 = ctx.getChild(4);
+        visit(p5);
+        return null;
     }
 
     @Override
