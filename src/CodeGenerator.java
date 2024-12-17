@@ -3,13 +3,18 @@ package src;
 import java.util.Map;
 
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
+import src.Asm.Mem;
 import src.Asm.Program;
+import src.Asm.UAL;
+import src.Asm.UALi;
 import src.Type.Type;
 import src.Type.UnknownType;
 
 public class CodeGenerator  extends AbstractParseTreeVisitor<Program> implements grammarTCLVisitor<Program> {
 
     private Map<UnknownType,Type> types;
+    private Integer nextRegister;
+    private final Integer SP = 0;
 
     /**
      * Constructeur
@@ -17,6 +22,7 @@ public class CodeGenerator  extends AbstractParseTreeVisitor<Program> implements
      */
     public CodeGenerator(Map<UnknownType, Type> types) {
         this.types = types;
+        this.nextRegister = 1;
     }
 
     @Override
@@ -105,8 +111,21 @@ public class CodeGenerator  extends AbstractParseTreeVisitor<Program> implements
 
     @Override
     public Program visitAddition(grammarTCLParser.AdditionContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitAddition'");
+        Program p = new Program();
+        p.addInstructions(visit(ctx.getChild(0)));
+        p.addInstructions(visit(ctx.getChild(2)));
+        p.addInstruction(new Mem(Mem.Op.LD, nextRegister, SP));
+        nextRegister++;
+        p.addInstruction(new UALi(UALi.Op.SUB, SP, SP, 1));
+        p.addInstruction(new Mem(Mem.Op.LD, nextRegister, SP));
+        nextRegister++;
+        switch (ctx.getChild(2).getText()) {
+            case "+" -> p.addInstruction(new UAL(UAL.Op.ADD, nextRegister, nextRegister -2, nextRegister -1));
+            case "-" -> p.addInstruction(new UAL(UAL.Op.SUB, nextRegister, nextRegister -1, nextRegister -2));
+        }
+        p.addInstruction(new Mem(Mem.Op.ST, nextRegister, SP));
+        nextRegister++;
+        return p;
     }
 
     @Override
