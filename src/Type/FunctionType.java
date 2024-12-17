@@ -70,5 +70,4 @@ public class FunctionType extends Type {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'toString'");
     }
-
 }

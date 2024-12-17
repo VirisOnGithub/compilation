@@ -49,5 +49,4 @@ public  class PrimitiveType extends Type {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'toString'");
     }
-
 }

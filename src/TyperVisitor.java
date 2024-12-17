@@ -10,7 +10,7 @@ import src.Type.UnknownType;
 
 public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements grammarTCLVisitor<Type> {
 
-    private Map<UnknownType,Type> types = new HashMap<UnknownType,Type>();
+    private final Map<UnknownType,Type> types = new HashMap<UnknownType,Type>();
 
     public Map<UnknownType, Type> getTypes() {
         return types;
@@ -183,6 +183,4 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'visitMain'");
     }
-
-    
 }
