@@ -46,7 +46,6 @@ public class ArrayType extends Type{
 
     @Override
     public String toString() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'toString'");
+        return "tab["+tabType.toString()+"]";
     }
 }

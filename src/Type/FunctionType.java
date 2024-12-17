@@ -67,7 +67,11 @@ public class FunctionType extends Type {
 
     @Override
     public String toString() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'toString'");
+        String s = "( ";
+        for (Type i : argsTypes){
+            s += i.toString() + " ";
+        }
+        s += ") -> " + returnType.toString();
+        return s;
     }
 }
