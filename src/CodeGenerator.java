@@ -183,9 +183,13 @@ public class CodeGenerator  extends AbstractParseTreeVisitor<Program> implements
 
     @Override
     public Program visitMain(grammarTCLParser.MainContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitMain'");
+        //main: decl_fct* 'int main()' core_fct EOF
+        Program main = new Program();
+        int nbChilds = ctx.getChildCount();
+        for(int i = 0; i < nbChilds - 3; i++) { //decl_fct*
+            main.addInstructions(visit(ctx.getChild(i)));
+        }
+        main.addInstructions(visit(ctx.getChild(nbChilds - 2))); //core_fct
+        return main;
     }
-
-        
 }
