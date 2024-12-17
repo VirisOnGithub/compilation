@@ -56,8 +56,15 @@ public class FunctionType extends Type {
 
     @Override
     public boolean contains(UnknownType v) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'contains'");
+        boolean result = false;
+        if (argsTypes != null) {
+            for (Type i : argsTypes) {
+                result = result || i.contains(v);
+            }
+        }
+        result = result || returnType.contains(v);
+        return result;
+
     }
 
     @Override
@@ -73,7 +80,7 @@ public class FunctionType extends Type {
         for (Type i : argsTypes){
             s += i.toString() + " ";
         }
-        s += ") -> " + returnType.toString();
+        s += ")->" + returnType.toString();
         return s;
     }
 }

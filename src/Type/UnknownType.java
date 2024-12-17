@@ -85,8 +85,7 @@ public class UnknownType extends Type {
 
     @Override
     public boolean contains(UnknownType v) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'contains'");
+        return this.equals(v);
     }
 
     @Override
@@ -98,6 +97,6 @@ public class UnknownType extends Type {
 
     @Override
     public String toString() {
-        return "Unknown type";
+        return "UnknownType";
     }
 }

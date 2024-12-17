@@ -34,8 +34,7 @@ public  class PrimitiveType extends Type {
 
     @Override
     public boolean contains(UnknownType v) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'contains'");
+        return false;
     }
 
     @Override

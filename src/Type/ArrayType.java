@@ -1,4 +1,5 @@
 package src.Type;
+import java.util.ArrayList;
 import java.util.Map;
 
 public class ArrayType extends Type{
@@ -34,8 +35,7 @@ public class ArrayType extends Type{
 
     @Override
     public boolean contains(UnknownType v) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'contains'");
+        return tabType.contains(v);
     }
 
     @Override
