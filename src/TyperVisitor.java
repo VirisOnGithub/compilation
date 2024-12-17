@@ -31,14 +31,31 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitComparison(grammarTCLParser.ComparisonContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitComparison'");
+        ParseTree p1 = ctx.getChild(0);
+        Type t1 = visit(p1);
+        ParseTree p3 = ctx.getChild(2);
+        Type t3 = visit(p3);
+        if (!t1.equals(t3)) {
+            throw new Error("Type error: comparison between different types");
+        }
+        UnknownType ut = new UnknownType();
+        types.putAll(t1.unify(t3));
+        return new PrimitiveType(Type.Base.BOOL);
     }
 
     @Override
     public Type visitOr(grammarTCLParser.OrContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitOr'");
+        ParseTree p1 = ctx.getChild(0);
+        Type t1 = visit(p1);
+        ParseTree p3 = ctx.getChild(2);
+        Type t3 = visit(p3);
+        if (t1 instanceof PrimitiveType && ((PrimitiveType) t1).getType() != Type.Base.BOOL) {
+            throw new Error("Type error: or with non-boolean on the first operand");
+        }
+        if (t3 instanceof PrimitiveType && ((PrimitiveType) t3).getType() != Type.Base.BOOL) {
+            throw new Error("Type error: or with non-boolean on the second operand");
+        }
+        return new PrimitiveType(Type.Base.BOOL);
     }
 
     @Override
@@ -83,8 +100,17 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitAnd(grammarTCLParser.AndContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitAnd'");
+        ParseTree p1 = ctx.getChild(0);
+        Type t1 = visit(p1);
+        ParseTree p3 = ctx.getChild(2);
+        Type t3 = visit(p3);
+        if (t1 instanceof PrimitiveType && ((PrimitiveType) t1).getType() != Type.Base.BOOL) {
+            throw new Error("Type error: and with non-boolean on the first operand");
+        }
+        if (t3 instanceof PrimitiveType && ((PrimitiveType) t3).getType() != Type.Base.BOOL) {
+            throw new Error("Type error: and with non-boolean on the second operand");
+        }
+        return new PrimitiveType(Type.Base.BOOL);
     }
 
     @Override
@@ -121,8 +147,17 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitAddition(grammarTCLParser.AdditionContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitAddition'");
+        ParseTree p1 = ctx.getChild(0);
+        Type t1 = visit(p1);
+        ParseTree p3 = ctx.getChild(2);
+        Type t3 = visit(p3);
+        if (t1 instanceof PrimitiveType && ((PrimitiveType) t1).getType() != Type.Base.INT) {
+            throw new Error("Type error: addition with non-integer on the first operand");
+        }
+        if (t3 instanceof PrimitiveType && ((PrimitiveType) t3).getType() != Type.Base.INT) {
+            throw new Error("Type error: addition with non-integer on the second operand");
+        }
+        return new PrimitiveType(Type.Base.INT);
     }
 
     @Override
@@ -171,13 +206,23 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         }
         ParseTree p5 = ctx.getChild(4);
         visit(p5);
+        if (ctx.getChildCount() == 7) {
+            ParseTree p7 = ctx.getChild(6);
+            visit(p7);
+        }
         return null;
     }
 
     @Override
     public Type visitWhile(grammarTCLParser.WhileContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitWhile'");
+        ParseTree p1 = ctx.getChild(1);
+        Type t1 = visit(p1);
+        if (t1 instanceof PrimitiveType && ((PrimitiveType) t1).getType() != Type.Base.BOOL) {
+            throw new Error("Type error: while condition is not a boolean");
+        }
+        ParseTree p3 = ctx.getChild(3);
+        visit(p3);
+        return null;
     }
 
     @Override
