@@ -70,8 +70,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitInteger(grammarTCLParser.IntegerContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitInteger'");
+        return new PrimitiveType(Type.Base.INT);
     }
 
     @Override
@@ -82,8 +81,8 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitBrackets(grammarTCLParser.BracketsContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitBrackets'");
+        ParseTree p1 = ctx.getChild(1);
+        return visit(p1);
     }
 
     @Override
@@ -94,8 +93,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitBoolean(grammarTCLParser.BooleanContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitBoolean'");
+        return new PrimitiveType(Type.Base.BOOL);
     }
 
     @Override
@@ -115,14 +113,22 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitVariable(grammarTCLParser.VariableContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitVariable'");
+        return new UnknownType();
     }
 
     @Override
     public Type visitMultiplication(grammarTCLParser.MultiplicationContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitMultiplication'");
+        ParseTree p1 = ctx.getChild(0);
+        Type t1 = visit(p1);
+        ParseTree p3 = ctx.getChild(2);
+        Type t3 = visit(p3);
+        if (t1 instanceof PrimitiveType && ((PrimitiveType) t1).getType() != Type.Base.INT) {
+            throw new Error("Type error: multiplication with non-integer on the first operand");
+        }
+        if (t3 instanceof PrimitiveType && ((PrimitiveType) t3).getType() != Type.Base.INT) {
+            throw new Error("Type error: multiplication with non-integer on the second operand");
+        }
+        return new PrimitiveType(Type.Base.INT);
     }
 
     @Override
@@ -141,8 +147,18 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitTab_initialization(grammarTCLParser.Tab_initializationContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitTab_initialization'");
+        if (ctx.getChildCount() > 2) {
+            for (int i = 1; i < ctx.getChildCount() - 3; i += 2) {
+                ParseTree p = ctx.getChild(i);
+                Type t = visit(p);
+                ParseTree p2 = ctx.getChild(i + 2);
+                Type t2 = visit(p2);
+                if (!t.equals(t2)) {
+                    throw new Error("Type error: initialization of array with different types");
+                }
+            }
+        }
+        return null;
     }
 
     @Override
@@ -173,27 +189,56 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
     }
 
     @Override
-    public Type visitDeclaration(grammarTCLParser.DeclarationContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitDeclaration'");
+    public Type visitDeclaration(grammarTCLParser.DeclarationContext ctx) { // pas sur
+        ParseTree p1 = ctx.getChild(0);
+        Type t1 = visit(p1);
+        if (!(t1 instanceof PrimitiveType)) {
+            throw new Error("Type error: declaration of variable with non-variable type");
+        }
+        if (ctx.getChildCount() == 5){
+            ParseTree p3 = ctx.getChild(3);
+            Type t3 = visit(p3);
+            if (t1.equals(t3)) {
+                throw new Error("Type error: declaration of variable with different type");
+            }
+        }
+        return null;
     }
 
     @Override
     public Type visitPrint(grammarTCLParser.PrintContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitPrint'");
+        ParseTree p1 = ctx.getChild(2);
+        Type t = visit(p1);
+        if (!(t instanceof UnknownType)) {
+            throw new Error("Type error: print of non-variable");
+        }
+        return null;
     }
 
     @Override
     public Type visitAssignment(grammarTCLParser.AssignmentContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitAssignment'");
+        ParseTree p1 = ctx.getChild(0);
+        Type t1 = visit(p1);
+        ParseTree p2 = ctx.getChild(5);
+        Type t2 = visit(p2);
+        if (!t1.equals(t2)) {
+            throw new Error("Type error: assignment of different types");
+        }
+        ParseTree p3 = ctx.getChild(2);
+        Type t3 = visit(p3);
+        if (t3 instanceof PrimitiveType && ((PrimitiveType) t3).getType() != Type.Base.INT) {
+            throw new Error("Type error: the address is not a integer");
+        }
+        return null;
     }
 
     @Override
     public Type visitBlock(grammarTCLParser.BlockContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitBlock'");
+        for (int i = 1; i < ctx.getChildCount() - 2; i++) {
+            ParseTree p = ctx.getChild(i);
+            visit(p);
+        }
+        return null;
     }
 
     @Override
@@ -227,8 +272,18 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitFor(grammarTCLParser.ForContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitFor'");
+        ParseTree p1 = ctx.getChild(2);
+        visit(p1);
+        ParseTree p2 = ctx.getChild(3);
+        Type t2 = visit(p2);
+        if (t2 instanceof PrimitiveType && ((PrimitiveType) t2).getType() != Type.Base.BOOL) {
+            throw new Error("Type error: for condition is not a boolean");
+        }
+        ParseTree p3 = ctx.getChild(5);
+        visit(p3);
+        ParseTree p4 = ctx.getChild(7);
+        visit(p4);
+        return null;
     }
 
     @Override

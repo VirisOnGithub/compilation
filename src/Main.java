@@ -84,6 +84,5 @@ public class Main {
 		System.out.println(func7.contains((UnknownType) cOnFuSiOn));	//true
 		System.out.println(func8.contains((UnknownType) cOnFuSiOn));	//false
 		System.out.println(func9.contains((UnknownType) cOnFuSiOn));	//true
-
 	}
 };
