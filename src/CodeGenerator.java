@@ -1,15 +1,20 @@
 package src;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
+import src.Asm.Instruction;
+import src.Asm.Mem;
 import src.Asm.Program;
+import src.Asm.UAL;
 import src.Type.Type;
 import src.Type.UnknownType;
 
 public class CodeGenerator  extends AbstractParseTreeVisitor<Program> implements grammarTCLVisitor<Program> {
-
     private Map<UnknownType,Type> types;
+    private Integer nextRegister;
+    private final Integer SP = 0;
 
     /**
      * Constructeur
@@ -17,6 +22,7 @@ public class CodeGenerator  extends AbstractParseTreeVisitor<Program> implements
      */
     public CodeGenerator(Map<UnknownType, Type> types) {
         this.types = types;
+        this.nextRegister = 1;
     }
 
     @Override
@@ -177,14 +183,26 @@ public class CodeGenerator  extends AbstractParseTreeVisitor<Program> implements
 
     @Override
     public Program visitDecl_fct(grammarTCLParser.Decl_fctContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitDecl_fct'");
+        Program fonction = new Program();
+        int nbChilds = ctx.getChildCount();
+        int nbArguments = ((nbChilds - 5) == 0 ? 0 : (nbChilds - 4)/2);
+        for(int i = 0; i < nbArguments; i++) {
+            Instruction depile = new Mem(Mem.Op.ST, nextRegister, SP);
+            nextRegister++;
+            if(i == 0) {
+                depile.setLabel(ctx.getChild(2).toString());
+            }
+            fonction.addInstruction(depile);
+
+        }
+        return fonction;
     }
 
     @Override
     public Program visitMain(grammarTCLParser.MainContext ctx) {
         //main: decl_fct* 'int main()' core_fct EOF
         Program main = new Program();
+        main.addInstruction(new UAL(UAL.Op.XOR, 0, 0, 0));
         int nbChilds = ctx.getChildCount();
         for(int i = 0; i < nbChilds - 3; i++) { //decl_fct*
             main.addInstructions(visit(ctx.getChild(i)));
