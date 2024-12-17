@@ -1,1 +1,0 @@
-typeSearchIndex = [{"l":"All Classes","url":"allclasses-index.html"},{"p":"src.Type","l":"ArrayType"},{"p":"src.Type","l":"src.Type.Base"},{"p":"src.Type","l":"FunctionType"},{"p":"src.Type","l":"PrimitiveType"},{"p":"src.Type","l":"src.Type"},{"p":"src.Type","l":"UnknownType"}]
