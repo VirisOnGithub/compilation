@@ -40,8 +40,8 @@ public class ArrayType extends Type{
 
     @Override
     public boolean equals(Object t) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'equals'");
+        return t instanceof ArrayType
+                && tabType.equals(((ArrayType)t).tabType);
     }
 
     @Override

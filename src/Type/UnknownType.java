@@ -58,6 +58,7 @@ public class UnknownType extends Type {
      * Getter du numéro de variable de type
      * @return numéro de variable de type
      */
+
     public int getVarIndex() {
         return varIndex;
     }
@@ -90,8 +91,9 @@ public class UnknownType extends Type {
 
     @Override
     public boolean equals(Object t) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'equals'");
+        return t instanceof UnknownType
+                && this.varName.equals(((UnknownType)t).getVarName())
+                && this.varIndex == ((UnknownType)t).getVarIndex();
     }
 
     @Override
