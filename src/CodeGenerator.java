@@ -220,14 +220,20 @@ public class CodeGenerator  extends AbstractParseTreeVisitor<Program> implements
 
     @Override
     public Program visitCore_fct(grammarTCLParser.Core_fctContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitCore_fct'");
+        //core_fct: '{' instr* RETURN expr SEMICOL '}';
+        Program program = new Program();
+        int nbInstructions = ctx.getChildCount() - 5;
+        for (int i = 0; i < nbInstructions; i++) { //instr*
+            program.addInstructions(visit(ctx.getChild(i + 1)));
+        }
+        program.addInstructions(visit(ctx.getChild(ctx.getChildCount() - 3))); //expr
+        return program;
     }
 
     @Override
     public Program visitDecl_fct(grammarTCLParser.Decl_fctContext ctx) {
         //decl_fct: type VAR '(' (type VAR (',' type VAR)*)? ')' core_fct;
-        Program fonction = new Program();
+        Program program = new Program();
         int nbChilds = ctx.getChildCount();
         int nbArguments = ((nbChilds - 5) == 0 ? 0 : (nbChilds - 4)/2);
         for(int i = 0; i < nbArguments; i++) { //the arguments are stacked before the call so we unstack them
@@ -236,27 +242,27 @@ public class CodeGenerator  extends AbstractParseTreeVisitor<Program> implements
             if(i == 0) {
                 depile.setLabel(ctx.getChild(2).toString()); //function label for later CALL
             }
-            fonction.addInstruction(depile);
-            fonction.addInstruction(new UALi(UALi.Op.SUB, SP, SP, 1));
+            program.addInstruction(depile);
+            program.addInstruction(new UALi(UALi.Op.SUB, SP, SP, 1));
         }
-        fonction.addInstructions(visit(ctx.getChild(nbChilds - 1))); //core_fct
-        return fonction;
+        program.addInstructions(visit(ctx.getChild(nbChilds - 1))); //core_fct
+        return program;
     }
 
     @Override
     public Program visitMain(grammarTCLParser.MainContext ctx) {
         //main: decl_fct* 'int main()' core_fct EOF
-        Program main = new Program();
-        main.addInstruction(new UAL(UAL.Op.XOR, 0, 0, 0)); //initialize SP
-        main.addInstruction(new JumpCall(JumpCall.Op.JMP, "main")); //call main
+        Program program = new Program();
+        program.addInstruction(new UAL(UAL.Op.XOR, 0, 0, 0)); //initialize SP
+        program.addInstruction(new JumpCall(JumpCall.Op.JMP, "main")); //call main
         int nbChilds = ctx.getChildCount();
         for(int i = 0; i < nbChilds - 3; i++) { //decl_fct*
-            main.addInstructions(visit(ctx.getChild(i)));
+            program.addInstructions(visit(ctx.getChild(i)));
         }
-        Program inMain = visit(ctx.getChild(nbChilds - 2)); //core_fct
-        inMain.getInstructions().getFirst().setLabel("main"); //main label
-        main.addInstructions(inMain);
-        main.addInstruction(new Stop()); //STOP
-        return main;
+        Program mainCoreProgram = visit(ctx.getChild(nbChilds - 2)); //core_fct
+        mainCoreProgram.getInstructions().getFirst().setLabel("main"); //main label
+        program.addInstructions(mainCoreProgram);
+        program.addInstruction(new Stop()); //STOP
+        return program;
     }
 }
