@@ -1,4 +1,11 @@
+int f() {
+    int b;
+    int a = 3;
+    a = a + 3;
+    return a;
+}
+
 int main() {
-    int x = 0;
+    x = 0;
     return x;
 }
