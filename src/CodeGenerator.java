@@ -39,8 +39,12 @@ public class CodeGenerator  extends AbstractParseTreeVisitor<Program> implements
 
     @Override
     public Program visitOr(grammarTCLParser.OrContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitOr'");
+        Program p = new Program();
+        p.addInstructions(visit(ctx.getChild(0)));
+        p.addInstructions(visit(ctx.getChild(2)));
+        p.addInstruction(new UAL(UAL.Op.OR, nextRegister, nextRegister-2, nextRegister-1));
+        nextRegister++;
+        return p;
     }
 
     @Override
@@ -51,8 +55,11 @@ public class CodeGenerator  extends AbstractParseTreeVisitor<Program> implements
 
     @Override
     public Program visitInteger(grammarTCLParser.IntegerContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitInteger'");
+        Program p = new Program();
+        p.addInstruction(new UAL(UAL.Op.XOR, nextRegister, nextRegister, nextRegister));
+        p.addInstruction(new UALi(UALi.Op.ADD, nextRegister, nextRegister, Integer.parseInt(ctx.getChild(0).getText())));
+        nextRegister++;
+        return p;
     }
 
     @Override
@@ -75,14 +82,26 @@ public class CodeGenerator  extends AbstractParseTreeVisitor<Program> implements
 
     @Override
     public Program visitBoolean(grammarTCLParser.BooleanContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitBoolean'");
+        Program p = new Program();
+        switch (ctx.getChild(0).getText()) {
+            case "true" -> {
+                p.addInstruction(new UAL(UAL.Op.XOR, nextRegister, nextRegister, nextRegister));
+                p.addInstruction(new UALi(UALi.Op.ADD, nextRegister, nextRegister, 1));
+            }
+            case "false" -> p.addInstruction(new UAL(UAL.Op.XOR, nextRegister, nextRegister, nextRegister));
+        }
+        nextRegister++;
+        return p;
     }
 
     @Override
     public Program visitAnd(grammarTCLParser.AndContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitAnd'");
+        Program p = new Program();
+        p.addInstructions(visit(ctx.getChild(0)));
+        p.addInstructions(visit(ctx.getChild(2)));
+        p.addInstruction(new UAL(UAL.Op.AND, nextRegister, nextRegister-2, nextRegister-1));
+        nextRegister++;
+        return p;
     }
 
     @Override
