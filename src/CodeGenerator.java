@@ -10,10 +10,10 @@ import src.Type.Type;
 import src.Type.UnknownType;
 
 public class CodeGenerator  extends AbstractParseTreeVisitor<Program> implements grammarTCLVisitor<Program> {
-    private Map<UnknownType,Type> types;
-    private Integer nextRegister;
-    private Integer nextLabel;
-    private final Integer SP = 0;
+    private final Map<UnknownType,Type> types;
+    private final Integer SP = 0; // stackPointer should always be 1 over the last stacked variable
+    private Integer nextRegister; // nextRegister should always be a non utilised register number
+    private Integer nextLabel; // nextLabel should always be a non utilised label number
 
     /**
      * Constructeur
@@ -22,21 +22,41 @@ public class CodeGenerator  extends AbstractParseTreeVisitor<Program> implements
     public CodeGenerator(Map<UnknownType, Type> types) {
         this.types = types;
         this.nextRegister = 1;
-        this.nextLabel = 1;
+        this.nextLabel = 0;
     }
 
+    /**
+     * Macro to add instructions to stack a register
+     * @param register the number of the register that needs to be stacked
+     * @return a program that stack the resister
+     */
     private Program stackRegister(int register) {
-        return null;
+        Program program = new Program();
+        program.addInstruction(new Mem(Mem.Op.ST, register, SP));
+        program.addInstruction(new UALi(UALi.Op.ADD, SP, SP, 1));
+        return program;
     }
 
+    /**
+     * Macro to add instructions to unstack a register
+     * @param register the number of the register that needs to be unstacked
+     * @return a program that unstack the resister
+     */
     private Program unstackRegister(int register) {
-        return null;
+        Program program = new Program();
+        program.addInstruction(new UALi(UALi.Op.SUB, SP, SP, 1));
+        program.addInstruction(new Mem(Mem.Op.LD, register, SP));
+        return program;
     }
 
     private int getVarRegister(String varName) {
         return 0;
     }
 
+    /**
+     * Macro to get a new valid non utilised label name
+     * @return the label name
+     */
     private String getLabel() {
         this.nextLabel++;
         return "Label" + (this.nextLabel-1);
@@ -330,18 +350,33 @@ public class CodeGenerator  extends AbstractParseTreeVisitor<Program> implements
         throw new UnsupportedOperationException("Unimplemented method 'visitAssignment'");
     }
 
+    /**
+     * Visit a node that contains code inside brackets and create the corresponding linear code
+     * @param ctx the context within the parse tree
+     * @return a program containing the linear code
+     */
     @Override
     public Program visitBlock(grammarTCLParser.BlockContext ctx) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'visitBlock'");
     }
 
+    /**
+     * Visit a node that contains an if structure and create the corresponding linear code
+     * @param ctx the context within the parse tree
+     * @return a program containing the linear code
+     */
     @Override
     public Program visitIf(grammarTCLParser.IfContext ctx) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'visitIf'");
     }
 
+    /**
+     * Visit a node that contains a while structure and create the corresponding linear code
+     * @param ctx the context within the parse tree
+     * @return a program containing the linear code
+     */
     @Override
     public Program visitWhile(grammarTCLParser.WhileContext ctx) {
         // WHILE '(' expr ')' instr
@@ -371,6 +406,11 @@ public class CodeGenerator  extends AbstractParseTreeVisitor<Program> implements
         return program;
     }
 
+    /**
+     * Visit a node that contains a for structure and create the corresponding linear code
+     * @param ctx the context within the parse tree
+     * @return a program containing the linear code
+     */
     @Override
     public Program visitFor(grammarTCLParser.ForContext ctx) {
         // FOR '(' instr ',' expr ',' instr ')' instr
@@ -404,6 +444,11 @@ public class CodeGenerator  extends AbstractParseTreeVisitor<Program> implements
         return program;
     }
 
+    /**
+     * Visit a node that contains the return of a function and create the corresponding linear code
+     * @param ctx the context within the parse tree
+     * @return a program containing the linear code
+     */
     @Override
     public Program visitReturn(grammarTCLParser.ReturnContext ctx) {
         // RETURN expr SEMICOL
@@ -412,6 +457,11 @@ public class CodeGenerator  extends AbstractParseTreeVisitor<Program> implements
         return program;
     }
 
+    /**
+     * Visit a node that contains the code of a function and create the corresponding linear code
+     * @param ctx the context within the parse tree
+     * @return a program containing the linear code
+     */
     @Override
     public Program visitCore_fct(grammarTCLParser.Core_fctContext ctx) {
         // core_fct: '{' instr* RETURN expr SEMICOL '}';
@@ -424,6 +474,11 @@ public class CodeGenerator  extends AbstractParseTreeVisitor<Program> implements
         return program;
     }
 
+    /**
+     * Visit a node that declare a function and create the corresponding linear code
+     * @param ctx the context within the parse tree
+     * @return a program containing the linear code
+     */
     @Override
     public Program visitDecl_fct(grammarTCLParser.Decl_fctContext ctx) {
         // decl_fct: type VAR '(' (type VAR (',' type VAR)*)? ')' core_fct;
@@ -440,6 +495,11 @@ public class CodeGenerator  extends AbstractParseTreeVisitor<Program> implements
         return program;
     }
 
+    /**
+     * Visit the 'main' node and create the corresponding linear code
+     * @param ctx the context within the parse tree
+     * @return a program containing the linear code
+     */
     @Override
     public Program visitMain(grammarTCLParser.MainContext ctx) {
         // main: decl_fct* 'int main()' core_fct EOF
