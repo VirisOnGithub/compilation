@@ -25,10 +25,8 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         System.out.println("visit negation");
         ParseTree p1 = ctx.getChild(1);
         Type t = visit(p1);
-        if (t instanceof PrimitiveType && ((PrimitiveType) t).getType() != Type.Base.BOOL) {
-            throw new Error("Type error: negation of non-boolean");
-        }
-        return null;
+        t.unify(new PrimitiveType(Type.Base.BOOL));
+        return new PrimitiveType(Type.Base.BOOL);
     }
 
     @Override
@@ -139,7 +137,18 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
     @Override
     public Type visitVariable(grammarTCLParser.VariableContext ctx) {
         System.out.println("visit unknown type");
-        return new UnknownType();
+        Type type;
+
+        ParseTree p1 = ctx.getChild(0);
+        UnknownType ut = new UnknownType(p1);
+
+        if (this.types.containsKey(ut)) {
+            type = this.types.get(ut);
+        } else {
+            type = new UnknownType();
+            this.types.put(ut, type);
+        }
+        return type;
     }
 
     @Override
@@ -243,13 +252,20 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
             throw new Error("Type error: declaration of variable with non-variable type");
         }
         ParseTree p2 = ctx.getChild(1);
-        Type t2 = visit(p2);
-        t1.unify(t2);
+        UnknownType ut = new UnknownType(p2);
+
+        if (this.types.containsKey(ut)) {
+            throw new Error("Type error: Already declared");
+        } else {
+            this.types.put(ut, t1);
+        }
+
         if (ctx.getChildCount() == 5){
             ParseTree p3 = ctx.getChild(3);
             Type t3 = visit(p3);
-            t2.unify(t3);
+            t1.unify(t3);
         }
+        System.out.println(this.types);
         return null;
     }
 

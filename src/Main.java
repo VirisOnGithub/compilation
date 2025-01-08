@@ -9,13 +9,12 @@ import java.util.ArrayList;
 
 public class Main {
 	public static void main(String[] args) {
-		System.out.println("Hello world");
-
+		/*
 		// tests PrimitiveType.equals() :
 		Type integer = new PrimitiveType(Type.Base.INT);
 		Type integer2 = new PrimitiveType(Type.Base.INT);
 		Type booooool = new PrimitiveType(Type.Base.BOOL);
-		/*
+
 		System.out.println(integer.equals(integer2));	//true
 		System.out.println(integer.equals(booooool));	//false
 
