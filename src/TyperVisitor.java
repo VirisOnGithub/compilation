@@ -2,6 +2,7 @@ package src;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
 
@@ -12,7 +13,7 @@ import src.Type.UnknownType;
 
 public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements grammarTCLVisitor<Type> {
 
-    private final Map<UnknownType,Type> types = new HashMap<UnknownType,Type>();
+    private final Map<UnknownType,Type> types = new HashMap<>();
 
     public Map<UnknownType, Type> getTypes() {
         return types;
@@ -21,6 +22,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
     @Override
     public Type visitNegation(grammarTCLParser.NegationContext ctx) {
         // TODO Auto-generated method stub
+        System.out.println("visit negation");
         ParseTree p1 = ctx.getChild(1);
         Type t = visit(p1);
         if (t instanceof PrimitiveType && ((PrimitiveType) t).getType() != Type.Base.BOOL) {
@@ -31,20 +33,23 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitComparison(grammarTCLParser.ComparisonContext ctx) {
+        System.out.println("visit comparison");
         ParseTree p1 = ctx.getChild(0);
         Type t1 = visit(p1);
         ParseTree p3 = ctx.getChild(2);
         Type t3 = visit(p3);
-        if (!t1.equals(t3)) {
-            throw new Error("Type error: comparison between different types");
+        if (t1 instanceof PrimitiveType && ((PrimitiveType) t1).getType() != Type.Base.INT) {
+            throw new Error("Type error: multiplication with non-integer on the first operand");
         }
-        UnknownType ut = new UnknownType();
-        types.putAll(t1.unify(t3));
+        if (t3 instanceof PrimitiveType && ((PrimitiveType) t3).getType() != Type.Base.INT) {
+            throw new Error("Type error: multiplication with non-integer on the second operand");
+        }
         return new PrimitiveType(Type.Base.BOOL);
     }
 
     @Override
     public Type visitOr(grammarTCLParser.OrContext ctx) {
+        System.out.println("visit or");
         ParseTree p1 = ctx.getChild(0);
         Type t1 = visit(p1);
         ParseTree p3 = ctx.getChild(2);
@@ -60,6 +65,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitOpposite(grammarTCLParser.OppositeContext ctx) {
+        System.out.println("visit opposite");
         ParseTree p1 = ctx.getChild(1);
         Type t = visit(p1);
         if (t instanceof PrimitiveType && ((PrimitiveType) t).getType() != Type.Base.INT) {
@@ -70,34 +76,53 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitInteger(grammarTCLParser.IntegerContext ctx) {
+        System.out.println("visit int");
         return new PrimitiveType(Type.Base.INT);
     }
 
     @Override
     public Type visitTab_access(grammarTCLParser.Tab_accessContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitTab_access'");
+        System.out.println("visit tabAccess");
+        ParseTree p0 = ctx.getChild(0);
+        visit(p0);
+        ParseTree p1 = ctx.getChild(2);
+        visit(p1);
+        return null;
     }
 
     @Override
     public Type visitBrackets(grammarTCLParser.BracketsContext ctx) {
+        System.out.println("visit brackets");
         ParseTree p1 = ctx.getChild(1);
         return visit(p1);
     }
 
     @Override
     public Type visitCall(grammarTCLParser.CallContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitCall'");
+        System.out.println("visit call");
+        ParseTree p0 = ctx.getChild(0);
+        visit(p0);
+        int NbChildren = ctx.getChildCount();
+        if(NbChildren != 3){
+            ParseTree p1 = ctx.getChild(2);
+            visit(p1);
+            for(int i = 0; i < (NbChildren - 3 - 1)/2; i++){
+                ParseTree p2 = ctx.getChild(4+2*i);
+                visit(p2);
+            }
+        }
+        return null;
     }
 
     @Override
     public Type visitBoolean(grammarTCLParser.BooleanContext ctx) {
+        System.out.println("visit bool");
         return new PrimitiveType(Type.Base.BOOL);
     }
 
     @Override
     public Type visitAnd(grammarTCLParser.AndContext ctx) {
+        System.out.println("visit and");
         ParseTree p1 = ctx.getChild(0);
         Type t1 = visit(p1);
         ParseTree p3 = ctx.getChild(2);
@@ -113,11 +138,14 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitVariable(grammarTCLParser.VariableContext ctx) {
+        System.out.println("visit unknown type");
         return new UnknownType();
     }
 
     @Override
     public Type visitMultiplication(grammarTCLParser.MultiplicationContext ctx) {
+        System.out.println("Visit Multiplication");
+
         ParseTree p1 = ctx.getChild(0);
         Type t1 = visit(p1);
         ParseTree p3 = ctx.getChild(2);
@@ -133,6 +161,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitEquality(grammarTCLParser.EqualityContext ctx) {
+        System.out.println("visit equality");
         ParseTree p1 = ctx.getChild(0);
         Type t1 = visit(p1);
         ParseTree p3 = ctx.getChild(2);
@@ -142,11 +171,13 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         }
         UnknownType ut = new UnknownType();
         types.putAll(t1.unify(t3));
+        //substituteAll()
         return new PrimitiveType(Type.Base.BOOL);
     }
 
     @Override
     public Type visitTab_initialization(grammarTCLParser.Tab_initializationContext ctx) {
+        System.out.println("visit tab initialization");
         if (ctx.getChildCount() > 2) {
             for (int i = 1; i < ctx.getChildCount() - 3; i += 2) {
                 ParseTree p = ctx.getChild(i);
@@ -163,6 +194,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitAddition(grammarTCLParser.AdditionContext ctx) {
+        System.out.println("visit addition");
         ParseTree p1 = ctx.getChild(0);
         Type t1 = visit(p1);
         ParseTree p3 = ctx.getChild(2);
@@ -178,35 +210,52 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitBase_type(grammarTCLParser.Base_typeContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitBase_type'");
+        System.out.println("Visit base type");
+        ParseTree p0 = ctx.getChild(0);
+        if (!Objects.equals(p0.getText(), "int") && !Objects.equals(p0.getText(), "bool") && !Objects.equals(p0.getText(), "auto")) {
+            throw new Error("sale merde");
+        }
+        switch (p0.getText()){
+            case "int":
+                return new PrimitiveType(Type.Base.INT);
+            case "bool":
+                return new PrimitiveType(Type.Base.BOOL);
+            case "auto":
+                return new UnknownType();
+        }
+        return null;
     }
 
     @Override
     public Type visitTab_type(grammarTCLParser.Tab_typeContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitTab_type'");
+        System.out.println("Visit tab type");
+        ParseTree p0 = ctx.getChild(0);
+        visit(p0);
+        return null;
     }
 
     @Override
     public Type visitDeclaration(grammarTCLParser.DeclarationContext ctx) { // pas sur
+        System.out.println("visit declaration");
         ParseTree p1 = ctx.getChild(0);
         Type t1 = visit(p1);
-        if (!(t1 instanceof PrimitiveType)) {
+        if (!(t1 instanceof PrimitiveType) && !(t1 instanceof UnknownType)) {
             throw new Error("Type error: declaration of variable with non-variable type");
         }
+        ParseTree p2 = ctx.getChild(1);
+        Type t2 = visit(p2);
+        t1.unify(t2);
         if (ctx.getChildCount() == 5){
             ParseTree p3 = ctx.getChild(3);
             Type t3 = visit(p3);
-            if (t1.equals(t3)) {
-                throw new Error("Type error: declaration of variable with different type");
-            }
+            t2.unify(t3);
         }
         return null;
     }
 
     @Override
     public Type visitPrint(grammarTCLParser.PrintContext ctx) {
+        System.out.println("visit print");
         ParseTree p1 = ctx.getChild(2);
         Type t = visit(p1);
         if (!(t instanceof UnknownType)) {
@@ -217,6 +266,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitAssignment(grammarTCLParser.AssignmentContext ctx) {
+        System.out.println("visit assignment");
         ParseTree p1 = ctx.getChild(0);
         Type t1 = visit(p1);
         ParseTree p2 = ctx.getChild(5);
@@ -234,7 +284,8 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitBlock(grammarTCLParser.BlockContext ctx) {
-        for (int i = 1; i < ctx.getChildCount() - 2; i++) {
+        System.out.println("visit block");
+        for (int i = 1; i < ctx.getChildCount() - 1; i++) {
             ParseTree p = ctx.getChild(i);
             visit(p);
         }
@@ -243,7 +294,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitIf(grammarTCLParser.IfContext ctx) {
-        // TODO Auto-generated method stub
+        System.out.println("visit if");
         ParseTree p3 = ctx.getChild(2);
         Type t3 = visit(p3);
         if (t3 instanceof PrimitiveType && ((PrimitiveType) t3).getType() != Type.Base.BOOL) {
@@ -260,6 +311,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitWhile(grammarTCLParser.WhileContext ctx) {
+        System.out.println("visit while");
         ParseTree p1 = ctx.getChild(1);
         Type t1 = visit(p1);
         if (t1 instanceof PrimitiveType && ((PrimitiveType) t1).getType() != Type.Base.BOOL) {
@@ -272,6 +324,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitFor(grammarTCLParser.ForContext ctx) {
+        System.out.println("visit for");
         ParseTree p1 = ctx.getChild(2);
         visit(p1);
         ParseTree p2 = ctx.getChild(3);
@@ -288,25 +341,70 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitReturn(grammarTCLParser.ReturnContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitReturn'");
+        System.out.println("visit return");
+        ParseTree p1 = ctx.getChild(1);
+        visit(p1);
+        return null;
     }
 
     @Override
     public Type visitCore_fct(grammarTCLParser.Core_fctContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitCore_fct'");
+        System.out.println("Visit core function");
+        int nbChildrenWithoutInstr = 5; // '{' instr* RETURN expr SEMICOL '}';
+        int nbChildren = ctx.getChildCount();
+        for (int i = 0; i < nbChildren - nbChildrenWithoutInstr; i++){
+            ParseTree p0 = ctx.getChild(1 + i);
+            visit(p0);
+        }
+        ParseTree p1 = ctx.getChild(nbChildren - 3); // return is the 2nd last
+        visit(p1);
+        return null;
     }
 
     @Override
     public Type visitDecl_fct(grammarTCLParser.Decl_fctContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitDecl_fct'");
+        System.out.println("Visit declare function");
+        ParseTree p0 = ctx.getChild(0);
+        visit(p0);
+        ParseTree p1 = ctx.getChild(1);
+        visit(p1);
+        int i = 4;
+        int j = ctx.getChildCount()-1;
+        if(i == j){
+            ParseTree p2 = ctx.getChild(i);
+            visit(p2);
+        } else {
+            ParseTree p3 = ctx.getChild(3);
+            ParseTree p4 = ctx.getChild(4);
+            visit(p3);
+            visit(p4);
+            // number of parameters is 0 mod 3
+            int nbVars = (j - i - 3)/3; // first 3 represent first arg + closing parenthesis
+            for (int k = 0; k < nbVars; k++){
+                ParseTree p5 = ctx.getChild(7+3*k);
+                ParseTree p6 = ctx.getChild(8+3*k);
+                visit(p5);
+                visit(p6);
+            }
+        }
+        return null;
     }
 
     @Override
     public Type visitMain(grammarTCLParser.MainContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitMain'");
+        System.out.println("visit main");
+        int childCount = ctx.getChildCount();
+        // if only 3 children, it means no fun decl
+        if(childCount == 3){
+            ParseTree p0 = ctx.getChild(1);
+            visit(p0);
+        } else {
+            // for each fun decl, it should be visited
+            for (int i = 0; i < childCount - 3; i++){
+                ParseTree p1 = ctx.getChild(i);
+                visit(p1);
+            }
+        }
+        return null;
     }
 }

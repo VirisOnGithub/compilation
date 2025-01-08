@@ -1,5 +1,0 @@
-int main() {
-    int tab1 = {};
-    int tab2 = {1, 2};
-    return 0;
-}
