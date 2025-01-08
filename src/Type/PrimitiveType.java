@@ -39,8 +39,7 @@ public  class PrimitiveType extends Type {
 
     @Override
     public Type substitute(UnknownType v, Type t) {
-
-        throw new UnsupportedOperationException("Unimplemented method 'substitute'");
+        return this;
     }
 
     @Override

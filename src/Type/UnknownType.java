@@ -84,11 +84,12 @@ public class UnknownType extends Type {
         return map;
     }
 
-
     @Override
     public Type substitute(UnknownType v, Type t) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'substitute'");
+        if (this.equals(v)) {
+            return t;
+        }
+        else return this;
     }
 
     @Override
@@ -98,9 +99,14 @@ public class UnknownType extends Type {
 
     @Override
     public boolean equals(Object t) {
-        return t instanceof UnknownType
-                && this.varName.equals(((UnknownType)t).getVarName())
-                && this.varIndex == ((UnknownType)t).getVarIndex();
+        if (t instanceof UnknownType) {
+            UnknownType tempT  = (UnknownType)t;
+            if (this.getVarName()=="#" && tempT.getVarName()=="#") {
+                return this.getVarIndex()==tempT.getVarIndex();
+            }
+            return this.getVarName()==tempT.getVarName();
+        }
+        else return false;
     }
 
     @Override
