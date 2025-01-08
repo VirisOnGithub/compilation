@@ -1,11 +1,12 @@
 package src;
 
+import java.util.Map;
+
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
 import src.Asm.*;
+import src.Type.ArrayType;
 import src.Type.Type;
 import src.Type.UnknownType;
-
-import java.util.Map;
 
 public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements grammarTCLVisitor<Program> {
   private final Integer SP = 0;
@@ -265,11 +266,37 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
     throw new UnsupportedOperationException("Unimplemented method 'visitDeclaration'");
   }
 
-  @Override
-  public Program visitPrint(grammarTCLParser.PrintContext ctx) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'visitPrint'");
-  }
+    private static int getArrayDepth(Type type) {
+        if (type instanceof ArrayType array)
+            return 1 + getArrayDepth(array.getTabType());
+        return 0;
+    }
+
+    @Override
+    public Program visitPrint(grammarTCLParser.PrintContext ctx) {
+        UnknownType variable = new UnknownType(ctx.VAR());
+        Type varType = types.get(variable);
+        int arrayDepth = getArrayDepth(varType);
+        Program p = new Program();
+        int varRegister = variable.getVarIndex();
+        if (arrayDepth == 0) {
+            // on affiche la variable de type primitif
+            p.addInstruction(new IO(IO.Op.PRINT, varRegister));
+        } else {
+            int depthRegister = this.nextRegister;
+            // on empile le tableau puis sa profondeur
+            p.addInstruction(new Mem(src.Asm.Mem.Op.ST, varRegister, SP));
+            p.addInstruction(new UALi(src.Asm.UALi.Op.ADD, SP, SP, 1));
+            p.addInstruction(new UAL(src.Asm.UAL.Op.XOR, depthRegister, depthRegister, depthRegister));
+            p.addInstruction(new UALi(src.Asm.UALi.Op.ADD, depthRegister, depthRegister, arrayDepth));
+            p.addInstruction(new Mem(src.Asm.Mem.Op.ST, depthRegister, SP));
+            p.addInstruction(new UALi(src.Asm.UALi.Op.ADD, SP, SP, 1));
+            // on appelle la fonction print_tab
+            p.addInstruction(new JumpCall(src.Asm.JumpCall.Op.CALL, "print_tab"));
+            this.nextRegister++;
+        }
+        return p;
+    }
 
   @Override
   public Program visitAssignment(grammarTCLParser.AssignmentContext ctx) {
