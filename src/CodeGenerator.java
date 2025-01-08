@@ -9,7 +9,6 @@ import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
 
 import src.Asm.CondJump;
 import src.Asm.IO;
-import src.Asm.Instruction;
 import src.Asm.JumpCall;
 import src.Asm.Mem;
 import src.Asm.Program;
@@ -19,10 +18,6 @@ import src.Asm.UALi;
 import src.Type.ArrayType;
 import src.Type.Type;
 import src.Type.UnknownType;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements grammarTCLVisitor<Program> {
     private final Integer SP = 0;
@@ -458,10 +453,12 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         // core_fct: '{' instr* RETURN expr SEMICOL '}';
         Program program = new Program();
         int nbInstructions = ctx.getChildCount() - 5;
+        enterFunction();
         for (int i = 0; i < nbInstructions; i++) { // instr*
             program.addInstructions(visit(ctx.getChild(i + 1)));
         }
         program.addInstructions(visit(ctx.getChild(ctx.getChildCount() - 3))); // expr
+        exitFunction();
         return program;
     }
 
