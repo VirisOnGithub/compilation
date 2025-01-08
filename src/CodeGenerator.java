@@ -1,9 +1,21 @@
 package src;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Stack;
 
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
-import src.Asm.*;
+
+import src.Asm.CondJump;
+import src.Asm.IO;
+import src.Asm.Instruction;
+import src.Asm.JumpCall;
+import src.Asm.Mem;
+import src.Asm.Program;
+import src.Asm.Stop;
+import src.Asm.UAL;
+import src.Asm.UALi;
 import src.Type.ArrayType;
 import src.Type.Type;
 import src.Type.UnknownType;
@@ -18,25 +30,21 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
     private Integer nextRegister;
     private Integer nextLabel;
 
-  private ArrayList<HashMap<UnknownType, Integer>> variables;
+    private ArrayList<Map<String, Integer>> varRegisters;
+    private Stack<Integer> lastAccessibleDepth;
 
-  /**
-   * Constructeur
-   *
-   * @param types types de chaque variable du code source
-   */
-  public CodeGenerator(Map<UnknownType, Type> types) {
-    this.types = types;
-    this.nextRegister = types.size() + 1;
-    this.nextLabel = 1;
-    this.variables = new ArrayList<>();
-  }
-
-  private static int getArrayDepth(Type type) {
-    if (type instanceof ArrayType array)
-      return 1 + getArrayDepth(array.getTabType());
-    return 0;
-  }
+    /**
+     * Constructeur
+     *
+     * @param types types de chaque variable du code source
+     */
+    public CodeGenerator(Map<UnknownType, Type> types) {
+        this.types = types;
+        this.nextRegister = 1;
+        this.nextLabel = 1;
+        this.varRegisters = new ArrayList<>();
+        this.lastAccessibleDepth = new Stack<>();
+    }
 
     private Program stackRegister(int register) {
         return null;
@@ -47,12 +55,36 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
     }
 
     private int getVarRegister(String varName) {
-        return 0;
+        // on dépile les blocks jusqu'à une déclaration de fonction
+        for (int depth = varRegisters.size() - 1; depth >= lastAccessibleDepth.getLast(); depth--) {
+            var varMap = varRegisters.get(depth);
+            if (varMap.containsKey(varName)) {
+                return varMap.get(varName);
+            }
+        }
+        throw new RuntimeException("La variable n'a pas été assignée");
     }
 
-    private String getLabel() {
-        this.nextLabel++;
-        return "Label" + (this.nextLabel-1);
+    private void enterFunction() {
+        lastAccessibleDepth.add(varRegisters.size());
+        enterBlock();
+    }
+
+    private void exitFunction() {
+        exitBlock();
+        lastAccessibleDepth.pop();
+    }
+
+    private void enterBlock() {
+        varRegisters.add(new HashMap<>());
+    }
+
+    private void exitBlock() {
+        varRegisters.removeLast();
+    }
+
+    private void assignVarRegister(String varName, int register) {
+        varRegisters.getLast().put(varName, register);
     }
 
     @Override
