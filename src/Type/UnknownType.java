@@ -84,11 +84,12 @@ public class UnknownType extends Type {
         return map;
     }
 
-
     @Override
     public Type substitute(UnknownType v, Type t) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'substitute'");
+        if (this.equals(v)) {
+            return t;
+        }
+        else return this;
     }
 
     @Override

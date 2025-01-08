@@ -81,8 +81,14 @@ public class FunctionType extends Type {
 
     @Override
     public Type substitute(UnknownType v, Type t) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'substitute'");
+        ArrayList<Type> newArgsTypes = new ArrayList<>();
+        if (this.getNbArgs()!=0) {
+            for (Type i : this.argsTypes) {
+                newArgsTypes.add(i.substitute(v, t));
+            }
+        }
+        FunctionType res = new FunctionType(returnType.substitute(v, t), newArgsTypes);
+        return res;
     }
 
     @Override
