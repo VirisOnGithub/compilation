@@ -1,7 +1,9 @@
 package src;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Stack;
 
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
 import src.Asm.*;
@@ -15,6 +17,9 @@ public class CodeGenerator  extends AbstractParseTreeVisitor<Program> implements
     private Integer nextRegister; // nextRegister should always be a non utilised register number
     private Integer nextLabel; // nextLabel should always be a non utilised label number
 
+    private ArrayList<Map<String, Integer>> varRegisters;
+    private Stack<Integer> lastAccessibleDepth;
+
     /**
      * Constructeur
      * @param types types de chaque variable du code source
@@ -23,6 +28,14 @@ public class CodeGenerator  extends AbstractParseTreeVisitor<Program> implements
         this.types = types;
         this.nextRegister = 1;
         this.nextLabel = 0;
+        this.varRegisters = new ArrayList<>();
+        this.lastAccessibleDepth = new Stack<>();
+    }
+
+    private static int getArrayDepth(Type type) {
+        if (type instanceof ArrayType array)
+            return 1 + getArrayDepth(array.getTabType());
+        return 0;
     }
 
     /**
@@ -50,7 +63,36 @@ public class CodeGenerator  extends AbstractParseTreeVisitor<Program> implements
     }
 
     private int getVarRegister(String varName) {
-        return 0;
+        // on dépile les blocks jusqu'à une déclaration de fonction
+        for (int depth = varRegisters.size() - 1; depth >= lastAccessibleDepth.getLast(); depth--) {
+            var varMap = varRegisters.get(depth);
+            if (varMap.containsKey(varName)) {
+                return varMap.get(varName);
+            }
+        }
+        throw new RuntimeException("La variable n'a pas été assignée");
+    }
+
+    private void enterFunction() {
+        lastAccessibleDepth.add(varRegisters.size());
+        enterBlock();
+    }
+
+    private void exitFunction() {
+        exitBlock();
+        lastAccessibleDepth.pop();
+    }
+
+    private void enterBlock() {
+        varRegisters.add(new HashMap<>());
+    }
+
+    private void exitBlock() {
+        varRegisters.removeLast();
+    }
+
+    private void assignVarRegister(String varName, int register) {
+        varRegisters.getLast().put(varName, register);
     }
 
     /**
@@ -312,12 +354,6 @@ public class CodeGenerator  extends AbstractParseTreeVisitor<Program> implements
         throw new UnsupportedOperationException("Unimplemented method 'visitDeclaration'");
     }
 
-    private static int getArrayDepth(Type type) {
-        if (type instanceof ArrayType array)
-            return 1 + getArrayDepth(array.getTabType());
-        return 0;
-    }
-
     @Override
     public Program visitPrint(grammarTCLParser.PrintContext ctx) {
         UnknownType variable = new UnknownType(ctx.VAR());
@@ -357,8 +393,11 @@ public class CodeGenerator  extends AbstractParseTreeVisitor<Program> implements
      */
     @Override
     public Program visitBlock(grammarTCLParser.BlockContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitBlock'");
+        Program p = new Program();
+        enterBlock();
+        visit(ctx.getChild(1));
+        exitBlock();
+        return p;
     }
 
     /**
@@ -485,7 +524,7 @@ public class CodeGenerator  extends AbstractParseTreeVisitor<Program> implements
         Program program = new Program();
         int nbChilds = ctx.getChildCount();
         int nbArguments = ((nbChilds - 5) == 0 ? 0 : (nbChilds - 4)/2);
-        for(int i = 0; i < nbArguments; i++) { // the arguments are stacked before the call so we unstack them
+        for (int i = 0; i < nbArguments; i++) { // the arguments are stacked before the call so we unstack them
             program.addInstruction(new Mem(Mem.Op.LD, nextRegister, SP));
             nextRegister++;
             program.addInstruction(new UALi(UALi.Op.SUB, SP, SP, 1));
@@ -507,7 +546,7 @@ public class CodeGenerator  extends AbstractParseTreeVisitor<Program> implements
         program.addInstruction(new UAL(UAL.Op.XOR, 0, 0, 0)); // initialize SP
         program.addInstruction(new JumpCall(JumpCall.Op.JMP, "main")); // call main
         int nbChilds = ctx.getChildCount();
-        for(int i = 0; i < nbChilds - 3; i++) { // decl_fct*
+        for (int i = 0; i < nbChilds - 3; i++) { // decl_fct*
             program.addInstructions(visit(ctx.getChild(i)));
         }
         Program mainCoreProgram = visit(ctx.getChild(nbChilds - 2)); // core_fct
