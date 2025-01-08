@@ -1,4 +1,5 @@
 package src.Type;
+import java.util.HashMap;
 import java.util.Map;
 
 public  class PrimitiveType extends Type {
@@ -22,13 +23,23 @@ public  class PrimitiveType extends Type {
 
     @Override
     public Map<UnknownType, Type> unify(Type t) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'unify'");
+        HashMap<UnknownType, Type> map = new HashMap <> ();
+        if (t instanceof UnknownType) {
+            //cas INT ~ X
+            map.put((UnknownType) t, this);
+            return map;
+        }
+        if (!this.equals(t)) {
+            //cas INT ~ BOOL, Function, Array...
+            throw new Error("TypeError: cannot unify " + this + " to " + t);
+        }
+        //cas INT ~ INT
+        return map;
     }
 
     @Override
     public Type substitute(UnknownType v, Type t) {
-        // TODO Auto-generated method stub
+
         throw new UnsupportedOperationException("Unimplemented method 'substitute'");
     }
 

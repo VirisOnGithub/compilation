@@ -1,5 +1,6 @@
 package src.Type;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -44,8 +45,38 @@ public class FunctionType extends Type {
 
     @Override
     public Map<UnknownType, Type> unify(Type t) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'unify'");
+        HashMap<UnknownType, Type> map = new HashMap <> ();
+        if (t instanceof UnknownType){
+            if (this.contains((UnknownType)t)){
+                //cas FUNC(X,Y)->Z ~ X
+                throw new Error("TypeError: cannot unify " + this + " to " + t);
+            }
+            //cas FUNC(X,Y)->Z ~ W
+            UnknownType newreturn = new UnknownType();
+            map.put(newreturn, this.returnType);
+            if (this.argsTypes != null) {
+                for (Type i : this.argsTypes) {
+                    UnknownType temp = new UnknownType();
+                    map.put(temp, i);
+                }
+            }
+            return map;
+        }
+
+        else if (t instanceof FunctionType tempT) {
+            if (this.equals(t)) {
+                return map;
+            }
+            map.putAll(this.returnType.unify(tempT.getReturnType()));
+            if (this.getNbArgs() != tempT.getNbArgs()) {
+                throw new Error("TypeError: cannot unify " + this + " to " + t);
+            }
+            for (int i = 0; i<this.getNbArgs(); i++) {
+                    map.putAll(this.getArgsType(i).unify(tempT.getArgsType(i)));
+            }
+            return map;
+        }
+        throw new Error("TypeError: cannot unify " + this + " to " + t);
     }
 
     @Override
@@ -57,12 +88,12 @@ public class FunctionType extends Type {
     @Override
     public boolean contains(UnknownType v) {
         boolean result = false;
-        if (argsTypes != null) {
-            for (Type i : argsTypes) {
+        if (this.argsTypes != null) {
+            for (Type i : this.argsTypes) {
                 result = result || i.contains(v);
             }
         }
-        result = result || returnType.contains(v);
+        result = result || this.returnType.contains(v);
         return result;
 
     }
