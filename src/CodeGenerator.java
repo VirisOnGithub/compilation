@@ -393,11 +393,10 @@ public class CodeGenerator  extends AbstractParseTreeVisitor<Program> implements
      */
     @Override
     public Program visitBlock(grammarTCLParser.BlockContext ctx) {
-        Program p = new Program();
         enterBlock();
-        visit(ctx.getChild(1));
+        Program program = visit(ctx.getChild(1));
         exitBlock();
-        return p;
+        return program;
     }
 
     /**
