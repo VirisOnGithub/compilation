@@ -68,8 +68,8 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
     p.addInstruction(new UALi(UALi.Op.ADD, nextRegister, nextRegister, 1));
     p.addInstruction(new JumpCall(JumpCall.Op.JMP, "Label" + nextLabel + 1));
     nextLabel++;
-    // Line to JMP to when operation is finished
-    // This line doesn't do anything but is needed to JPM to the end of comparison
+    // Line to JMP to when comparison is finished
+    // This line doesn't do anything but is needed to JMP to the end of comparison
     // It explains why we still use the same register and why we increment its value only after
     UALi asmi = new UALi(UALi.Op.ADD, nextRegister, nextRegister, 0);
     asmi.setLabel("Label" + nextLabel);
@@ -184,8 +184,46 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
 
   @Override
   public Program visitEquality(grammarTCLParser.EqualityContext ctx) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'visitEquality'");
+    // expr op=(EQUALS | DIFF) expr     # equality
+    // EQUALS : '==';
+    // DIFF : '!=';
+    Program p = new Program();
+    p.addInstructions(visit(ctx.getChild(0)));
+    int valueRegister = nextRegister - 1;
+    p.addInstructions(visit(ctx.getChild(2)));
+    // Get value of Child(0) in nextRegister - 2
+    p.addInstruction(new UAL(UAL.Op.XOR, nextRegister, nextRegister, nextRegister));
+    p.addInstruction(new UALi(UALi.Op.ADD, nextRegister, nextRegister, valueRegister));
+    nextRegister++;
+    // Get value of Child(2) in nextRegister - 1
+    p.addInstruction(new UAL(UAL.Op.XOR, nextRegister, nextRegister, nextRegister));
+    p.addInstruction(new UALi(UALi.Op.ADD, nextRegister, nextRegister, nextRegister - 2));
+    nextRegister++;
+    switch (ctx.getChild(1).getText()) {
+      case "==" ->
+              p.addInstruction(new CondJump(CondJump.Op.JEQU, nextRegister - 2, nextRegister - 1, "Label" + nextLabel));
+      case "!=" ->
+              p.addInstruction(new CondJump(CondJump.Op.JNEQ, nextRegister - 2, nextRegister - 1, "Label" + nextLabel));
+    }
+    // Return 0 if Child(0) !equality Child(2), then JMP to end of equality
+    p.addInstruction(new UAL(UAL.Op.XOR, nextRegister, nextRegister, nextRegister));
+    p.addInstruction(new JumpCall(JumpCall.Op.JMP, "Label" + nextLabel + 1));
+    // Return 1 if Child(0) equality Child(2), then JMP to end of equality
+    UAL asm = new UAL(UAL.Op.XOR, nextRegister, nextRegister, nextRegister);
+    asm.setLabel("Label" + nextLabel);
+    p.addInstruction(asm);
+    p.addInstruction(new UALi(UALi.Op.ADD, nextRegister, nextRegister, 1));
+    p.addInstruction(new JumpCall(JumpCall.Op.JMP, "Label" + nextLabel + 1));
+    nextLabel++;
+    // Line to JMP to when equality is finished
+    // This line doesn't do anything but is needed to JMP to the end of equality
+    // It explains why we still use the same register and why we increment its value only after
+    UALi asmi = new UALi(UALi.Op.ADD, nextRegister, nextRegister, 0);
+    asmi.setLabel("Label" + nextLabel);
+    p.addInstruction(asmi);
+    nextRegister++;
+    nextLabel++;
+    return p;
   }
 
   @Override
