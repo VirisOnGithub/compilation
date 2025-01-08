@@ -11,6 +11,7 @@ import src.Type.UnknownType;
 public class CodeGenerator  extends AbstractParseTreeVisitor<Program> implements grammarTCLVisitor<Program> {
     private Map<UnknownType,Type> types;
     private Integer nextRegister;
+    private Integer nextLabel;
     private final Integer SP = 0;
 
     /**
@@ -19,7 +20,13 @@ public class CodeGenerator  extends AbstractParseTreeVisitor<Program> implements
      */
     public CodeGenerator(Map<UnknownType, Type> types) {
         this.types = types;
-        this.nextRegister = 1;
+        this.nextRegister = types.size() + 1;
+        this.nextLabel = 1;
+    }
+    
+    private String getLabel() {
+        this.nextLabel++;
+        return "Label" + (this.nextLabel-1);
     }
 
     @Override
@@ -208,14 +215,43 @@ public class CodeGenerator  extends AbstractParseTreeVisitor<Program> implements
 
     @Override
     public Program visitFor(grammarTCLParser.ForContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitFor'");
+        //FOR '(' instr ',' expr ',' instr ')' instr
+        /* pseudo-assembler for(int i = 0; i < 10; i++)
+            ST R0 1
+        loop: visit(expr)
+            XOR R1 R1 R1
+            JEQU nextRegister-2 nextRegister-1 end_loop //-2 = cond return, -1 = XOR'd register
+            instr
+            ADDi R0 R0 1
+            JMP loop
+        end_loop: suite...
+        */
+        Program program = new Program();
+        String labelStartLoop = this.getLabel();
+        String labelEndLoop = this.getLabel();
+        program.addInstructions(visit(ctx.getChild(2))); //initialization
+        Program condLoopProgram = visit(ctx.getChild(4)); //loop condition
+        condLoopProgram.getInstructions().getFirst().setLabel(labelStartLoop); //set looping label
+        program.addInstructions(condLoopProgram);
+        program.addInstruction(new UAL(UAL.Op.XOR, nextRegister, nextRegister, nextRegister)); //set new register to 0 for later test
+        nextRegister++;
+        program.addInstruction(new CondJump(CondJump.Op.JEQU, nextRegister-2, nextRegister-1, labelEndLoop)); //test if condition is false => stop looping
+        program.addInstructions(visit(ctx.getChild(8))); //instructions inside the loop
+        program.addInstructions(visit(ctx.getChild(6))); //iteration
+        program.addInstruction(new JumpCall(JumpCall.Op.JMP, labelStartLoop)); //go back to the start of the loop
+        Program endLoopProgram = new Program();
+        endLoopProgram.addInstruction(new UALi(UALi.Op.ADD, nextRegister, nextRegister, 0)); //dummy instruction to set end loop label
+        endLoopProgram.getInstructions().getFirst().setLabel(labelEndLoop);
+        program.addInstructions(endLoopProgram);
+        return program;
     }
 
     @Override
     public Program visitReturn(grammarTCLParser.ReturnContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitReturn'");
+        //RETURN expr SEMICOL
+        Program program = new Program();
+        program.addInstructions(visit(ctx.getChild(1))); //expr, return value will be in R(nextRegister-1)
+        return program;
     }
 
     @Override
@@ -237,14 +273,11 @@ public class CodeGenerator  extends AbstractParseTreeVisitor<Program> implements
         int nbChilds = ctx.getChildCount();
         int nbArguments = ((nbChilds - 5) == 0 ? 0 : (nbChilds - 4)/2);
         for(int i = 0; i < nbArguments; i++) { //the arguments are stacked before the call so we unstack them
-            Instruction depile = new Mem(Mem.Op.LD, nextRegister, SP);
+            program.addInstruction(new Mem(Mem.Op.LD, nextRegister, SP));
             nextRegister++;
-            if(i == 0) {
-                depile.setLabel(ctx.getChild(2).toString()); //function label for later CALL
-            }
-            program.addInstruction(depile);
             program.addInstruction(new UALi(UALi.Op.SUB, SP, SP, 1));
         }
+        program.getInstructions().getFirst().setLabel(ctx.getChild(2).toString()); //function label
         program.addInstructions(visit(ctx.getChild(nbChilds - 1))); //core_fct
         return program;
     }
