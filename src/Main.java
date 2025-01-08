@@ -9,15 +9,16 @@ import java.util.ArrayList;
 
 public class Main {
 	public static void main(String[] args) {
-		// System.out.println("Hello world");
-		/*
+		System.out.println("Hello world");
 
 		// tests PrimitiveType.equals() :
 		Type integer = new PrimitiveType(Type.Base.INT);
 		Type integer2 = new PrimitiveType(Type.Base.INT);
 		Type booooool = new PrimitiveType(Type.Base.BOOL);
+		/*
 		System.out.println(integer.equals(integer2));	//true
 		System.out.println(integer.equals(booooool));	//false
+
 
 		// tests ArrayType.equals()
 		Type arrayInt = new ArrayType(integer);
@@ -39,7 +40,7 @@ public class Main {
 		System.out.println(func1.equals(func2));	//false
 
 		//tests UnknownType.equals()
-		UnknownType cOnFuSiOn = new UnknownType();
+		Type cOnFuSiOn = new UnknownType();
 		Type cOnFuSiOn2 = new UnknownType();
 		Type unknown = new UnknownType("aHAAAAAAA", 12);
 		Type unknown2 = new UnknownType("aHAAAAAAA", 12);
@@ -50,19 +51,19 @@ public class Main {
 		System.out.println(cOnFuSiOn.equals(integer));		//false
 
 		// tests PrimitiveType.contains() :
-		System.out.println(integer.contains(cOnFuSiOn));	//false
+		System.out.println(integer.contains((UnknownType) cOnFuSiOn));	//false
 
 		// tests UnknownsType.contains() :
-		System.out.println(cOnFuSiOn.contains(cOnFuSiOn));	//true
-		System.out.println(cOnFuSiOn2.contains(cOnFuSiOn));	//false
+		System.out.println(cOnFuSiOn.contains((UnknownType) cOnFuSiOn));	//true
+		System.out.println(cOnFuSiOn2.contains((UnknownType) cOnFuSiOn));	//false
 		System.out.println(unknown.contains((UnknownType) unknown2));		//true
 
 		//tests ArrayType.contains()
 		Type array1 = new ArrayType(cOnFuSiOn);
 		Type array2 = new ArrayType(array1);
-		System.out.println(array1.contains(cOnFuSiOn)); 	//true
-		System.out.println(array2.contains(cOnFuSiOn)); 	//true
-		System.out.println(arrayInt.contains(cOnFuSiOn));	//false
+		System.out.println(array1.contains((UnknownType) cOnFuSiOn)); 	//true
+		System.out.println(array2.contains((UnknownType) cOnFuSiOn)); 	//true
+		System.out.println(arrayInt.contains((UnknownType) cOnFuSiOn));	//false
 
 		//tests FunctionType.contains()
 		ArrayList<Type> arg2 = new ArrayList<>();
@@ -79,6 +80,25 @@ public class Main {
 		Type func7 = new FunctionType(booooool, arg3);
 		Type func8 = new FunctionType(booooool, arg4);
 		Type func9 = new FunctionType(cOnFuSiOn, arg4);
+		System.out.println(func1.contains((UnknownType) cOnFuSiOn)); 	//false
+		System.out.println(func2.contains((UnknownType) cOnFuSiOn)); 	//false
+		System.out.println(func3.contains((UnknownType) cOnFuSiOn)); 	//true
+		System.out.println(func4.contains((UnknownType) cOnFuSiOn));	//true
+		System.out.println(func5.contains((UnknownType) cOnFuSiOn));	//true
+		System.out.println(func6.contains((UnknownType) cOnFuSiOn));	//false
+		System.out.println(func7.contains((UnknownType) cOnFuSiOn));	//true
+		System.out.println(func8.contains((UnknownType) cOnFuSiOn));	//false
+		System.out.println(func9.contains((UnknownType) cOnFuSiOn));	//true
+
+
+
+		System.out.println(integer.unify(integer2));	//null
+		System.out.println(integer.unify(cOnFuSiOn));	//{UnknownType(#, 0)=INT}
+		System.out.println(cOnFuSiOn.unify(booooool));	//{UnknownType(#, 0)=BOOL}
+		System.out.println(cOnFuSiOn.unify(cOnFuSiOn2));
+		// System.out.println(integer.unify(booooool));	//error
+
+
 		System.out.println(func1.contains(cOnFuSiOn)); 	//false
 		System.out.println(func2.contains(cOnFuSiOn)); 	//false
 		System.out.println(func3.contains(cOnFuSiOn)); 	//true
@@ -88,7 +108,7 @@ public class Main {
 		System.out.println(func7.contains(cOnFuSiOn));	//true
 		System.out.println(func8.contains(cOnFuSiOn));	//false
 		System.out.println(func9.contains(cOnFuSiOn));	//true
-		
+
 		 */
 
 		String fichier ="input.txt";
@@ -119,4 +139,4 @@ public class Main {
 
 		visitor.visit(tree);
 	}
-};
+}

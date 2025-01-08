@@ -1,4 +1,5 @@
 package src.Type;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -58,7 +59,6 @@ public class UnknownType extends Type {
      * Getter du numéro de variable de type
      * @return numéro de variable de type
      */
-
     public int getVarIndex() {
         return varIndex;
     }
@@ -73,9 +73,17 @@ public class UnknownType extends Type {
 
     @Override
     public Map<UnknownType, Type> unify(Type t) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'unify'");
+        HashMap<UnknownType, Type> map = new HashMap <UnknownType, Type> ();
+        if (t instanceof UnknownType && this.equals((UnknownType)t)) {
+            return map;
+        }
+        if (t.contains(this)) {
+            throw new Error("TypeError: cannot unify " + this + " to " + t);
+        }
+        map.put(this, t);
+        return map;
     }
+
 
     @Override
     public Type substitute(UnknownType v, Type t) {
@@ -97,6 +105,6 @@ public class UnknownType extends Type {
 
     @Override
     public String toString() {
-        return "UnknownType";
+        return "UnknownType(" + varName + ", " + varIndex + ")";
     }
 }

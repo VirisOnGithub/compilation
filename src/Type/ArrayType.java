@@ -1,5 +1,6 @@
 package src.Type;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 
 public class ArrayType extends Type{
@@ -23,7 +24,37 @@ public class ArrayType extends Type{
 
     @Override
     public Map<UnknownType, Type> unify(Type t) {
-        // TODO Auto-generated method stubxxs
+        HashMap<UnknownType, Type> map = new HashMap <UnknownType, Type> ();
+        if (t instanceof UnknownType) {
+            if (this.contains((UnknownType) t)) {
+                //cas Tab[X] ~ X
+                throw new Error("TypeError: cannot unify " + this + " to " + t);
+            }
+            else {
+                //cas Tab[X] ~ Y
+                map.put((UnknownType) t, this.tabType);
+                return map;
+            }
+        }
+        if (t instanceof ArrayType) {
+            //cas Tab[X] ~ Tab[X]
+            //cas Tab[X] ~ Tab[Tab[X]]
+            return this.getTabType().unify(((ArrayType) t).getTabType());
+        }
+        else {
+            //cas Tab[X] ~ INT, BOOL, Function...
+            throw new Error("TypeError: cannot unify " + this + " to " + t);
+        }
+
+
+
+
+
+
+
+
+
+        // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'unify'");
     }
 
