@@ -24,8 +24,11 @@ public class CodeGenerator  extends AbstractParseTreeVisitor<Program> implements
 
     @Override
     public Program visitNegation(grammarTCLParser.NegationContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitNegation'");
+        Program p = new Program();
+        p.addInstructions(visit(ctx.getChild(1)));
+        p.addInstruction(new UALi(UALi.Op.XOR, nextRegister+1, nextRegister, 1));
+        nextRegister+=2;
+        return p;
     }
 
     @Override
@@ -46,8 +49,12 @@ public class CodeGenerator  extends AbstractParseTreeVisitor<Program> implements
 
     @Override
     public Program visitOpposite(grammarTCLParser.OppositeContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitOpposite'");
+        Program p = new Program();
+        p.addInstructions(visit(ctx.getChild(1)));
+        p.addInstruction(new UALi(UALi.Op.XOR, nextRegister, nextRegister-1, 0xFFFFFFFF));
+        p.addInstruction(new UALi(UALi.Op.SUB, nextRegister, nextRegister, 1));
+        nextRegister++;
+        return p;
     }
 
     @Override
