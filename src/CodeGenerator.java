@@ -4,6 +4,7 @@ import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
 import src.Asm.*;
 import src.Type.Type;
 import src.Type.UnknownType;
+
 import java.util.Map;
 
 public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements grammarTCLVisitor<Program> {
@@ -22,16 +23,16 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
     this.nextRegister = 1;
     this.nextLabel = 1;
   }
-  
+
   @Override
   public Program visitNegation(grammarTCLParser.NegationContext ctx) {
-        Program p = new Program();
-        p.addInstructions(visit(ctx.getChild(1)));
-        p.addInstruction(new UALi(UALi.Op.XOR, nextRegister+1, nextRegister, 1));
-        nextRegister+=2;
-        return p;
+    Program p = new Program();
+    p.addInstructions(visit(ctx.getChild(1)));
+    p.addInstruction(new UALi(UALi.Op.XOR, nextRegister + 1, nextRegister, 1));
+    nextRegister += 2;
+    return p;
   }
-  
+
   @Override
   public Program visitComparison(grammarTCLParser.ComparisonContext ctx) {
     // expr op=(SUP | INF | SUPEQ | INFEQ) expr	    # comparison
@@ -56,6 +57,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
               p.addInstruction(new CondJump(CondJump.Op.JSEQ, nextRegister - 2, nextRegister - 1, "Label" + nextLabel));
       case "<=" ->
               p.addInstruction(new CondJump(CondJump.Op.JIEQ, nextRegister - 2, nextRegister - 1, "Label" + nextLabel));
+    }
     // Return 0 if Child(0) !comparison Child(2), then JMP to end of comparison
     p.addInstruction(new UAL(UAL.Op.XOR, nextRegister, nextRegister, nextRegister));
     p.addInstruction(new JumpCall(JumpCall.Op.JMP, "Label" + nextLabel + 1));
@@ -92,12 +94,12 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
 
   @Override
   public Program visitOpposite(grammarTCLParser.OppositeContext ctx) {
-        Program p = new Program();
-        p.addInstructions(visit(ctx.getChild(1)));
-        p.addInstruction(new UALi(UALi.Op.XOR, nextRegister, nextRegister-1, 0xFFFFFFFF));
-        p.addInstruction(new UALi(UALi.Op.SUB, nextRegister, nextRegister, 1));
-        nextRegister++;
-        return p;
+    Program p = new Program();
+    p.addInstructions(visit(ctx.getChild(1)));
+    p.addInstruction(new UALi(UALi.Op.XOR, nextRegister, nextRegister - 1, 0xFFFFFFFF));
+    p.addInstruction(new UALi(UALi.Op.SUB, nextRegister, nextRegister, 1));
+    nextRegister++;
+    return p;
   }
 
   @Override
