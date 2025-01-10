@@ -11,17 +11,20 @@ import src.Type.ArrayType;
 import src.Type.Type;
 import src.Type.UnknownType;
 
-public class CodeGenerator  extends AbstractParseTreeVisitor<Program> implements grammarTCLVisitor<Program> {
-    private final Map<UnknownType,Type> types;
+public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements grammarTCLVisitor<Program> {
+    private final Map<UnknownType,Type> types; // links each variable with its type
+
     private final Integer SP = 0; // stackPointer should always be 1 over the last stacked variable
     private Integer nextRegister; // nextRegister should always be a non utilised register number
     private Integer nextLabel; // nextLabel should always be a non utilised label number
 
-    private ArrayList<Map<String, Integer>> varRegisters;
-    private Stack<Integer> lastAccessibleDepth;
+    private ArrayList<Map<String, Integer>> varRegisters; // links each variable with its register number, for each depth
+    private Stack<Integer> lastAccessibleDepth; // stack top is the furthest that we can search in varRegisters
+
+    private Stack<String> functionsEndLabels; // stack top is the label of the end of the currently called function
 
     /**
-     * Constructeur
+     * Constructor
      * @param types types de chaque variable du code source
      */
     public CodeGenerator(Map<UnknownType, Type> types) {
@@ -30,12 +33,7 @@ public class CodeGenerator  extends AbstractParseTreeVisitor<Program> implements
         this.nextLabel = 0;
         this.varRegisters = new ArrayList<>();
         this.lastAccessibleDepth = new Stack<>();
-    }
-
-    private static int getArrayDepth(Type type) {
-        if (type instanceof ArrayType array)
-            return 1 + getArrayDepth(array.getTabType());
-        return 0;
+        this.functionsEndLabels = new Stack<>();
     }
 
     /**
@@ -62,46 +60,78 @@ public class CodeGenerator  extends AbstractParseTreeVisitor<Program> implements
         return program;
     }
 
-    private int getVarRegister(String varName) {
-        // on dépile les blocks jusqu'à une déclaration de fonction
-        for (int depth = varRegisters.size() - 1; depth >= lastAccessibleDepth.getLast(); depth--) {
-            var varMap = varRegisters.get(depth);
-            if (varMap.containsKey(varName)) {
-                return varMap.get(varName);
-            }
-        }
-        throw new RuntimeException("La variable n'a pas été assignée");
-    }
-
-    private void enterFunction() {
-        lastAccessibleDepth.add(varRegisters.size());
-        enterBlock();
-    }
-
-    private void exitFunction() {
-        exitBlock();
-        lastAccessibleDepth.pop();
-    }
-
-    private void enterBlock() {
-        varRegisters.add(new HashMap<>());
-    }
-
-    private void exitBlock() {
-        varRegisters.removeLast();
-    }
-
-    private void assignVarRegister(String varName, int register) {
-        varRegisters.getLast().put(varName, register);
-    }
-
     /**
      * Macro to get a new valid non utilised label name
      * @return the label name
      */
     private String getLabel() {
-        this.nextLabel++;
-        return "Label" + (this.nextLabel-1);
+        nextLabel++;
+        return "Label" + (nextLabel-1);
+    }
+
+    /**
+     * Get the number of the register were a given variable is stocked in
+     * @param varName the name of the variable we try to find the register for
+     * @return the number of the register where varName is, RuntimeException else
+     */
+    private int getVarRegister(String varName) {
+        for (int depth = varRegisters.size() - 1; depth >= lastAccessibleDepth.getLast(); depth--) { // we unstack all the accessible maps in varRegisters
+            var varMap = varRegisters.get(depth);
+            if (varMap.containsKey(varName)) { // we stop at the first corresponding variable name
+                return varMap.get(varName);
+            }
+        }
+        throw new RuntimeException("The variable " + varName + " has not been assigned"); // if none was found
+    }
+
+    /**
+     * Set the register number of a given variable
+     * @param varName the name of the variable
+     * @param register the register we want to put the variable in
+     */
+    private void assignVarRegister(String varName, int register) {
+        varRegisters.getLast().put(varName, register);
+    }
+
+    /**
+     * Needs to be called just before entering a function
+     */
+    private void enterFunction() {
+        lastAccessibleDepth.add(varRegisters.size());
+        this.enterBlock();
+    }
+
+    /**
+     * Needs to be called just after leaving a function
+     */
+    private void exitFunction() {
+        this.exitBlock();
+        lastAccessibleDepth.pop();
+    }
+
+    /**
+     * Needs to be called just before entering a {} block
+     */
+    private void enterBlock() {
+        varRegisters.add(new HashMap<>());
+    }
+
+    /**
+     * Needs to be called just after leaving a {} block
+     */
+    private void exitBlock() {
+        varRegisters.removeLast();
+    }
+
+    /**
+     * Returns the depth (or dimension) of a given variable
+     * @param type the type we want to know the depth of
+     * @return 0 if it not an array, else the depth/dimension of the array
+     */
+    private static int getArrayDepth(Type type) {
+        if (type instanceof ArrayType array)
+            return 1 + getArrayDepth(array.getTabType());
+        return 0;
     }
 
     @Override
@@ -393,9 +423,14 @@ public class CodeGenerator  extends AbstractParseTreeVisitor<Program> implements
      */
     @Override
     public Program visitBlock(grammarTCLParser.BlockContext ctx) {
-        enterBlock();
-        Program program = visit(ctx.getChild(1));
-        exitBlock();
+        // '{' instr+ '}'
+        Program program = new Program();
+        int nbInstr = ctx.getChildCount() - 2;
+        this.enterBlock(); // '{'
+        for (int i = 0; i < nbInstr; i++) { // instr+
+            program.addInstructions(visit(ctx.getChild(i + 1)));
+        }
+        this.exitBlock(); // '}'
         return program;
     }
 
@@ -435,10 +470,12 @@ public class CodeGenerator  extends AbstractParseTreeVisitor<Program> implements
         program.addInstruction(new UAL(UAL.Op.XOR, nextRegister, nextRegister, nextRegister)); // set new register to 0 for later test
         nextRegister++;
         program.addInstruction(new CondJump(CondJump.Op.JEQU, nextRegister-2, nextRegister-1, labelEndLoop)); // test if condition is false => stop looping
+        this.enterBlock(); // start of the loop {
         program.addInstructions(visit(ctx.getChild(4))); // instructions inside the loop
+        this.exitBlock(); // } end of the loop
         program.addInstruction(new JumpCall(JumpCall.Op.JMP, labelStartLoop)); // go back to the start of the loop
         Program endLoopProgram = new Program();
-        endLoopProgram.addInstruction(new UALi(UALi.Op.ADD, nextRegister, nextRegister, 0)); // dummy instruction to set end loop label
+        endLoopProgram.addInstruction(new UALi(UALi.Op.ADD, nextRegister-1, nextRegister-1, 0)); // dummy instruction to set end loop label
         endLoopProgram.getInstructions().getFirst().setLabel(labelEndLoop);
         program.addInstructions(endLoopProgram);
         return program;
@@ -472,11 +509,13 @@ public class CodeGenerator  extends AbstractParseTreeVisitor<Program> implements
         program.addInstruction(new UAL(UAL.Op.XOR, nextRegister, nextRegister, nextRegister)); // set new register to 0 for later test
         nextRegister++;
         program.addInstruction(new CondJump(CondJump.Op.JEQU, nextRegister-2, nextRegister-1, labelEndLoop)); // test if condition is false => stop looping
+        this.enterBlock(); // start of the loop {
         program.addInstructions(visit(ctx.getChild(8))); // instructions inside the loop
+        this.exitBlock(); // } end of the loop
         program.addInstructions(visit(ctx.getChild(6))); // iteration
         program.addInstruction(new JumpCall(JumpCall.Op.JMP, labelStartLoop)); // go back to the start of the loop
         Program endLoopProgram = new Program();
-        endLoopProgram.addInstruction(new UALi(UALi.Op.ADD, nextRegister, nextRegister, 0)); // dummy instruction to set end loop label
+        endLoopProgram.addInstruction(new UALi(UALi.Op.ADD, nextRegister-1, nextRegister-1, 0)); // dummy instruction to set end loop label
         endLoopProgram.getInstructions().getFirst().setLabel(labelEndLoop);
         program.addInstructions(endLoopProgram);
         return program;
@@ -492,6 +531,7 @@ public class CodeGenerator  extends AbstractParseTreeVisitor<Program> implements
         // RETURN expr SEMICOL
         Program program = new Program();
         program.addInstructions(visit(ctx.getChild(1))); // expr, return value will be in R(nextRegister-1)
+        program.addInstruction(new JumpCall(JumpCall.Op.JMP, this.functionsEndLabels.getFirst())); // return;
         return program;
     }
 
@@ -504,13 +544,21 @@ public class CodeGenerator  extends AbstractParseTreeVisitor<Program> implements
     public Program visitCore_fct(grammarTCLParser.Core_fctContext ctx) {
         // core_fct: '{' instr* RETURN expr SEMICOL '}';
         Program program = new Program();
+        String endLabel = this.getLabel();
         int nbInstructions = ctx.getChildCount() - 5;
-        enterFunction();
+        this.enterFunction(); // '{'
+        this.functionsEndLabels.add(endLabel);
         for (int i = 0; i < nbInstructions; i++) { // instr*
             program.addInstructions(visit(ctx.getChild(i + 1)));
         }
-        program.addInstructions(visit(ctx.getChild(ctx.getChildCount() - 3))); // expr
-        exitFunction();
+        program.addInstructions(visit(ctx.getChild(ctx.getChildCount() - 3))); // expr, return value will be in R(nextRegister-1)
+        program.addInstruction(new JumpCall(JumpCall.Op.JMP, this.functionsEndLabels.getFirst())); // return;
+        this.functionsEndLabels.pop();
+        this.exitFunction(); // '}'
+        Program endFunctionProgram = new Program();
+        endFunctionProgram.addInstruction(new UALi(UALi.Op.ADD, nextRegister-1, nextRegister-1, 0)); // dummy instruction to set end function label
+        endFunctionProgram.getInstructions().getFirst().setLabel(endLabel);
+        program.addInstructions(endFunctionProgram);
         return program;
     }
 
