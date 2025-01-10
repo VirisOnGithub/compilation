@@ -441,8 +441,40 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
      */
     @Override
     public Program visitIf(grammarTCLParser.IfContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitIf'");
+        // IF '(' expr ')' instr (ELSE instr)?
+        /* pseudo-assembler if (cond) then instr1 else instr2
+            cond
+            XOR R1 R1 R1
+            JEQU nextRegister-2 nextRegister-1 if //-2 = cond return, -1 = XOR'd register
+            instr2 // only if there is an else
+            JMP end
+         if: instr1
+         end: following code...
+         */
+        Program program = new Program();
+        String labelIf = this.getLabel();
+        String labelEnd = this.getLabel();
+        program.addInstructions(visit(ctx.getChild(2))); // if condition
+        program.addInstruction(new UAL(UAL.Op.XOR, nextRegister, nextRegister, nextRegister)); // set new register to 0 for later test
+        nextRegister++;
+        program.addInstruction(new CondJump(CondJump.Op.JNEQ, nextRegister-2, nextRegister-1, labelIf)); // test if condition is true (!=0) => jump if
+        if (ctx.getChildCount() == 7) { // if there is an else
+            this.enterBlock(); // {
+            program.addInstructions(visit(ctx.getChild(7))); // else instructions
+            this.exitBlock(); // }
+        }
+        program.addInstruction(new JumpCall(JumpCall.Op.JMP, labelEnd)); // JMP end
+        Program ifInstrProgram = new Program();
+        this.enterBlock(); // {
+        ifInstrProgram.addInstructions(visit(ctx.getChild(5))); // if instructions
+        this.exitBlock(); // }
+        ifInstrProgram.getInstructions().getFirst().setLabel(labelIf);
+        program.addInstructions(ifInstrProgram);
+        Program endIfProgram = new Program();
+        endIfProgram.addInstruction(new UALi(UALi.Op.ADD, nextRegister-1, nextRegister-1, 0)); // dummy instruction to set end if label
+        endIfProgram.getInstructions().getFirst().setLabel(labelEnd);
+        program.addInstructions(endIfProgram);
+        return program;
     }
 
     /**
@@ -459,7 +491,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
             JEQU nextRegister-2 nextRegister-1 end_loop //-2 = cond return, -1 = XOR'd register
             instr
             JMP loop
-        end_loop: suite...
+        end_loop: following code...
         */
         Program program = new Program();
         String labelStartLoop = this.getLabel();
@@ -497,7 +529,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
             instr
             ADDi R0 R0 1
             JMP loop
-        end_loop: suite...
+        end_loop: following code...
         */
         Program program = new Program();
         String labelStartLoop = this.getLabel();
