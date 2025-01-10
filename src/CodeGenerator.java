@@ -18,10 +18,10 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
     private Integer nextRegister; // nextRegister should always be a non utilised register number
     private Integer nextLabel; // nextLabel should always be a non utilised label number
 
-    private ArrayList<Map<String, Integer>> varRegisters; // links each variable with its register number, for each depth
-    private Stack<Integer> lastAccessibleDepth; // stack top is the furthest that we can search in varRegisters
+    private final ArrayList<Map<String, Integer>> varRegisters; // links each variable with its register number, for each depth
+    private final Stack<Integer> lastAccessibleDepth; // stack top is the furthest that we can search in varRegisters
 
-    private Stack<String> functionsEndLabels; // stack top is the label of the end of the currently called function
+    private final Stack<String> functionsEndLabels; // stack top is the label of the end of the currently called function
 
     /**
      * Constructor
@@ -39,7 +39,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
     /**
      * Macro to add instructions to stack a register
      * @param register the number of the register that needs to be stacked
-     * @return a program that stack the resister
+     * @return a program that stack the register
      */
     private Program stackRegister(int register) {
         Program program = new Program();
@@ -49,9 +49,9 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
     }
 
     /**
-     * Macro to add instructions to unstack a register
+     * Macro to add instructions to unstack into a register
      * @param register the number of the register that needs to be unstacked
-     * @return a program that unstack the resister
+     * @return a program that unstack into the register
      */
     private Program unstackRegister(int register) {
         Program program = new Program();
@@ -126,7 +126,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
     /**
      * Returns the depth (or dimension) of a given variable
      * @param type the type we want to know the depth of
-     * @return 0 if it not an array, else the depth/dimension of the array
+     * @return 0 if it is not an array, else the depth/dimension of the array
      */
     private static int getArrayDepth(Type type) {
         if (type instanceof ArrayType array)
@@ -235,10 +235,20 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         throw new UnsupportedOperationException("Unimplemented method 'visitTab_access'");
     }
 
+    /**
+     * Visit a node that contains an expression between brackets and create the corresponding linear code
+     * @param ctx the context within the parse tree
+     * @return a program containing the linear code
+     */
     @Override
     public Program visitBrackets(grammarTCLParser.BracketsContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitBrackets'");
+        // '(' expr ')'
+
+        Program program = new Program();
+
+        program.addInstructions(visit(ctx.getChild(1))); // expr
+
+        return program;
     }
 
     /**
@@ -383,16 +393,29 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         return p;
     }
 
+    /**
+     * Visit a node that contains the type of a variable, which shouldn't be called in the context of linear code creation
+     * @param ctx the context within the parse tree
+     * @return a RuntimeException
+     */
     @Override
     public Program visitBase_type(grammarTCLParser.Base_typeContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitBase_type'");
+        // BASE_TYPE
+        // BASE_TYPE : 'int' | 'bool' | 'auto';
+
+        throw new RuntimeException("Method 'visitBase_type' should not be called");
     }
 
+    /**
+     * Visit a node that contains the type of an array, which shouldn't be called in the context of linear code creation
+     * @param ctx the context within the parse tree
+     * @return a RuntimeException
+     */
     @Override
     public Program visitTab_type(grammarTCLParser.Tab_typeContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitTab_type'");
+        // type '[' ']'
+
+        throw new RuntimeException("Method 'visitTab_type' should not be called");
     }
 
     @Override
