@@ -1,76 +1,92 @@
 package src;
 
-import src.Graph.UnorientedGraph;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.Arrays;
-import java.util.ArrayList; // Import statement added
-import src.Asm.Instruction;
+import src.Graph.OrientedGraph;
 import src.Asm.Program;
+import src.Asm.Instruction;
+import java.io.InputStream;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
+import java.io.BufferedReader;
+import java.util.ArrayList;
+import java.util.Arrays;
 import src.Asm.SubInstruction;
 
 public class ControlGraph {
-    private UnorientedGraph<String> conflictGraph;
-    private HashMap<String, String> registerAllocation;
+    private OrientedGraph<String> controlFlowGraph;
 
     public ControlGraph() {
-        this.conflictGraph = new UnorientedGraph<>();
-        this.registerAllocation = new HashMap<>();
+        this.controlFlowGraph = new OrientedGraph<>();
     }
 
-    public void buildControlGraph(Program prog) {
-        Set<String> liveVariables = new HashSet<>();
+    public void buildControlFlowGraph(Program prog) {
+        String prevLabel = null;
         for (Instruction instr : prog.getInstructions()) {
-            liveVariables.addAll(instr.getLiveVariables());
-            for (String var : instr.getDefinedVariables()) {
-                for (String liveVar : liveVariables) {
-                    if (!liveVar.equals(var)) {
-                        conflictGraph.addEdge(var, liveVar);
-                    }
-                }
-                liveVariables.remove(var);
+            String label = instr.getLabel();
+            controlFlowGraph.addVertex(label);
+            if (prevLabel != null) {
+                controlFlowGraph.addEdge(prevLabel, label);
             }
-            liveVariables.addAll(instr.getUsedVariables());
+            if (instr.getName().equals("JMP") || instr.getName().equals("JNE")) {
+                controlFlowGraph.addEdge(label, instr.getDefinedVariables().get(0));
+            }
+            if (!instr.getName().equals("JMP")) {
+                prevLabel = label;
+            } else {
+                prevLabel = null;
+            }
         }
     }
 
-    public void allocateRegisters() {
-        int numColors = conflictGraph.color();
-        for (String var : conflictGraph.getVertices()) {
-            int color = conflictGraph.getColor(var);
-            registerAllocation.put(var, "R" + color);
+    public void printControlFlowGraph() {
+        System.out.println("Control Flow Graph:");
+        for (String vertex : controlFlowGraph.getVertices()) {
+            System.out.print(vertex + ": ");
+            for (String neighbor : controlFlowGraph.getOutNeighbors(vertex)) {
+                System.out.print(neighbor + " ");
+            }
+            System.out.println();
         }
-    }
-
-    public String generateAssemblyCode(Program prog) {
-        StringBuilder assemblyCode = new StringBuilder();
-        for (Instruction instr : prog.getInstructions()) {
-            assemblyCode.append(instr.toAssembly(registerAllocation)).append("\n");
-        }
-        return assemblyCode.toString();
     }
 
     public static void main(String[] args) {
-        // Program de test
+        String fileName = "input.txt";
+        StringBuilder input = new StringBuilder();
+
+        try {
+            InputStream ips = new FileInputStream(fileName);
+            InputStreamReader ipsr = new InputStreamReader(ips);
+            BufferedReader br = new BufferedReader(ipsr);
+            String line;
+            while ((line = br.readLine()) != null) {
+                input.append(line).append("\n");
+            }
+            br.close();
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+
+        // Create a sample Program object
         Program prog = new Program(new ArrayList<>(Arrays.asList(
             new SubInstruction("L1", "MOV", Arrays.asList("a"), Arrays.asList("b", "c")),
             new SubInstruction("L2", "ADD", Arrays.asList("b"), Arrays.asList("a", "d")),
-            new SubInstruction("L3", "SUB", Arrays.asList("c"), Arrays.asList("b")),
-            new SubInstruction("L4", "MUL", Arrays.asList("d"), Arrays.asList("c"))
+            new SubInstruction("L3", "CMP", Arrays.asList("a"), Arrays.asList("b")),
+            new SubInstruction("L4", "JNE", Arrays.asList("L6"), Arrays.asList()),
+            new SubInstruction("L5", "SUB", Arrays.asList("c"), Arrays.asList("b")),
+            new SubInstruction("L6", "MUL", Arrays.asList("d"), Arrays.asList("c")),
+            new SubInstruction("L7", "JMP", Arrays.asList("L9"), Arrays.asList()),
+            new SubInstruction("L8", "DIV", Arrays.asList("a"), Arrays.asList("d")),
+            new SubInstruction("L9", "NOP", Arrays.asList(), Arrays.asList())
         )));
 
-        // Graph de controle
+        // Build control flow graph
         ControlGraph controlGraph = new ControlGraph();
+        controlGraph.buildControlFlowGraph(prog);
 
-        // Build graphe de controle pour le programme
-        controlGraph.buildControlGraph(prog);
+        // Print control flow graph
+        controlGraph.printControlFlowGraph();
 
-        // Allocation des registres
-        controlGraph.allocateRegisters();
-
-        // Generation et affichage du code assembleur
-        String assemblyCode = controlGraph.generateAssemblyCode(prog);
-        System.out.println(assemblyCode);
+        // Generate and display assembly code
+        // String assemblyCode = controlGraph.generateAssemblyCode(prog);
+        // System.out.println(assemblyCode);
     }
 }
