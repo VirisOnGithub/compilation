@@ -174,6 +174,16 @@ public class ConflictGraph extends UnorientedGraph<String> {
 
         ControlGraph controlGraph = new ControlGraph(program);
         ConflictGraph conflictGraph = new ConflictGraph(controlGraph, program);
+
+        // Afficher le graphe de conflit
+        System.out.println("Graphe de conflit:");
         System.out.println(conflictGraph);
+
+        // Colorer le graphe de conflit
+        int numColors = conflictGraph.color();
+        System.out.println("Nombre de couleurs utilisées: " + numColors);
+        for (String var : conflictGraph.vertices) {
+            System.out.println("Variable " + var + " est colorée avec la couleur " + conflictGraph.getColor(var));
+        }
     }
 }
