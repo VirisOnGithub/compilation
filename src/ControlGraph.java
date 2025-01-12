@@ -3,90 +3,135 @@ package src;
 import src.Graph.OrientedGraph;
 import src.Asm.Program;
 import src.Asm.Instruction;
-import java.io.InputStream;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
-import java.io.BufferedReader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import src.Asm.SubInstruction;
+import java.util.HashMap;
+import java.util.Map;
 
-public class ControlGraph {
-    private OrientedGraph<String> controlFlowGraph;
 
-    public ControlGraph() {
-        this.controlFlowGraph = new OrientedGraph<>();
+public class ControlGraph extends OrientedGraph<Instruction> {
+     private Map<String, Instruction> labelMap;
+
+    /**
+     * Constructeur
+     * @param program le programme à partir duquel construire le graphe de contrôle
+     */
+    public ControlGraph(Program program) {
+        super();
+        this.labelMap = new HashMap<>();
+        buildControlGraph(program);
     }
 
-    public void buildControlFlowGraph(Program prog) {
-        String prevLabel = null;
-        for (Instruction instr : prog.getInstructions()) {
-            String label = instr.getLabel();
-            controlFlowGraph.addVertex(label);
-            if (prevLabel != null) {
-                controlFlowGraph.addEdge(prevLabel, label);
+    /**
+     * Construit le graphe de contrôle à partir d'un programme
+     * @param program le programme à partir duquel construire le graphe de contrôle
+     */
+    private void buildControlGraph(Program program) {
+        Instruction prevInstruction = null;
+        for (Instruction instruction : program.getInstructions()) {
+            this.addVertex(instruction);
+            if (!instruction.getLabel().isEmpty()) {
+                labelMap.put(instruction.getLabel(), instruction);
             }
-            if (instr.getName().equals("JMP") || instr.getName().equals("JNE")) {
-                controlFlowGraph.addEdge(label, instr.getDefinedVariables().get(0));
+            if (prevInstruction != null) {
+                this.addEdge(prevInstruction, instruction);
             }
-            if (!instr.getName().equals("JMP")) {
-                prevLabel = label;
-            } else {
-                prevLabel = null;
+            prevInstruction = instruction;
+        }
+
+        // Ajout des arêtes pour les sauts conditionnels et les appels de fonction après avoir construit le graphe
+        for (Instruction instruction : program.getInstructions()) {
+            if (isConditionalJump(instruction) || isCall(instruction)) {
+                String targetLabel = getTargetLabel(instruction);
+                if (labelMap.containsKey(targetLabel)) {
+                    this.addEdge(instruction, labelMap.get(targetLabel));
+                }
             }
         }
     }
 
-    public void printControlFlowGraph() {
-        System.out.println("Control Flow Graph:");
-        for (String vertex : controlFlowGraph.getVertices()) {
-            System.out.print(vertex + ": ");
-            for (String neighbor : controlFlowGraph.getOutNeighbors(vertex)) {
-                System.out.print(neighbor + " ");
+    /**
+     * Vérifie si une instruction est un saut conditionnel
+     * @param instruction l'instruction à vérifier
+     * @return true si l'instruction est un saut conditionnel, false sinon
+     */
+    private boolean isConditionalJump(Instruction instruction) {
+        return instruction.getName().startsWith("JEQU") || instruction.getName().startsWith("JINF") || instruction.getName().startsWith("JSUP") || instruction.getName().startsWith("JMP");
+    }
+
+    /**
+     * Vérifie si une instruction est un appel de fonction
+     * @param instruction l'instruction à vérifier
+     * @return true si l'instruction est un appel de fonction, false sinon
+     */
+    private boolean isCall(Instruction instruction) {
+        return instruction.getName().startsWith("CALL");
+    }
+
+    /**
+     * Extrait le label cible d'une instruction de saut conditionnel ou d'appel de fonction
+     * @param instruction l'instruction de saut conditionnel ou d'appel de fonction
+     * @return le label cible
+     */
+    private String getTargetLabel(Instruction instruction) {
+        String[] parts = instruction.getName().split(" ");
+        return parts[parts.length - 1];
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        for (Instruction u : this.vertices) {
+            sb.append(u.getLabel()).append(" -> ");
+            for (Instruction v : this.adjList.get(u)) {
+                sb.append(v.getLabel()).append(", ");
             }
-            System.out.println();
+            if (this.adjList.get(u).size() > 0) {
+                sb.setLength(sb.length() - 2); // Remove the last comma and space
+            }
+            sb.append("\n");
         }
+        return sb.toString();
     }
 
     public static void main(String[] args) {
-        String fileName = "input.txt";
-        StringBuilder input = new StringBuilder();
+        Program program = new Program();
 
-        try {
-            InputStream ips = new FileInputStream(fileName);
-            InputStreamReader ipsr = new InputStreamReader(ips);
-            BufferedReader br = new BufferedReader(ipsr);
-            String line;
-            while ((line = br.readLine()) != null) {
-                input.append(line).append("\n");
-            }
-            br.close();
-        } catch (Exception e) {
-            System.out.println(e);
-        }
+        Instruction instr1 = new Instruction("L1", "XOR R1000 R1000 R1000") {};
+        Instruction instr2 = new Instruction("L2", "SUBi R1000 R1000 1") {};
+        Instruction instr3 = new Instruction("L3", "PRINT R1001") {};
+        Instruction instr4 = new Instruction("L4", "JEQU R1000 R1001 LABEL2") {};
+        Instruction instr5 = new Instruction("L5", "JINF R1000 R1001 L6") {};
+        Instruction instr6 = new Instruction("L6", "JSUP R1000 R1001 L7") {};
+        Instruction instr7 = new Instruction("L7", "CALL FUNC1") {};
+        Instruction instr8 = new Instruction("L8", "JMP END") {};
+        Instruction instr9 = new Instruction("L9", "STOP") {};
+        Instruction instr10 = new Instruction("LABEL1", "ADD R1002 R1000 R1001") {};
+        Instruction instr11 = new Instruction("L11", "MUL R1003 R1002 R1000") {};
+        Instruction instr12 = new Instruction("L12", "JMP END") {};
+        Instruction instr13 = new Instruction("LABEL2", "DIV R1004 R1003 R1001") {};
+        Instruction instr14 = new Instruction("L14", "PRINT R1004") {};
+        Instruction instr15 = new Instruction("END", "RET") {};
+        Instruction instr16 = new Instruction("FUNC1", "ADD R1005 R1000 R1001") {};
+        Instruction instr17 = new Instruction("L17", "RET") {};
 
-        // Create a sample Program object
-        Program prog = new Program(new ArrayList<>(Arrays.asList(
-            new SubInstruction("L1", "MOV", Arrays.asList("a"), Arrays.asList("b", "c")),
-            new SubInstruction("L2", "ADD", Arrays.asList("b"), Arrays.asList("a", "d")),
-            new SubInstruction("L3", "CMP", Arrays.asList("a"), Arrays.asList("b")),
-            new SubInstruction("L4", "JNE", Arrays.asList("L6"), Arrays.asList()),
-            new SubInstruction("L5", "SUB", Arrays.asList("c"), Arrays.asList("b")),
-            new SubInstruction("L6", "MUL", Arrays.asList("d"), Arrays.asList("c")),
-            new SubInstruction("L7", "JMP", Arrays.asList("L9"), Arrays.asList()),
-            new SubInstruction("L8", "DIV", Arrays.asList("a"), Arrays.asList("d")),
-            new SubInstruction("L9", "NOP", Arrays.asList(), Arrays.asList())
-        )));
+        program.addInstruction(instr1);
+        program.addInstruction(instr2);
+        program.addInstruction(instr3);
+        program.addInstruction(instr4);
+        program.addInstruction(instr5);
+        program.addInstruction(instr6);
+        program.addInstruction(instr7);
+        program.addInstruction(instr8);
+        program.addInstruction(instr9);
+        program.addInstruction(instr10);
+        program.addInstruction(instr11);
+        program.addInstruction(instr12);
+        program.addInstruction(instr13);
+        program.addInstruction(instr14);
+        program.addInstruction(instr15);
+        program.addInstruction(instr16);
+        program.addInstruction(instr17);
 
-        // Build control flow graph
-        ControlGraph controlGraph = new ControlGraph();
-        controlGraph.buildControlFlowGraph(prog);
-
-        // Print control flow graph
-        controlGraph.printControlFlowGraph();
-
-        // Generate and display assembly code
-        // String assemblyCode = controlGraph.generateAssemblyCode(prog);
-        // System.out.println(assemblyCode);
+        ControlGraph controlGraph = new ControlGraph(program);
+        System.out.println(controlGraph);
     }
 }

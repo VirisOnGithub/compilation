@@ -1,7 +1,6 @@
 package src.Asm;
+
 import java.util.ArrayList;
-import java.util.List;
-import src.Asm.Instruction;
 /**
  * Ceci est une classe permettant de représenter un programme.
  */
@@ -53,14 +52,4 @@ public class Program {
     public Program() {
         this.instructions = new ArrayList<Instruction>();
     }   
-
-    /**
-     * Surcharge du constructeur
-     * @param instructions
-     */
-
-    public Program(ArrayList<Instruction> instructions) {
-        this.instructions = instructions;
-    }
-
 }

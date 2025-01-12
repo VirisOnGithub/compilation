@@ -1,8 +1,4 @@
 package src.Asm;
-
-import java.util.HashMap;
-import java.util.List;
-
 public abstract class Instruction {
     protected String label;
     protected String name;
@@ -49,10 +45,4 @@ public abstract class Instruction {
     public void setName(String name) {
         this.name = name;
     }
-
-    public abstract List<String> getDefinedVariables();
-    public abstract List<String> getUsedVariables();
-    public abstract List<String> getLiveVariables();
-    public abstract void setLiveVariables(List<String> liveVariables);
-    public abstract String toAssembly(HashMap<String, String> registerAllocation);
 }
