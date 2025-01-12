@@ -19,13 +19,20 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         return types;
     }
 
+    private void bigAssSubstitute(HashMap<UnknownType, Type> contraintes){
+        this.types.forEach( (variable, value) -> {
+            value.substituteAll(contraintes);
+        } );
+    }
+
     @Override
     public Type visitNegation(grammarTCLParser.NegationContext ctx) {
         // TODO Auto-generated method stub
         System.out.println("visit negation");
         ParseTree p1 = ctx.getChild(1);
         Type t = visit(p1);
-        t.unify(new PrimitiveType(Type.Base.BOOL));
+        HashMap<UnknownType, Type> constraints = new HashMap<>(t.unify(new PrimitiveType(Type.Base.BOOL)));
+        this.bigAssSubstitute(constraints);
         return new PrimitiveType(Type.Base.BOOL);
     }
 
@@ -36,12 +43,9 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         Type t1 = visit(p1);
         ParseTree p3 = ctx.getChild(2);
         Type t3 = visit(p3);
-        if (t1 instanceof PrimitiveType && ((PrimitiveType) t1).getType() != Type.Base.INT) {
-            throw new Error("Type error: multiplication with non-integer on the first operand");
-        }
-        if (t3 instanceof PrimitiveType && ((PrimitiveType) t3).getType() != Type.Base.INT) {
-            throw new Error("Type error: multiplication with non-integer on the second operand");
-        }
+        HashMap<UnknownType, Type> constraints = new HashMap<>(t1.unify(new PrimitiveType(Type.Base.INT)));
+        constraints.putAll(t3.unify(new PrimitiveType(Type.Base.INT)));
+        this.bigAssSubstitute(constraints);
         return new PrimitiveType(Type.Base.BOOL);
     }
 
@@ -52,12 +56,9 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         Type t1 = visit(p1);
         ParseTree p3 = ctx.getChild(2);
         Type t3 = visit(p3);
-        if (t1 instanceof PrimitiveType && ((PrimitiveType) t1).getType() != Type.Base.BOOL) {
-            throw new Error("Type error: or with non-boolean on the first operand");
-        }
-        if (t3 instanceof PrimitiveType && ((PrimitiveType) t3).getType() != Type.Base.BOOL) {
-            throw new Error("Type error: or with non-boolean on the second operand");
-        }
+        HashMap<UnknownType, Type> constraints = new HashMap<>(t1.unify(new PrimitiveType(Type.Base.BOOL)));
+        constraints.putAll(t3.unify(new PrimitiveType(Type.Base.BOOL)));
+        this.bigAssSubstitute(constraints);
         return new PrimitiveType(Type.Base.BOOL);
     }
 
@@ -66,9 +67,8 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         System.out.println("visit opposite");
         ParseTree p1 = ctx.getChild(1);
         Type t = visit(p1);
-        if (t instanceof PrimitiveType && ((PrimitiveType) t).getType() != Type.Base.INT) {
-            throw new Error("Type error: opposite of non-integer");
-        }
+        HashMap<UnknownType, Type> constraints = new HashMap<>(t.unify(new PrimitiveType(Type.Base.INT)));
+        this.bigAssSubstitute(constraints);
         return null;
     }
 
@@ -125,12 +125,9 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         Type t1 = visit(p1);
         ParseTree p3 = ctx.getChild(2);
         Type t3 = visit(p3);
-        if (t1 instanceof PrimitiveType && ((PrimitiveType) t1).getType() != Type.Base.BOOL) {
-            throw new Error("Type error: and with non-boolean on the first operand");
-        }
-        if (t3 instanceof PrimitiveType && ((PrimitiveType) t3).getType() != Type.Base.BOOL) {
-            throw new Error("Type error: and with non-boolean on the second operand");
-        }
+        HashMap<UnknownType, Type> constraints = new HashMap<>(t1.unify(new PrimitiveType(Type.Base.BOOL)));
+        constraints.putAll(t3.unify(new PrimitiveType(Type.Base.BOOL)));
+        this.bigAssSubstitute(constraints);
         return new PrimitiveType(Type.Base.BOOL);
     }
 
@@ -154,17 +151,13 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
     @Override
     public Type visitMultiplication(grammarTCLParser.MultiplicationContext ctx) {
         System.out.println("Visit Multiplication");
-
         ParseTree p1 = ctx.getChild(0);
         Type t1 = visit(p1);
         ParseTree p3 = ctx.getChild(2);
         Type t3 = visit(p3);
-        if (t1 instanceof PrimitiveType && ((PrimitiveType) t1).getType() != Type.Base.INT) {
-            throw new Error("Type error: multiplication with non-integer on the first operand");
-        }
-        if (t3 instanceof PrimitiveType && ((PrimitiveType) t3).getType() != Type.Base.INT) {
-            throw new Error("Type error: multiplication with non-integer on the second operand");
-        }
+        HashMap<UnknownType, Type> constraints = new HashMap<>(t1.unify(new PrimitiveType(Type.Base.INT)));
+        constraints.putAll(t3.unify(new PrimitiveType(Type.Base.INT)));
+        this.bigAssSubstitute(constraints);
         return new PrimitiveType(Type.Base.INT);
     }
 
@@ -175,12 +168,8 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         Type t1 = visit(p1);
         ParseTree p3 = ctx.getChild(2);
         Type t3 = visit(p3);
-        if (!t1.equals(t3)) {
-            throw new Error("Type error: equality between different types");
-        }
-        UnknownType ut = new UnknownType();
-        types.putAll(t1.unify(t3));
-        //substituteAll()
+        HashMap<UnknownType, Type> constraints = new HashMap<>(t1.unify(t3));
+        this.bigAssSubstitute(constraints);
         return new PrimitiveType(Type.Base.BOOL);
     }
 
@@ -208,12 +197,9 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         Type t1 = visit(p1);
         ParseTree p3 = ctx.getChild(2);
         Type t3 = visit(p3);
-        if (t1 instanceof PrimitiveType && ((PrimitiveType) t1).getType() != Type.Base.INT) {
-            throw new Error("Type error: addition with non-integer on the first operand");
-        }
-        if (t3 instanceof PrimitiveType && ((PrimitiveType) t3).getType() != Type.Base.INT) {
-            throw new Error("Type error: addition with non-integer on the second operand");
-        }
+        HashMap<UnknownType, Type> constraints = new HashMap<>(t1.unify(new PrimitiveType(Type.Base.INT)));
+        constraints.putAll(t3.unify(new PrimitiveType(Type.Base.INT)));
+        this.bigAssSubstitute(constraints);
         return new PrimitiveType(Type.Base.INT);
     }
 
@@ -287,14 +273,11 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         Type t1 = visit(p1);
         ParseTree p2 = ctx.getChild(5);
         Type t2 = visit(p2);
-        if (!t1.equals(t2)) {
-            throw new Error("Type error: assignment of different types");
-        }
+        HashMap<UnknownType, Type> constraints = new HashMap<>(t1.unify(t2));
         ParseTree p3 = ctx.getChild(2);
         Type t3 = visit(p3);
-        if (t3 instanceof PrimitiveType && ((PrimitiveType) t3).getType() != Type.Base.INT) {
-            throw new Error("Type error: the address is not a integer");
-        }
+        constraints.putAll(t3.unify(new PrimitiveType(Type.Base.INT)));
+        this.bigAssSubstitute(constraints);
         return null;
     }
 
@@ -313,9 +296,8 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         System.out.println("visit if");
         ParseTree p3 = ctx.getChild(2);
         Type t3 = visit(p3);
-        if (t3 instanceof PrimitiveType && ((PrimitiveType) t3).getType() != Type.Base.BOOL) {
-            throw new Error("Type error: if condition is not a boolean");
-        }
+        HashMap<UnknownType, Type> constraints = new HashMap<>(t3.unify(new PrimitiveType(Type.Base.BOOL)));
+        this.bigAssSubstitute(constraints);
         ParseTree p5 = ctx.getChild(4);
         visit(p5);
         if (ctx.getChildCount() == 7) {
@@ -330,9 +312,8 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         System.out.println("visit while");
         ParseTree p1 = ctx.getChild(1);
         Type t1 = visit(p1);
-        if (t1 instanceof PrimitiveType && ((PrimitiveType) t1).getType() != Type.Base.BOOL) {
-            throw new Error("Type error: while condition is not a boolean");
-        }
+        HashMap<UnknownType, Type> constraints = new HashMap<>(t1.unify(new PrimitiveType(Type.Base.BOOL)));
+        this.bigAssSubstitute(constraints);
         ParseTree p3 = ctx.getChild(3);
         visit(p3);
         return null;
@@ -345,9 +326,8 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         visit(p1);
         ParseTree p2 = ctx.getChild(3);
         Type t2 = visit(p2);
-        if (t2 instanceof PrimitiveType && ((PrimitiveType) t2).getType() != Type.Base.BOOL) {
-            throw new Error("Type error: for condition is not a boolean");
-        }
+        HashMap<UnknownType, Type> constraints = new HashMap<>(t2.unify(new PrimitiveType(Type.Base.BOOL)));
+        this.bigAssSubstitute(constraints);
         ParseTree p3 = ctx.getChild(5);
         visit(p3);
         ParseTree p4 = ctx.getChild(7);
