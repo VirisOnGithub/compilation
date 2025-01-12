@@ -5,10 +5,13 @@ import src.Asm.Program;
 import src.Asm.Instruction;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 
 
 public class ControlGraph extends OrientedGraph<Instruction> {
-     private Map<String, Instruction> labelMap;
+
+    private Map<String, Instruction> labelMap;
 
     /**
      * Constructeur
@@ -74,6 +77,17 @@ public class ControlGraph extends OrientedGraph<Instruction> {
     private String getTargetLabel(Instruction instruction) {
         String[] parts = instruction.getName().split(" ");
         return parts[parts.length - 1];
+    }
+
+    /**
+     * Retourne l'ensemble des sommets du graphe 
+     */
+    public Set<Instruction> getVertices(Program program) {
+        Set<Instruction> vertices = new HashSet<>();
+        for (Instruction instruction : program.getInstructions()) {
+            vertices.add(instruction);
+        }
+        return vertices;
     }
 
     @Override

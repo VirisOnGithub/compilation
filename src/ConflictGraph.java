@@ -2,116 +2,178 @@ package src;
 
 import src.Graph.UnorientedGraph;
 import src.Asm.Program;
-import src.Asm.SubInstruction;
-
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Set;
 
 import src.Asm.Instruction;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 
-public class ConflictGraph {
-    private UnorientedGraph<String> conflictGraph;
+public class ConflictGraph extends UnorientedGraph<String> {
 
-    public ConflictGraph() {
-        this.conflictGraph = new UnorientedGraph<>();
+    private Map<Instruction, Set<String>> in;
+    private Map<Instruction, Set<String>> out;
+
+    public ConflictGraph(ControlGraph controlGraph, Program program) {
+        super();
+        this.in = new HashMap<>();
+        this.out = new HashMap<>();
+        computeLiveness(controlGraph, program);
+        buildConflictGraph(controlGraph, program);
     }
 
-    public void buildConflictGraph(Program prog) {
-        // Calculer les variables vivantes en entrée et en sortie
-        calculateLiveVariables(prog);
-
-        // Construire le graphe de conflits
-        for (Instruction instr : prog.getInstructions()) {
-            for (String var1 : instr.getLiveVariables()) {
-                for (String var2 : instr.getLiveVariables()) {
-                    if (!var1.equals(var2)) {
-                        conflictGraph.addEdge(var1, var2);
-                    }
-                }
-            }
-        }
-    }
-
-    private void calculateLiveVariables(Program prog) {
+    private void computeLiveness(ControlGraph controlGraph, Program program) {
         boolean changed;
         do {
             changed = false;
-            for (int i = prog.getInstructions().size() - 1; i >= 0; i--) {
-                Instruction instr = prog.getInstructions().get(i);
-                List<String> liveOut = new ArrayList<>();
-                if (i < prog.getInstructions().size() - 1) {
-                    liveOut.addAll(prog.getInstructions().get(i + 1).getLiveVariables());
-                }
-                List<String> liveIn = new ArrayList<>(liveOut);
-                liveIn.removeAll(instr.getDefinedVariables());
-                liveIn.addAll(instr.getUsedVariables());
+            for (Instruction instruction : controlGraph.getVertices(program)) {
+                Set<String> oldIn = in.getOrDefault(instruction, new HashSet<>());
+                Set<String> oldOut = out.getOrDefault(instruction, new HashSet<>());
 
-                if (!liveIn.equals(instr.getLiveVariables())) {
-                    instr.setLiveVariables(liveIn);
+                Set<String> newIn = new HashSet<>(oldOut);
+                newIn.removeAll(getDef(instruction));
+                newIn.addAll(getUse(instruction));
+
+                Set<String> newOut = new HashSet<>();
+                for (Instruction succ : controlGraph.getOutNeighbors(instruction)) {
+                    newOut.addAll(in.getOrDefault(succ, new HashSet<>()));
+                }
+
+                if (!newIn.equals(oldIn) || !newOut.equals(oldOut)) {
+                    in.put(instruction, newIn);
+                    out.put(instruction, newOut);
                     changed = true;
                 }
             }
         } while (changed);
     }
 
-    public Set<String> getVertices() {
-        return conflictGraph.getVertices();
+    private void buildConflictGraph(ControlGraph controlGraph, Program program) {
+        for (Instruction instruction : controlGraph.getVertices(program)) {
+            Set<String> live = new HashSet<>(in.getOrDefault(instruction, new HashSet<>()));
+            live.addAll(out.getOrDefault(instruction, new HashSet<>()));
+
+            for (String var1 : live) {
+                for (String var2 : live) {
+                    if (!var1.equals(var2)) {
+                        this.addEdge(var1, var2);
+                    }
+                }
+            }
+        }
     }
 
-    public void printConflictGraph() {
-        System.out.println("Conflict Graph:");
-        for (String vertex : conflictGraph.getVertices()) {
-            System.out.print(vertex + ": ");
-            for (String neighbor : conflictGraph.getNeighbors(vertex)) {
-                System.out.print(neighbor + " ");
-            }
-            System.out.println();
+    private Set<String> getUse(Instruction instruction) {
+        Set<String> use = new HashSet<>();
+        String[] parts = instruction.getName().split(" ");
+        switch (parts[0]) {
+            case "XOR":
+            case "SUBi":
+            case "ADD":
+            case "MUL":
+            case "DIV":
+                use.add(parts[2]);
+                use.add(parts[3]);
+                break;
+            case "PRINT":
+            case "JEQU":
+            case "JINF":
+            case "JSUP":
+                use.add(parts[1]);
+                break;
+            case "CALL":
+                // No use variables for CALL
+                break;
+            default:
+                break;
         }
+        return use;
+    }
+
+    private Set<String> getDef(Instruction instruction) {
+        Set<String> def = new HashSet<>();
+        String[] parts = instruction.getName().split(" ");
+        switch (parts[0]) {
+            case "XOR":
+            case "SUBi":
+            case "ADD":
+            case "MUL":
+            case "DIV":
+                def.add(parts[1]);
+                break;
+            case "PRINT":
+            case "JEQU":
+            case "JINF":
+            case "JSUP":
+            case "CALL":
+            case "RET":
+            case "JMP":
+            case "STOP":
+                // No def variables for these instructions
+                break;
+            default:
+                break;
+        }
+        return def;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        for (String u : this.vertices) {
+            sb.append(u).append(" -> ");
+            for (String v : this.adjList.get(u)) {
+                sb.append(v).append(", ");
+            }
+            if (this.adjList.get(u).size() > 0) {
+                sb.setLength(sb.length() - 2); // Remove the last comma and space
+            }
+            sb.append("\n");
+        }
+        return sb.toString();
     }
 
     public static void main(String[] args) {
-        String fileName = "input.txt";
-        StringBuilder input = new StringBuilder();
+        Program program = new Program();
 
-        try {
-            InputStream ips = new FileInputStream(fileName);
-            InputStreamReader ipsr = new InputStreamReader(ips);
-            BufferedReader br = new BufferedReader(ipsr);
-            String line;
-            while ((line = br.readLine()) != null) {
-                input.append(line).append("\n");
-            }
-            br.close();
-        } catch (Exception e) {
-            System.out.println(e);
-        }
+        Instruction instr1 = new Instruction("L1", "XOR R1000 R1000 R1000") {};
+        Instruction instr2 = new Instruction("L2", "SUBi R1000 R1000 1") {};
+        Instruction instr3 = new Instruction("L3", "PRINT R1001") {};
+        Instruction instr4 = new Instruction("L4", "JEQU R1000 R1001 LABEL2") {};
+        Instruction instr5 = new Instruction("L5", "JINF R1000 R1001 L6") {};
+        Instruction instr6 = new Instruction("L6", "JSUP R1000 R1001 L7") {};
+        Instruction instr7 = new Instruction("L7", "CALL FUNC1") {};
+        Instruction instr8 = new Instruction("L8", "JMP END") {};
+        Instruction instr9 = new Instruction("L9", "STOP") {};
+        Instruction instr10 = new Instruction("LABEL1", "ADD R1002 R1000 R1001") {};
+        Instruction instr11 = new Instruction("L11", "MUL R1003 R1002 R1000") {};
+        Instruction instr12 = new Instruction("L12", "JMP END") {};
+        Instruction instr13 = new Instruction("LABEL2", "DIV R1004 R1003 R1001") {};
+        Instruction instr14 = new Instruction("L14", "PRINT R1004") {};
+        Instruction instr15 = new Instruction("END", "RET") {};
+        Instruction instr16 = new Instruction("FUNC1", "ADD R1005 R1000 R1001") {};
+        Instruction instr17 = new Instruction("L17", "RET") {};
 
-        // Create a sample Program object with more complex instructions
-        Program prog = new Program(new ArrayList<>(Arrays.asList(
-            new SubInstruction("L1", "MOV", Arrays.asList("a"), Arrays.asList("b", "c")),
-            new SubInstruction("L2", "ADD", Arrays.asList("b"), Arrays.asList("a", "d")),
-            new SubInstruction("L3", "CMP", Arrays.asList("a"), Arrays.asList("b")),
-            new SubInstruction("L4", "JNE", Arrays.asList("L6"), Arrays.asList()),
-            new SubInstruction("L5", "SUB", Arrays.asList("c"), Arrays.asList("b")),
-            new SubInstruction("L6", "MUL", Arrays.asList("d"), Arrays.asList("c")),
-            new SubInstruction("L7", "JMP", Arrays.asList("L9"), Arrays.asList()),
-            new SubInstruction("L8", "DIV", Arrays.asList("a"), Arrays.asList("d")),
-            new SubInstruction("L9", "NOP", Arrays.asList(), Arrays.asList())
-        )));
+        program.addInstruction(instr1);
+        program.addInstruction(instr2);
+        program.addInstruction(instr3);
+        program.addInstruction(instr4);
+        program.addInstruction(instr5);
+        program.addInstruction(instr6);
+        program.addInstruction(instr7);
+        program.addInstruction(instr8);
+        program.addInstruction(instr9);
+        program.addInstruction(instr10);
+        program.addInstruction(instr11);
+        program.addInstruction(instr12);
+        program.addInstruction(instr13);
+        program.addInstruction(instr14);
+        program.addInstruction(instr15);
+        program.addInstruction(instr16);
+        program.addInstruction(instr17);
 
-        // Build conflict graph
-        ConflictGraph conflictGraph = new ConflictGraph();
-        conflictGraph.buildConflictGraph(prog);
-
-        // Print conflict graph
-        conflictGraph.printConflictGraph();
+        ControlGraph controlGraph = new ControlGraph(program);
+        ConflictGraph conflictGraph = new ConflictGraph(controlGraph, program);
+        System.out.println(conflictGraph);
     }
-
-    
 }
