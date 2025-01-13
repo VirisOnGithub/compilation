@@ -14,7 +14,8 @@ import src.Type.UnknownType;
 public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements grammarTCLVisitor<Program> {
     private final Map<UnknownType,Type> types; // links each variable with its type
 
-    private final Integer SP = 0; // stackPointer should always be 1 over the last stacked variable
+    private final int SP = 0; // stackPointer should always be 1 over the last stacked variable
+    private final int TP = 1; // stackPointer for tabs, conatins the address of the next free space in memory for tabs
     private Integer nextRegister; // nextRegister should always be a non utilised register number
     private Integer nextLabel; // nextLabel should always be a non utilised label number
 
@@ -351,8 +352,41 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
 
     @Override
     public Program visitTab_initialization(grammarTCLParser.Tab_initializationContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitTab_initialization'");
+        int varCount = (ctx.getChildCount() - 2) / 2 + 1;
+        Program p = new Program();
+        int lengthRegister = nextRegister;
+        nextRegister++;
+        int pointerRegister = nextRegister;
+        nextRegister++;
+        // lengthRegister := varCount
+        p.addInstructions(assignRegister(lengthRegister, varCount));
+        
+        // pointerRegister := TP
+        p.addInstruction(new Mem(src.Asm.Mem.Op.LD, pointerRegister, TP));
+
+        // on empile la longueur du tableau
+        p.addInstruction(new Mem(Mem.Op.ST, nextRegister, pointerRegister));
+        p.addInstruction(new UALi(src.Asm.UALi.Op.ADD, pointerRegister, pointerRegister, 1));
+        
+        // le TP pointe maintenant à la fin du tableau
+        p.addInstruction(new UALi(UALi.Op.ADD, TP, TP, 12));
+        for (int i = 0; i < varCount; i++) {
+            if (i % 10 == 0 && i > 0) {
+                // on ajoute le pointeur sur la suite à la fin du tableau
+                p.addInstruction(new Mem(src.Asm.Mem.Op.ST, TP, pointerRegister));
+                // on bouge le pointeur au début du prochain tableau
+                p.addInstruction(new Mem(src.Asm.Mem.Op.LD, pointerRegister, TP));
+                // on met à jour le prochain espace vide pour les tableaux
+                p.addInstruction(new UALi(UALi.Op.ADD, TP, TP, 11));
+            }
+            // on a la valeur dans nextRegister - 3
+            p.addInstructions(visit(ctx.getChild(2 * i + 1)));
+            // on la rajoute dans le tableau
+            p.addInstruction(new Mem(Mem.Op.ST, nextRegister - 3, pointerRegister));
+            // on pointe sur la case suivante
+            p.addInstruction(new UALi(UALi.Op.ADD, pointerRegister, pointerRegister, 1));
+        }
+        return p;
     }
 
     @Override
