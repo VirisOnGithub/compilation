@@ -233,7 +233,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitBase_type(grammarTCLParser.Base_typeContext ctx) {
-        System.out.println("Visit base type");
+        System.out.println("Visit base type : BASE_TYPE");
         ParseTree p0 = ctx.getChild(0);
         if (!Objects.equals(p0.getText(), "int") && !Objects.equals(p0.getText(), "bool") && !Objects.equals(p0.getText(), "auto")) {
             throw new Error("Not a base type.");
@@ -257,11 +257,10 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
     }
 
     @Override
-    public Type visitDeclaration(grammarTCLParser.DeclarationContext ctx) { // pas sur
-        System.out.println("visit declaration");
+    public Type visitDeclaration(grammarTCLParser.DeclarationContext ctx) {
+        System.out.println("visit declaration : type VAR (ASSIGN expr)? SEMICOL");
         ParseTree p0 = ctx.getChild(0);
         Type t0 = visit(p0);
-        HashMap<UnknownType, Type> constraints = new HashMap<>();
         if (!(t0 instanceof PrimitiveType) && !(t0 instanceof UnknownType)) {
             throw new Error("Type error: declaration of variable with non-variable type");
         }
@@ -269,14 +268,16 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         ParseTree p1 = ctx.getChild(1);
         UnknownType ut = new UnknownType(p1);
 
-        this.types.put(ut, t0);
+        HashMap<UnknownType, Type> constraints = new HashMap<>(ut.unify(t0));
 
         if (ctx.getChildCount() == 5){
             ParseTree p3 = ctx.getChild(3);
             Type t3 = visit(p3);
-            constraints.putAll(t0.unify(t3));
+            constraints.putAll(ut.unify(t3));
         }
         this.bigAssSubstitute(constraints);
+        this.types.putAll(constraints);
+
         System.out.println(this.types);
         return null;
     }
@@ -374,18 +375,19 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         System.out.println("Visit core function");
         int nbChildrenWithoutInstr = 5; // '{' instr* RETURN expr SEMICOL '}';
         int nbChildren = ctx.getChildCount();
-        for (int i = 0; i < nbChildren - nbChildrenWithoutInstr; i++){
-            ParseTree p0 = ctx.getChild(1 + i);
-            visit(p0);
+        for (int i = 1; i <= nbChildren - nbChildrenWithoutInstr; i++){
+            ParseTree p = ctx.getChild(i);
+            visit(p);
         }
-        ParseTree p1 = ctx.getChild(nbChildren - 3); // return is the 2nd last
-        visit(p1);
+        int returnExprIndex = nbChildren - 3;
+        ParseTree p = ctx.getChild(returnExprIndex);
+        visit(p);
         return null;
     }
 
     @Override
     public Type visitDecl_fct(grammarTCLParser.Decl_fctContext ctx) {
-        System.out.println("Visit declare function");
+        System.out.println("Visit declare function : type VAR (ASSIGN expr)? SEMICOL");
         ParseTree p0 = ctx.getChild(0);
         visit(p0);
         ParseTree p1 = ctx.getChild(1);
@@ -408,6 +410,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
                 visit(p5);
                 visit(p6);
             }
+            System.out.println(this.types);
         }
         return null;
     }

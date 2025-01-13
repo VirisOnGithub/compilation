@@ -1,5 +1,5 @@
 int main() {
-    auto a = 3;
+    auto a = 66;
     auto b = 2;
     if (!a) {
         return 1;
