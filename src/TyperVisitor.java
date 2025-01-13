@@ -147,13 +147,13 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitVariable(grammarTCLParser.VariableContext ctx) {
-        System.out.println("visit unknown type");
+        System.out.println("visit variable");
         Type type;
 
         System.out.println(this.types);
 
-        ParseTree p1 = ctx.getChild(0);
-        UnknownType ut = new UnknownType(p1);
+        ParseTree p0 = ctx.getChild(0);
+        UnknownType ut = new UnknownType(p0);
         System.out.println("ut : "+ut);
 
         //TODO refaire contains
@@ -161,6 +161,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
             System.out.println("1");
             type = this.types.get(ut);
         } else {
+            System.out.println("2");
             type = new UnknownType();
             this.types.put(ut, type);
         }
