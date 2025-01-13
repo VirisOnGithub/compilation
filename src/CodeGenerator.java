@@ -401,7 +401,6 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
     @Override
     public Program visitBase_type(grammarTCLParser.Base_typeContext ctx) {
         // BASE_TYPE
-        // BASE_TYPE : 'int' | 'bool' | 'auto';
 
         throw new RuntimeException("Method 'visitBase_type' should not be called");
     }
@@ -485,14 +484,14 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
     @Override
     public Program visitIf(grammarTCLParser.IfContext ctx) {
         // IF '(' expr ')' instr (ELSE instr)?
-        /* pseudo-assembler if (cond) then instr1 else instr2
-            cond
-            XOR R1 R1 R1
-            JEQU nextRegister-2 nextRegister-1 if //-2 = cond return, -1 = XOR'd register
-            instr2 // only if there is an else
-            JMP end
-         if: instr1
-         end: following code...
+        /* pseudo-assembler: if (cond) then instr1 else instr2
+         *   cond
+         *   XOR R1 R1 R1
+         *   JEQU nextRegister-2 nextRegister-1 if //-2 = cond return, -1 = XOR'd register
+         *   instr2 // only if there is an else
+         *   JMP end
+         * if: instr1
+         * end: following code...
          */
 
         Program program = new Program();
@@ -532,13 +531,13 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
     @Override
     public Program visitWhile(grammarTCLParser.WhileContext ctx) {
         // WHILE '(' expr ')' instr
-        /* pseudo-assembler while(i<10) instr
-        loop: visit(cond)
-            XOR R1 R1 R1
-            JEQU nextRegister-2 nextRegister-1 end_loop //-2 = cond return, -1 = XOR'd register
-            instr
-            JMP loop
-        end_loop: following code...
+        /* pseudo-assembler: while(i<10) instr
+         * loop: visit(cond)
+         *   XOR R1 R1 R1
+         *   JEQU nextRegister-2 nextRegister-1 end_loop //-2 = cond return, -1 = XOR'd register
+         *   instr
+         *   JMP loop
+         * end_loop: following code...
         */
 
         Program program = new Program();
@@ -572,15 +571,15 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
     @Override
     public Program visitFor(grammarTCLParser.ForContext ctx) {
         // FOR '(' instr ',' expr ',' instr ')' instr
-        /* pseudo-assembler for(int i = 0; i < 10; i++) instr
-            ST R0 1
-        loop: visit(cond)
-            XOR R1 R1 R1
-            JEQU nextRegister-2 nextRegister-1 end_loop //-2 = cond return, -1 = XOR'd register
-            instr
-            ADDi R0 R0 1
-            JMP loop
-        end_loop: following code...
+        /* pseudo-assembler: for(int i = 0; i < 10; i++) instr
+         *   ST R0 1
+         * loop: visit(cond)
+         *   XOR R1 R1 R1
+         *   JEQU nextRegister-2 nextRegister-1 end_loop //-2 = cond return, -1 = XOR'd register
+         *   instr
+         *   ADDi R0 R0 1
+         *   JMP loop
+         * end_loop: following code...
         */
 
         Program program = new Program();
@@ -634,7 +633,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
      */
     @Override
     public Program visitCore_fct(grammarTCLParser.Core_fctContext ctx) {
-        // core_fct: '{' instr* RETURN expr SEMICOL '}';
+        // '{' instr* RETURN expr SEMICOL '}'
 
         Program program = new Program();
         String endLabel = this.getLabel();
@@ -663,17 +662,17 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
      */
     @Override
     public Program visitDecl_fct(grammarTCLParser.Decl_fctContext ctx) {
-        // decl_fct: type VAR '(' (type VAR (',' type VAR)*)? ')' core_fct;
+        // type VAR '(' (type VAR (',' type VAR)*)? ')' core_fct
 
         Program program = new Program();
         int nbChilds = ctx.getChildCount();
-        int nbArguments = ((nbChilds - 5) == 0 ? 0 : (nbChilds - 4)/2);
+        int nbArguments = (nbChilds == 5 ? 0 : (nbChilds - 4)/3);
 
         this.enterFunction();
         for (int i = 0; i < nbArguments; i++) { // the arguments are stacked before the call so we unstack them
             program.addInstructions(this.unstackRegister(nextRegister));
             nextRegister++;
-            this.assignVarRegister(ctx.getChild((2*i)+5).getText(), nextRegister-1); // arguments counts as new definitions of variables
+            this.assignVarRegister(ctx.getChild((3*i)+5).getText(), nextRegister-1); // arguments counts as new definitions of variables
         }
         program.getInstructions().getFirst().setLabel(ctx.getChild(1).toString()); // function label
         program.addInstructions(visit(ctx.getChild(nbChilds - 1))); // core_fct
@@ -689,7 +688,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
      */
     @Override
     public Program visitMain(grammarTCLParser.MainContext ctx) {
-        // main: decl_fct* 'int main()' core_fct EOF
+        // decl_fct* 'int main()' core_fct EOF
 
         Program program = new Program();
         int nbChilds = ctx.getChildCount();
