@@ -82,6 +82,7 @@ public class UnknownType extends Type {
             throw new Error("TypeError: cannot unify " + this + " to " + t);
         }
         map.put(this, t);
+
         return map;
     }
 

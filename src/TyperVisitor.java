@@ -26,6 +26,9 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
                 if (oldType instanceof UnknownType) {
                     this.types.put(variable, newType);
                 }
+                if (type instanceof UnknownType) {
+                    this.types.put((UnknownType) type, oldType);
+                }
             } else {
                 this.types.put(variable, type);
             }
@@ -33,16 +36,14 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
     }
     //constraints
     //sub : a ~ b
-    // => a ~ int
-    // => b ~ int
+    // => b ~ bool
 
 
     // types
-    // a ~ int
+    // a ~ bool
     // b ~ ut
 
-    // int a;
-    // auto b;
+    // bool a;
     // a = b;
 
 
@@ -182,17 +183,19 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         UnknownType ut = new UnknownType(p0);
         System.out.println("ut : "+ut);
 
-        //TODO refaire contains
+        Type result;
         boolean temp = this.types.containsKey(ut);
         if (temp) {
             System.out.println("1");
-            type = this.types.get(ut);
-        } else {
+            result = this.types.get(ut);
+        }
+        else {
             System.out.println("2");
+            result = ut;
             type = new UnknownType();
             this.types.put(ut, type);
         }
-        return type;
+        return result;
     }
 
     @Override
@@ -282,25 +285,29 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         return array;
     }
 
+    // type VAR (ASSIGN expr)? SEMICOL
     @Override
     public Type visitDeclaration(grammarTCLParser.DeclarationContext ctx) {
         System.out.println("visit declaration : type VAR (ASSIGN expr)? SEMICOL");
         ParseTree p0 = ctx.getChild(0);
         Type t0 = visit(p0);
-        if (!(t0 instanceof PrimitiveType) && !(t0 instanceof ArrayType)) {
+        if (t0 instanceof FunctionType) {
             throw new Error("Type error: declaration of variable with non-variable type");
         }
 
-        ParseTree p1 = ctx.getChild(1);
-        UnknownType ut = new UnknownType(p1);
 
-        HashMap<UnknownType, Type> constraints = new HashMap<>(ut.unify(t0));
+        UnknownType a = new UnknownType(ctx.getChild(1));
+        HashMap<UnknownType, Type> constraints = new HashMap<>();
+        constraints.put(a, t0);
 
+        // cas : "auto a = b;"
         if (ctx.getChildCount() == 5){
             ParseTree p3 = ctx.getChild(3);
             Type t3 = visit(p3);
-            constraints.putAll(ut.unify(t3));
+            constraints.putAll(a.unify(t3));
+            System.out.println("!!!!!!" + a.unify(t3));
         }
+        System.out.println("constraints :"+ constraints);
         this.bigAssSubstitute(constraints);
 
         System.out.println(this.types);
