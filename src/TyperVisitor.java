@@ -115,6 +115,9 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
     @Override
     public Type visitBoolean(grammarTCLParser.BooleanContext ctx) {
         System.out.println("visit bool");
+
+        ParseTree p1 = ctx.getChild(0);
+        System.out.println(p1);
         return new PrimitiveType(Type.Base.BOOL);
     }
 
@@ -136,10 +139,15 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         System.out.println("visit unknown type");
         Type type;
 
+        System.out.println(this.types);
+
         ParseTree p1 = ctx.getChild(0);
         UnknownType ut = new UnknownType(p1);
+        System.out.println("ut : "+ut);
 
+        //TODO refaire contains
         if (this.types.containsKey(ut)) {
+            System.out.println("1");
             type = this.types.get(ut);
         } else {
             type = new UnknownType();
@@ -151,6 +159,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
     @Override
     public Type visitMultiplication(grammarTCLParser.MultiplicationContext ctx) {
         System.out.println("Visit Multiplication");
+
         ParseTree p1 = ctx.getChild(0);
         Type t1 = visit(p1);
         ParseTree p3 = ctx.getChild(2);
@@ -210,15 +219,12 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         if (!Objects.equals(p0.getText(), "int") && !Objects.equals(p0.getText(), "bool") && !Objects.equals(p0.getText(), "auto")) {
             throw new Error("sale merde");
         }
-        switch (p0.getText()){
-            case "int":
-                return new PrimitiveType(Type.Base.INT);
-            case "bool":
-                return new PrimitiveType(Type.Base.BOOL);
-            case "auto":
-                return new UnknownType();
-        }
-        return null;
+        return switch (p0.getText()) {
+            case "int"  -> new PrimitiveType(Type.Base.INT);
+            case "bool" -> new PrimitiveType(Type.Base.BOOL);
+            case "auto" -> new UnknownType();
+            default -> null;
+        };
     }
 
     @Override

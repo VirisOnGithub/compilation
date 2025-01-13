@@ -1,6 +1,7 @@
 package src.Type;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -99,14 +100,16 @@ public class UnknownType extends Type {
 
     @Override
     public boolean equals(Object t) {
-        if (t instanceof UnknownType) {
-            UnknownType tempT  = (UnknownType)t;
-            if (this.getVarName()=="#" && tempT.getVarName()=="#") {
-                return this.getVarIndex()==tempT.getVarIndex();
+        System.out.println("equals");
+        if (t instanceof UnknownType tempT) {
+            if (this.getVarName().equals("#") && tempT.getVarName().equals("#")) {
+                return this.getVarIndex() == tempT.getVarIndex();
             }
-            return this.getVarName()==tempT.getVarName();
+
+            return this.getVarName().equals(tempT.getVarName());
+        } else {
+            return false;
         }
-        else return false;
     }
 
     @Override
