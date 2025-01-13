@@ -87,8 +87,7 @@ public class FunctionType extends Type {
                 newArgsTypes.add(i.substitute(v, t));
             }
         }
-        FunctionType res = new FunctionType(returnType.substitute(v, t), newArgsTypes);
-        return res;
+        return new FunctionType(returnType.substitute(v, t), newArgsTypes);
     }
 
     @Override

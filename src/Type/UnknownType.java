@@ -74,8 +74,8 @@ public class UnknownType extends Type {
 
     @Override
     public Map<UnknownType, Type> unify(Type t) {
-        HashMap<UnknownType, Type> map = new HashMap <UnknownType, Type> ();
-        if (t instanceof UnknownType && this.equals((UnknownType)t)) {
+        HashMap<UnknownType, Type> map = new HashMap<>();
+        if (t instanceof UnknownType && this.equals(t)) {
             return map;
         }
         if (t.contains(this)) {

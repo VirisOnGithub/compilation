@@ -24,7 +24,7 @@ public class ArrayType extends Type{
 
     @Override
     public Map<UnknownType, Type> unify(Type t) {
-        HashMap<UnknownType, Type> map = new HashMap<UnknownType, Type>();
+        HashMap<UnknownType, Type> map = new HashMap<>();
         if (t instanceof UnknownType) {
             if (this.contains((UnknownType) t)) {
                 //cas Tab[X] ~ X

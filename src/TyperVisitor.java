@@ -18,16 +18,17 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         return types;
     }
 
-    private void bigAssSubstitute(HashMap<UnknownType, Type> contraintes){
-        this.types.forEach( (variable, value) -> {
-            value.substituteAll(contraintes);
-        } );
+    private void bigAssSubstitute(HashMap<UnknownType, Type> constraints) {
+        if (this.types.isEmpty()) {
+            this.types.putAll(constraints);
+        } else {
+            this.types.replaceAll((v, t) -> v.substituteAll(constraints));
+        }
     }
 
     @Override
     public Type visitNegation(grammarTCLParser.NegationContext ctx) {
-        // TODO Auto-generated method stub
-        System.out.println("visit negation");
+        System.out.println("visit negation : NOT expr");
         ParseTree p1 = ctx.getChild(1);
         Type t = visit(p1);
         HashMap<UnknownType, Type> constraints = new HashMap<>(t.unify(new PrimitiveType(Type.Base.BOOL)));
@@ -37,7 +38,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitComparison(grammarTCLParser.ComparisonContext ctx) {
-        System.out.println("visit comparison");
+        System.out.println("visit comparison : expr op expr");
         ParseTree p1 = ctx.getChild(0);
         Type t1 = visit(p1);
         ParseTree p3 = ctx.getChild(2);
@@ -276,7 +277,6 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
             constraints.putAll(ut.unify(t3));
         }
         this.bigAssSubstitute(constraints);
-        this.types.putAll(constraints);
 
         System.out.println(this.types);
         return null;
@@ -410,7 +410,6 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
                 visit(p5);
                 visit(p6);
             }
-            System.out.println(this.types);
         }
         return null;
     }
@@ -420,7 +419,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         System.out.println("visit main");
         int childCount = ctx.getChildCount();
         // if only 3 children, it means no fun decl
-        if(childCount == 3){
+        if (childCount == 3) {
             ParseTree p0 = ctx.getChild(1);
             visit(p0);
         } else {
