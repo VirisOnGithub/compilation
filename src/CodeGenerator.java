@@ -18,10 +18,10 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
     private Integer nextRegister; // nextRegister should always be a non utilised register number
     private Integer nextLabel; // nextLabel should always be a non utilised label number
 
-    private ArrayList<Map<String, Integer>> varRegisters; // links each variable with its register number, for each depth
-    private Stack<Integer> lastAccessibleDepth; // stack top is the furthest that we can search in varRegisters
+    private final ArrayList<Map<String, Integer>> varRegisters; // links each variable with its register number, for each depth
+    private final Stack<Integer> lastAccessibleDepth; // stack top is the furthest that we can search in varRegisters
 
-    private Stack<String> functionsEndLabels; // stack top is the label of the end of the currently called function
+    private final Stack<String> functionsEndLabels; // stack top is the label of the end of the currently called function
 
     /**
      * Constructor
@@ -39,7 +39,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
     /**
      * Macro to add instructions to stack a register
      * @param register the number of the register that needs to be stacked
-     * @return a program that stack the resister
+     * @return a program that stack the register
      */
     private Program stackRegister(int register) {
         Program program = new Program();
@@ -49,9 +49,9 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
     }
 
     /**
-     * Macro to add instructions to unstack a register
+     * Macro to add instructions to unstack into a register
      * @param register the number of the register that needs to be unstacked
-     * @return a program that unstack the resister
+     * @return a program that unstack into the register
      */
     private Program unstackRegister(int register) {
         Program program = new Program();
@@ -126,7 +126,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
     /**
      * Returns the depth (or dimension) of a given variable
      * @param type the type we want to know the depth of
-     * @return 0 if it not an array, else the depth/dimension of the array
+     * @return 0 if it is not an array, else the depth/dimension of the array
      */
     private static int getArrayDepth(Type type) {
         if (type instanceof ArrayType array)
@@ -235,16 +235,43 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         throw new UnsupportedOperationException("Unimplemented method 'visitTab_access'");
     }
 
+    /**
+     * Visit a node that contains an expression between brackets and create the corresponding linear code
+     * @param ctx the context within the parse tree
+     * @return a program containing the linear code
+     */
     @Override
     public Program visitBrackets(grammarTCLParser.BracketsContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitBrackets'");
+        // '(' expr ')'
+
+        Program program = new Program();
+
+        program.addInstructions(visit(ctx.getChild(1))); // expr
+
+        return program;
     }
 
+    /**
+     * Visit a node that contains a function call and create the corresponding linear code
+     * @param ctx the context within the parse tree
+     * @return a program containing the linear code
+     */
     @Override
     public Program visitCall(grammarTCLParser.CallContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitCall'");
+        // VAR '(' (expr (',' expr)*)? ')'
+
+        Program program = new Program();
+        int nbChilds = ctx.getChildCount();
+        int nbArguments = nbChilds == 3 ? 0 : (nbChilds - 2)/2;
+
+        for (int i = 0; i < nbArguments; i++) { // expr*
+            program.addInstructions(visit(ctx.getChild((2*i)+3))); // value of expression will be stocked in R(nextRegister-1)
+            program.addInstructions(stackRegister(nextRegister-1)); // stack argument
+            nextRegister++;
+        }
+        program.addInstruction(new JumpCall(JumpCall.Op.JMP, ctx.getChild(0).getText())); // call the function
+
+        return program;
     }
 
     @Override
@@ -366,16 +393,28 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         return p;
     }
 
+    /**
+     * Visit a node that contains the type of a variable, which shouldn't be called in the context of linear code creation
+     * @param ctx the context within the parse tree
+     * @return a RuntimeException
+     */
     @Override
     public Program visitBase_type(grammarTCLParser.Base_typeContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitBase_type'");
+        // BASE_TYPE
+
+        throw new RuntimeException("Method 'visitBase_type' should not be called");
     }
 
+    /**
+     * Visit a node that contains the type of an array, which shouldn't be called in the context of linear code creation
+     * @param ctx the context within the parse tree
+     * @return a RuntimeException
+     */
     @Override
     public Program visitTab_type(grammarTCLParser.Tab_typeContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitTab_type'");
+        // type '[' ']'
+
+        throw new RuntimeException("Method 'visitTab_type' should not be called");
     }
 
     @Override
@@ -432,13 +471,16 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
     @Override
     public Program visitBlock(grammarTCLParser.BlockContext ctx) {
         // '{' instr+ '}'
+
         Program program = new Program();
         int nbInstr = ctx.getChildCount() - 2;
+
         this.enterBlock(); // '{'
         for (int i = 0; i < nbInstr; i++) { // instr+
             program.addInstructions(visit(ctx.getChild(i + 1)));
         }
         this.exitBlock(); // '}'
+
         return program;
     }
 
@@ -450,18 +492,20 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
     @Override
     public Program visitIf(grammarTCLParser.IfContext ctx) {
         // IF '(' expr ')' instr (ELSE instr)?
-        /* pseudo-assembler if (cond) then instr1 else instr2
-            cond
-            XOR R1 R1 R1
-            JEQU nextRegister-2 nextRegister-1 if //-2 = cond return, -1 = XOR'd register
-            instr2 // only if there is an else
-            JMP end
-         if: instr1
-         end: following code...
+        /* pseudo-assembler: if (cond) then instr1 else instr2
+         *   cond
+         *   XOR R1 R1 R1
+         *   JEQU nextRegister-2 nextRegister-1 if //-2 = cond return, -1 = XOR'd register
+         *   instr2 // only if there is an else
+         *   JMP end
+         * if: instr1
+         * end: following code...
          */
+
         Program program = new Program();
         String labelIf = this.getLabel();
         String labelEnd = this.getLabel();
+
         program.addInstructions(visit(ctx.getChild(2))); // if condition
         program.addInstruction(new UAL(UAL.Op.XOR, nextRegister, nextRegister, nextRegister)); // set new register to 0 for later test
         nextRegister++;
@@ -472,12 +516,14 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
             this.exitBlock(); // }
         }
         program.addInstruction(new JumpCall(JumpCall.Op.JMP, labelEnd)); // JMP end
+
         Program ifInstrProgram = new Program();
         this.enterBlock(); // {
         ifInstrProgram.addInstructions(visit(ctx.getChild(5))); // if instructions
         this.exitBlock(); // }
         ifInstrProgram.getInstructions().getFirst().setLabel(labelIf);
         program.addInstructions(ifInstrProgram);
+
         Program endIfProgram = new Program();
         endIfProgram.addInstruction(new UALi(UALi.Op.ADD, nextRegister-1, nextRegister-1, 0)); // dummy instruction to set end if label
         endIfProgram.getInstructions().getFirst().setLabel(labelEnd);
@@ -493,17 +539,19 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
     @Override
     public Program visitWhile(grammarTCLParser.WhileContext ctx) {
         // WHILE '(' expr ')' instr
-        /* pseudo-assembler while(i<10) instr
-        loop: visit(cond)
-            XOR R1 R1 R1
-            JEQU nextRegister-2 nextRegister-1 end_loop //-2 = cond return, -1 = XOR'd register
-            instr
-            JMP loop
-        end_loop: following code...
+        /* pseudo-assembler: while(i<10) instr
+         * loop: visit(cond)
+         *   XOR R1 R1 R1
+         *   JEQU nextRegister-2 nextRegister-1 end_loop //-2 = cond return, -1 = XOR'd register
+         *   instr
+         *   JMP loop
+         * end_loop: following code...
         */
+
         Program program = new Program();
         String labelStartLoop = this.getLabel();
         String labelEndLoop = this.getLabel();
+
         Program condLoopProgram = visit(ctx.getChild(2)); // loop condition
         condLoopProgram.getInstructions().getFirst().setLabel(labelStartLoop); // set looping label
         program.addInstructions(condLoopProgram);
@@ -514,10 +562,12 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         program.addInstructions(visit(ctx.getChild(4))); // instructions inside the loop
         this.exitBlock(); // } end of the loop
         program.addInstruction(new JumpCall(JumpCall.Op.JMP, labelStartLoop)); // go back to the start of the loop
+
         Program endLoopProgram = new Program();
         endLoopProgram.addInstruction(new UALi(UALi.Op.ADD, nextRegister-1, nextRegister-1, 0)); // dummy instruction to set end loop label
         endLoopProgram.getInstructions().getFirst().setLabel(labelEndLoop);
         program.addInstructions(endLoopProgram);
+
         return program;
     }
 
@@ -529,19 +579,22 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
     @Override
     public Program visitFor(grammarTCLParser.ForContext ctx) {
         // FOR '(' instr ',' expr ',' instr ')' instr
-        /* pseudo-assembler for(int i = 0; i < 10; i++) instr
-            ST R0 1
-        loop: visit(cond)
-            XOR R1 R1 R1
-            JEQU nextRegister-2 nextRegister-1 end_loop //-2 = cond return, -1 = XOR'd register
-            instr
-            ADDi R0 R0 1
-            JMP loop
-        end_loop: following code...
+        /* pseudo-assembler: for(int i = 0; i < 10; i++) instr
+         *   ST R0 1
+         * loop: visit(cond)
+         *   XOR R1 R1 R1
+         *   JEQU nextRegister-2 nextRegister-1 end_loop //-2 = cond return, -1 = XOR'd register
+         *   instr
+         *   ADDi R0 R0 1
+         *   JMP loop
+         * end_loop: following code...
         */
+
         Program program = new Program();
         String labelStartLoop = this.getLabel();
         String labelEndLoop = this.getLabel();
+
+        this.enterBlock(); // needed because the for can declare variables locally (for (int i = 0;...)
         program.addInstructions(visit(ctx.getChild(2))); // initialization
         Program condLoopProgram = visit(ctx.getChild(4)); // loop condition
         condLoopProgram.getInstructions().getFirst().setLabel(labelStartLoop); // set looping label
@@ -554,10 +607,13 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         this.exitBlock(); // } end of the loop
         program.addInstructions(visit(ctx.getChild(6))); // iteration
         program.addInstruction(new JumpCall(JumpCall.Op.JMP, labelStartLoop)); // go back to the start of the loop
+
         Program endLoopProgram = new Program();
         endLoopProgram.addInstruction(new UALi(UALi.Op.ADD, nextRegister-1, nextRegister-1, 0)); // dummy instruction to set end loop label
         endLoopProgram.getInstructions().getFirst().setLabel(labelEndLoop);
         program.addInstructions(endLoopProgram);
+        this.exitBlock();
+
         return program;
     }
 
@@ -569,9 +625,12 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
     @Override
     public Program visitReturn(grammarTCLParser.ReturnContext ctx) {
         // RETURN expr SEMICOL
+
         Program program = new Program();
+
         program.addInstructions(visit(ctx.getChild(1))); // expr, return value will be in R(nextRegister-1)
         program.addInstruction(new JumpCall(JumpCall.Op.JMP, this.functionsEndLabels.getFirst())); // return;
+
         return program;
     }
 
@@ -582,23 +641,25 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
      */
     @Override
     public Program visitCore_fct(grammarTCLParser.Core_fctContext ctx) {
-        // core_fct: '{' instr* RETURN expr SEMICOL '}';
+        // '{' instr* RETURN expr SEMICOL '}'
+
         Program program = new Program();
         String endLabel = this.getLabel();
         int nbInstructions = ctx.getChildCount() - 5;
-        this.enterFunction(); // '{'
-        this.functionsEndLabels.add(endLabel);
+
+        this.functionsEndLabels.add(endLabel); // every subsequent return; instruction will jump to the end of the function
         for (int i = 0; i < nbInstructions; i++) { // instr*
             program.addInstructions(visit(ctx.getChild(i + 1)));
         }
         program.addInstructions(visit(ctx.getChild(ctx.getChildCount() - 3))); // expr, return value will be in R(nextRegister-1)
         program.addInstruction(new JumpCall(JumpCall.Op.JMP, this.functionsEndLabels.getFirst())); // return;
-        this.functionsEndLabels.pop();
-        this.exitFunction(); // '}'
+        this.functionsEndLabels.pop(); // since there is no more instructions there is no more return; to be found
+
         Program endFunctionProgram = new Program();
         endFunctionProgram.addInstruction(new UALi(UALi.Op.ADD, nextRegister-1, nextRegister-1, 0)); // dummy instruction to set end function label
         endFunctionProgram.getInstructions().getFirst().setLabel(endLabel);
         program.addInstructions(endFunctionProgram);
+
         return program;
     }
 
@@ -609,17 +670,22 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
      */
     @Override
     public Program visitDecl_fct(grammarTCLParser.Decl_fctContext ctx) {
-        // decl_fct: type VAR '(' (type VAR (',' type VAR)*)? ')' core_fct;
+        // type VAR '(' (type VAR (',' type VAR)*)? ')' core_fct
+
         Program program = new Program();
         int nbChilds = ctx.getChildCount();
-        int nbArguments = ((nbChilds - 5) == 0 ? 0 : (nbChilds - 4)/2);
+        int nbArguments = (nbChilds == 5 ? 0 : (nbChilds - 4)/3);
+
+        this.enterFunction();
         for (int i = 0; i < nbArguments; i++) { // the arguments are stacked before the call so we unstack them
-            program.addInstruction(new Mem(Mem.Op.LD, nextRegister, SP));
+            program.addInstructions(this.unstackRegister(nextRegister));
             nextRegister++;
-            program.addInstruction(new UALi(UALi.Op.SUB, SP, SP, 1));
+            this.assignVarRegister(ctx.getChild((3*i)+5).getText(), nextRegister-1); // arguments counts as new definitions of variables
         }
-        program.getInstructions().getFirst().setLabel(ctx.getChild(2).toString()); // function label
+        program.getInstructions().getFirst().setLabel(ctx.getChild(1).toString()); // function label
         program.addInstructions(visit(ctx.getChild(nbChilds - 1))); // core_fct
+        this.exitFunction();
+
         return program;
     }
 
@@ -630,18 +696,22 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
      */
     @Override
     public Program visitMain(grammarTCLParser.MainContext ctx) {
-        // main: decl_fct* 'int main()' core_fct EOF
+        // decl_fct* 'int main()' core_fct EOF
+
         Program program = new Program();
+        int nbChilds = ctx.getChildCount();
+
         program.addInstruction(new UAL(UAL.Op.XOR, 0, 0, 0)); // initialize SP
         program.addInstruction(new JumpCall(JumpCall.Op.JMP, "main")); // call main
-        int nbChilds = ctx.getChildCount();
         for (int i = 0; i < nbChilds - 3; i++) { // decl_fct*
             program.addInstructions(visit(ctx.getChild(i)));
         }
+
         Program mainCoreProgram = visit(ctx.getChild(nbChilds - 2)); // core_fct
         mainCoreProgram.getInstructions().getFirst().setLabel("main"); // main label
         program.addInstructions(mainCoreProgram);
         program.addInstruction(new Stop()); // STOP
+
         return program;
     }
 }
