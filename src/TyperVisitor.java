@@ -157,7 +157,8 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         System.out.println("ut : "+ut);
 
         //TODO refaire contains
-        if (this.types.containsKey(ut)) {
+        boolean temp = this.types.containsKey(ut);
+        if (temp) {
             System.out.println("1");
             type = this.types.get(ut);
         } else {

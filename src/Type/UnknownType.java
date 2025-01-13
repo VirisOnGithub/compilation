@@ -99,6 +99,16 @@ public class UnknownType extends Type {
     }
 
     @Override
+    public int hashCode() {
+        if (this.getVarName().equals("#")) {
+            return Objects.hash(varIndex);
+        } else {
+            return Objects.hash(varName);
+        }
+
+    }
+
+    @Override
     public boolean equals(Object t) {
         System.out.println("equals");
         if (t instanceof UnknownType tempT) {
