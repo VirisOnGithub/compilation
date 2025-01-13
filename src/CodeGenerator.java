@@ -443,9 +443,9 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         } else {
             int depthRegister = this.nextRegister;
             // on empile le tableau puis sa profondeur
-            stackRegister(varRegister);
+            p.addInstructions(stackRegister(varRegister));
             p.addInstructions(assignRegister(depthRegister, arrayDepth));
-            stackRegister(depthRegister);
+            p.addInstructions(stackRegister(depthRegister));
             // on appelle la fonction print_tab
             p.addInstruction(new JumpCall(src.Asm.JumpCall.Op.CALL, "print_tab"));
             this.nextRegister++;
