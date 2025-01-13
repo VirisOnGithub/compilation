@@ -30,7 +30,7 @@ instr:
 |	'{' instr+ '}'								# block
 |	IF '(' expr ')' instr (ELSE instr)?			# if
 |	WHILE '(' expr ')' instr					# while
-|	FOR '(' instr  expr ';' instr ')' instr	# for
+|	FOR '(' instr  expr ';' instr ')' instr 	# for
 |	RETURN expr SEMICOL  	    	      		# return
 ;
 
