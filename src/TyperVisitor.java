@@ -19,12 +19,37 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
     }
 
     private void bigAssSubstitute(HashMap<UnknownType, Type> constraints) {
-        if (this.types.isEmpty()) {
-            this.types.putAll(constraints);
-        } else {
-            this.types.replaceAll((v, t) -> v.substituteAll(constraints));
-        }
+        constraints.forEach((variable, type) -> {
+            if (this.types.containsKey(variable)) {
+                Type newType = variable.substitute(variable, type);
+                Type oldType = this.types.get(variable);
+                if (oldType instanceof UnknownType) {
+                    this.types.put(variable, newType);
+                }
+            } else {
+                this.types.put(variable, type);
+            }
+        });
     }
+    //constraints
+    //sub : a ~ b
+    // => a ~ int
+    // => b ~ int
+
+
+    // types
+    // a ~ int
+    // b ~ ut
+
+    // int a;
+    // auto b;
+    // a = b;
+
+
+
+    // return unknown
+
+
 
     @Override
     public Type visitNegation(grammarTCLParser.NegationContext ctx) {
@@ -262,7 +287,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         System.out.println("visit declaration : type VAR (ASSIGN expr)? SEMICOL");
         ParseTree p0 = ctx.getChild(0);
         Type t0 = visit(p0);
-        if (!(t0 instanceof PrimitiveType) && !(t0 instanceof UnknownType)) {
+        if (!(t0 instanceof PrimitiveType) && !(t0 instanceof ArrayType)) {
             throw new Error("Type error: declaration of variable with non-variable type");
         }
 

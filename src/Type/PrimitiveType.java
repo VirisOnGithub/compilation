@@ -33,7 +33,7 @@ public  class PrimitiveType extends Type {
             //cas INT ~ BOOL, Function, Array...
             throw new Error("TypeError: cannot unify " + this + " to " + t);
         }
-        //cas INT ~ INT
+        //else : cas INT ~ INT
         return map;
     }
 

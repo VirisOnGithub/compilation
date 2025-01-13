@@ -1,6 +1,6 @@
 int main() {
-    auto a = 66;
-    auto b = 2;
+    auto a = true;
+    auto a = b;
     if (!a) {
         return 1;
     }

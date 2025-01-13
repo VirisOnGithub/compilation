@@ -40,9 +40,9 @@ public abstract class Type {
      * @param h liste de substitutions
      * @return src.Type obtenu en appliquant toutes les substitutions de h
      */
-    public Type substituteAll(Map<UnknownType,Type> h){
+    public Type substituteAll(Map<UnknownType,Type> h) {
         Type result = this;
-        for (UnknownType key : h.keySet()) 
+        for (UnknownType key : h.keySet())
             result = result.substitute(key, h.get(key));
         return result;
     }
