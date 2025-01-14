@@ -30,7 +30,15 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
                     this.types.put((UnknownType) type, oldType);
                 }
             } else {
-                this.types.put(variable, type);
+                if (this.types.containsValue(variable)) {
+                    this.types.forEach((key, value) -> {
+                        if (value.contains(variable)) {
+                            this.types.put(key, value.substitute(variable, type));
+                        }
+                    });
+                } else {
+                    this.types.put(variable, type);
+                }
             }
         });
     }
@@ -414,26 +422,31 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         Type functionReturnType = visit(functionReturnTypeNode);
 
         int i = 4;
-        int childCount = ctx.getChildCount()-1;
-        boolean noParameters = childCount == 6;
+        int childCount = ctx.getChildCount();
+        boolean noParameters = childCount == 5;
         if (noParameters) {
             this.types.put(functionName, new FunctionType(functionReturnType, new ArrayList<>()));
+
             int core_fctIndex = 4;
             ParseTree core_fctNode = ctx.getChild(core_fctIndex);
             visit(core_fctNode);
+
         } else {
-            ParseTree p3 = ctx.getChild(3);
-            ParseTree p4 = ctx.getChild(4);
-            visit(p3);
-            visit(p4);
-            // number of parameters is 0 mod 3
-            int nbVars = (childCount - i - 3)/3; // first 3 represent first arg + closing parenthesis
-            for (int k = 0; k < nbVars; k++){
-                ParseTree p5 = ctx.getChild(7+3*k);
-                ParseTree p6 = ctx.getChild(8+3*k);
-                visit(p5);
-                visit(p6);
+            ArrayList<Type> paramList = new ArrayList<>();
+
+            int paramNumber = (childCount - 4)/3;
+            for (int k = 0; k < paramNumber; k++) {
+                ParseTree paramTypeNode = ctx.getChild(k);
+                ParseTree paramNameNode = ctx.getChild(k+1);
+                Type paramType = visit(paramTypeNode);
+                UnknownType paramName = new UnknownType(paramNameNode);
+
+                paramName.unify(paramType);
+                paramList.add(paramType);
             }
+
+            FunctionType functionType = new FunctionType(functionReturnType, paramList);
+            this.types.put(functionName, functionType);
         }
         return null;
     }
