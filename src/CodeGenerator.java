@@ -14,7 +14,8 @@ import src.Type.UnknownType;
 public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements grammarTCLVisitor<Program> {
     private final Map<UnknownType,Type> types; // links each variable with its type
 
-    private final Integer SP = 0; // stackPointer should always be 1 over the last stacked variable
+    private final int SP = 0; // stackPointer should always be 1 over the last stacked variable
+    private final int TP = 1; // stackPointer for tabs, conatins the address of the next free space in memory for tabs
     private Integer nextRegister; // nextRegister should always be a non utilised register number
     private Integer nextLabel; // nextLabel should always be a non utilised label number
 
@@ -124,6 +125,19 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
     }
 
     /**
+     * Assign a value to a register.
+     * register := value
+     * @param register
+     * @param value
+     */
+    private Program assignRegister(int register, int value) {
+        Program p = new Program();
+        p.addInstruction(new UAL(UAL.Op.XOR, register, register, register));
+        p.addInstruction(new UALi(UALi.Op.ADD, register, register, value));
+        return p;
+    }
+
+    /**
      * Returns the depth (or dimension) of a given variable
      * @param type the type we want to know the depth of
      * @return 0 if it is not an array, else the depth/dimension of the array
@@ -148,15 +162,12 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         // expr op=(SUP | INF | SUPEQ | INFEQ) expr # comparison
         Program p = new Program();
         p.addInstructions(visit(ctx.getChild(0)));
-        int valueRegister = nextRegister - 1;
         p.addInstructions(visit(ctx.getChild(2)));
         // Get value of Child(0) in nextRegister - 2
-        p.addInstruction(new UAL(UAL.Op.XOR, nextRegister, nextRegister, nextRegister));
-        p.addInstruction(new UALi(UALi.Op.ADD, nextRegister, nextRegister, valueRegister));
+        p.addInstructions(assignRegister(nextRegister, nextRegister - 1));
         nextRegister++;
         // Get value of Child(2) in nextRegister - 1
-        p.addInstruction(new UAL(UAL.Op.XOR, nextRegister, nextRegister, nextRegister));
-        p.addInstruction(new UALi(UALi.Op.ADD, nextRegister, nextRegister, nextRegister - 2));
+        p.addInstructions(assignRegister(nextRegister, nextRegister - 2));
         nextRegister++;
         switch (ctx.getChild(1).getText()) {
             case ">" ->
@@ -222,9 +233,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         // INT # integer
         // INT : '-'?[0-9]+
         Program p = new Program();
-        p.addInstruction(new UAL(UAL.Op.XOR, nextRegister, nextRegister, nextRegister));
-        p.addInstruction(
-                new UALi(UALi.Op.ADD, nextRegister, nextRegister, Integer.parseInt(ctx.getChild(0).getText())));
+        p.addInstructions(assignRegister(nextRegister, Integer.parseInt(ctx.getChild(0).getText())));
         nextRegister++;
         return p;
     }
@@ -281,8 +290,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         Program p = new Program();
         switch (ctx.getChild(0).getText()) {
             case "true" -> {
-                p.addInstruction(new UAL(UAL.Op.XOR, nextRegister, nextRegister, nextRegister));
-                p.addInstruction(new UALi(UALi.Op.ADD, nextRegister, nextRegister, 1));
+                p.addInstructions(assignRegister(nextRegister, 1));
             }
             case "false" -> p.addInstruction(new UAL(UAL.Op.XOR, nextRegister, nextRegister, nextRegister));
         }
@@ -332,15 +340,12 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         // DIFF : '!=';
         Program p = new Program();
         p.addInstructions(visit(ctx.getChild(0)));
-        int valueRegister = nextRegister - 1;
         p.addInstructions(visit(ctx.getChild(2)));
         // Get value of Child(0) in nextRegister - 2
-        p.addInstruction(new UAL(UAL.Op.XOR, nextRegister, nextRegister, nextRegister));
-        p.addInstruction(new UALi(UALi.Op.ADD, nextRegister, nextRegister, valueRegister));
+        p.addInstructions(assignRegister(nextRegister, nextRegister - 1));
         nextRegister++;
         // Get value of Child(2) in nextRegister - 1
-        p.addInstruction(new UAL(UAL.Op.XOR, nextRegister, nextRegister, nextRegister));
-        p.addInstruction(new UALi(UALi.Op.ADD, nextRegister, nextRegister, nextRegister - 2));
+        p.addInstructions(assignRegister(nextRegister, nextRegister - 2));
         nextRegister++;
         switch (ctx.getChild(1).getText()) {
             case "==" ->
@@ -374,8 +379,41 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
 
     @Override
     public Program visitTab_initialization(grammarTCLParser.Tab_initializationContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitTab_initialization'");
+        int varCount = (ctx.getChildCount() - 2) / 2 + 1;
+        Program p = new Program();
+        int lengthRegister = nextRegister;
+        nextRegister++;
+        int pointerRegister = nextRegister;
+        nextRegister++;
+        // lengthRegister := varCount
+        p.addInstructions(assignRegister(lengthRegister, varCount));
+        
+        // pointerRegister := TP
+        p.addInstruction(new Mem(src.Asm.Mem.Op.LD, pointerRegister, TP));
+
+        // on empile la longueur du tableau
+        p.addInstruction(new Mem(Mem.Op.ST, nextRegister, pointerRegister));
+        p.addInstruction(new UALi(src.Asm.UALi.Op.ADD, pointerRegister, pointerRegister, 1));
+        
+        // le TP pointe maintenant à la fin du tableau
+        p.addInstruction(new UALi(UALi.Op.ADD, TP, TP, 12));
+        for (int i = 0; i < varCount; i++) {
+            if (i % 10 == 0 && i > 0) {
+                // on ajoute le pointeur sur la suite à la fin du tableau
+                p.addInstruction(new Mem(src.Asm.Mem.Op.ST, TP, pointerRegister));
+                // on bouge le pointeur au début du prochain tableau
+                p.addInstruction(new Mem(src.Asm.Mem.Op.LD, pointerRegister, TP));
+                // on met à jour le prochain espace vide pour les tableaux
+                p.addInstruction(new UALi(UALi.Op.ADD, TP, TP, 11));
+            }
+            // on a la valeur dans nextRegister - 3
+            p.addInstructions(visit(ctx.getChild(2 * i + 1)));
+            // on la rajoute dans le tableau
+            p.addInstruction(new Mem(Mem.Op.ST, nextRegister - 3, pointerRegister));
+            // on pointe sur la case suivante
+            p.addInstruction(new UALi(UALi.Op.ADD, pointerRegister, pointerRegister, 1));
+        }
+        return p;
     }
 
     @Override
@@ -444,12 +482,9 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         } else {
             int depthRegister = this.nextRegister;
             // on empile le tableau puis sa profondeur
-            p.addInstruction(new Mem(src.Asm.Mem.Op.ST, varRegister, SP));
-            p.addInstruction(new UALi(src.Asm.UALi.Op.ADD, SP, SP, 1));
-            p.addInstruction(new UAL(src.Asm.UAL.Op.XOR, depthRegister, depthRegister, depthRegister));
-            p.addInstruction(new UALi(src.Asm.UALi.Op.ADD, depthRegister, depthRegister, arrayDepth));
-            p.addInstruction(new Mem(src.Asm.Mem.Op.ST, depthRegister, SP));
-            p.addInstruction(new UALi(src.Asm.UALi.Op.ADD, SP, SP, 1));
+            p.addInstructions(stackRegister(varRegister));
+            p.addInstructions(assignRegister(depthRegister, arrayDepth));
+            p.addInstructions(stackRegister(depthRegister));
             // on appelle la fonction print_tab
             p.addInstruction(new JumpCall(src.Asm.JumpCall.Op.CALL, "print_tab"));
             this.nextRegister++;
