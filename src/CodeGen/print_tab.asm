@@ -3,7 +3,7 @@
 ']' : 93
 ' ' : 32
 
-print_tab:
+print_tab: // *print_tab
 	SUBi SP SP 1
 	LD R1 SP		# profondeur
 	SUBi SP SP 1
@@ -16,7 +16,7 @@ print_tab:
 	OUT R4			# on affiche " "
 	XOR R5 R5 R5	# i = 0
 	ADDi R2 R2 1	# on pointe maintenant sur le premier élément
-debut_boucle_print_tab:
+debut_boucle_print_tab: // *loop_start
 	JEQU R5 R3 fin_pour_print_tab
 	XOR R6 R6 R6
 	MODi R7 R5 10
@@ -43,15 +43,15 @@ debut_boucle_print_tab:
 	SUBi SP SP 1
 	LD R3 SP						# on dépile la taille du tableau
 	JMP fin_print_element
-print_element:
+print_element: // *print_elem
 	PRINT R2
-fin_print_element:
+fin_print_element: // *print_elem_end
 	XOR R8 R8 R8
 	ADDi R8 R8 32
 	OUT R8			# on affiche " "
 	ADDi R2 R2 1	# on pointe maintenant sur le prochain élément
 	JMP debut_boucle_print_tab
-fin_pour_print_tab:
+fin_pour_print_tab: // *print_end
 	XOR R4 R4 R4
 	ADDi R4 R4 93
 	OUT R4 			# on affiche "]"

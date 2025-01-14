@@ -40,5 +40,15 @@ public class Main {
 		Program program = codeGenerator.visit(tree); // génération du code linéaire
 
 		System.out.println(program);
+
+		try {
+			FileWriter fileWriter = new FileWriter("prog.asm");
+			fileWriter.write(program.toString());
+			fileWriter.flush();
+			fileWriter.close();
+		}
+		catch (Exception e) {
+			System.out.println(e.getMessage());
+		}
 	}
 }
