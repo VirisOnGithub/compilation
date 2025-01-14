@@ -248,6 +248,8 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         p.addInstructions(stackRegister(indexRegister));
         p.addInstruction(new JumpCall(JumpCall.Op.CALL, "*tab_access"));
         p.addInstructions(unstackRegister(nextRegister));
+        // on récupère la valeur pointée
+        p.addInstruction(new Mem(Mem.Op.LD, nextRegister, nextRegister));
         nextRegister++;
         return p;
     }
@@ -528,7 +530,31 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
     @Override
     public Program visitAssignment(grammarTCLParser.AssignmentContext ctx) {
         Program p = new Program();
-        p.addInstructions(visit(ctx.getChild(SP)));
+
+        p.addInstructions(visit(ctx.getChild(ctx.getChildCount() - 2)));
+        int rightRegister = nextRegister - 1;
+
+        int varRegister = getVarRegister(ctx.VAR().getText());
+
+        int bracketsCount = (ctx.getChildCount() - 4) / 3;
+        int leftRegister = nextRegister;
+        p.addInstruction(new UALi(UALi.Op.ADD, leftRegister, varRegister, 0));
+        nextRegister++;
+        for (int i = 0; i < bracketsCount; i++) {
+            int child = 2 + i * 3;
+            p.addInstructions(visit(ctx.getChild(child)));
+            p.addInstructions(stackRegister(leftRegister));
+            p.addInstructions(stackRegister(nextRegister - 1));
+            p.addInstruction(new JumpCall(JumpCall.Op.CALL, "*tab_access"));
+            p.addInstructions(unstackRegister(leftRegister));
+        }
+
+        if (bracketsCount == 0) {
+            p.addInstruction(new UALi(UALi.Op.ADD, varRegister, rightRegister, 0));
+        } else {
+            p.addInstruction(new Mem(Mem.Op.ST, rightRegister, leftRegister));
+        }
+
         return p;
     }
 
@@ -822,7 +848,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         program.addInstruction(new CondJump(CondJump.Op.JNEQ, r[7], r[6], "*skip_tab_end"));
         program.addInstruction(new CondJump(CondJump.Op.JEQU, r[5], r[6], "*skip_tab_end"));
         program.addInstruction(new Mem(Mem.Op.LD, r[2], r[2]));
-        
+
         program.addInstruction(new UAL("*skip_tab_end", UAL.Op.XOR, r[9], r[9], r[9]));
         program.addInstruction(new UALi(UALi.Op.ADD, r[9], r[9], 1));
         program.addInstruction(new CondJump(CondJump.Op.JEQU, r[1], r[9], "*print_elem"));
@@ -879,35 +905,30 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         p.addInstruction(new Mem(Mem.Op.LD, r[2], r[1]));
         p.addInstruction(new UAL(UAL.Op.XOR, r[3], r[3], r[3]));
         p.addInstruction(new CondJump(CondJump.Op.JIEQ, r[0], r[2], "*skip_resize"));
-        p.addInstruction(new UALi(UALi.Op.ADD, r[2], r[0], 1));
-        p.addInstruction(new Mem(Mem.Op.ST, r[1], r[2]));
+        p.addInstruction(new UALi(UALi.Op.ADD, r[4], r[0], 1));
+        p.addInstruction(new Mem(Mem.Op.ST, r[4], r[1]));
 
         p.addInstruction(new UALi("*skip_resize", UALi.Op.ADD, r[1], r[1], 1));
 
         p.addInstruction(new UALi("*begin_loop", UALi.Op.MOD, r[5], r[3], 10));
-        
         p.addInstruction(new CondJump(CondJump.Op.JNEQ, r[5], r[6], "*skip_tab_access_end"));
         p.addInstruction(new CondJump(CondJump.Op.JEQU, r[3], r[6], "*skip_tab_access_end"));
-        p.addInstruction(new CondJump(CondJump.Op.JIEQ, r[3], r[2], "*skip_alloc"));
+        p.addInstruction(new CondJump(CondJump.Op.JIEQ, r[3], r[0], "*skip_alloc"));
         p.addInstruction(new Mem(Mem.Op.ST, TP, r[1]));
         p.addInstruction(new UALi(UALi.Op.ADD, TP, TP, 11));
 
         p.addInstruction(new Mem("*skip_alloc", Mem.Op.LD, r[1], r[1]));
 
-        p.addInstruction(new CondJump("*skip_tab_access_end", CondJump.Op.JIEQ, r[3], r[2], "*skip_fill"));
+        p.addInstruction(new CondJump("*skip_tab_access_end", CondJump.Op.JINF, r[3], r[2], "*skip_fill"));
         p.addInstruction(new Mem(Mem.Op.ST, r[6], r[1]));
 
         p.addInstruction(new CondJump("*skip_fill", CondJump.Op.JNEQ, r[3], r[0], "*skip_return"));
-        p.addInstruction(new Mem(Mem.Op.LD, r[1], r[1]));
         p.addInstructions(stackRegister(r[1]));
         p.addInstruction(new Ret());
 
         p.addInstruction(new UALi("*skip_return", UALi.Op.ADD, r[1], r[1], 1));
         p.addInstruction(new UALi(UALi.Op.ADD, r[3], r[3], 1));
 
-        // p.addInstruction(new IO(IO.Op.PRINT, r[3]));
-        // p.addInstruction(new IO(IO.Op.PRINT, r[3]));
-        
         p.addInstruction(new JumpCall(JumpCall.Op.JMP, "*begin_loop"));
 
         return p;

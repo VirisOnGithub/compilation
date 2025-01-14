@@ -113,7 +113,7 @@ for i in range(registerCount):
 
 MEM = []
 for i in range(65536):
-    MEM.append(random.randint(0,1000))
+    MEM.append(36280)
 
 # pile sauvegarde adresse de retour
 
@@ -128,7 +128,7 @@ NbCycle = 0
 
 ff = open("prog.asm",'r') 
 MEM_INST = ff.readlines()
-ff.close();
+ff.close()
 
 # constitution de la table des symboles
 PROG = []

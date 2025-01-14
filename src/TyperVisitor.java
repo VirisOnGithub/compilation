@@ -274,22 +274,22 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
             throw new Error("Type error: variable "+parameter+" isn't defined");
         }
         if (this.types.get(parameter) instanceof UnknownType) {
-            throw new Error("Type error: variable's type isn't defined");
+            // throw new Error("Type error: variable's type isn't defined");
         }
         return null;
     }
 
     @Override
     public Type visitAssignment(grammarTCLParser.AssignmentContext ctx) {
-        ParseTree p1 = ctx.getChild(0);
-        Type t1 = visit(p1);
-        ParseTree p2 = ctx.getChild(5);
-        Type t2 = visit(p2);
-        HashMap<UnknownType, Type> constraints = new HashMap<>(t1.unify(t2));
-        ParseTree p3 = ctx.getChild(2);
-        Type t3 = visit(p3);
-        constraints.putAll(t3.unify(new PrimitiveType(Type.Base.INT)));
-        this.bigAssSubstitute(constraints);
+        // ParseTree p1 = ctx.getChild(0);
+        // Type t1 = visit(p1);
+        // ParseTree p2 = ctx.getChild(5);
+        // Type t2 = visit(p2);
+        // HashMap<UnknownType, Type> constraints = new HashMap<>(t1.unify(t2));
+        // ParseTree p3 = ctx.getChild(2);
+        // Type t3 = visit(p3);
+        // constraints.putAll(t3.unify(new PrimitiveType(Type.Base.INT)));
+        // this.bigAssSubstitute(constraints);
         return null;
     }
 
