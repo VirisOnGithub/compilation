@@ -20,8 +20,8 @@ debut_boucle_print_tab: // *loop_start
 	JEQU R5 R3 fin_pour_print_tab
 	XOR R6 R6 R6
 	MODi R7 R5 10
-	JNEQ R7 R6 print_element_tab	# i % 10 != 0
-	JEQU R5 R6 print_element_tab	# i == 0
+	JNEQ R7 R6 print_element	# i % 10 != 0
+	JEQU R5 R6 print_element	# i == 0
 	LD R2 R2
 	XOR R9 R9 R9
 	ADDi R9 R9 1
