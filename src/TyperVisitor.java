@@ -41,8 +41,8 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
                 }
             }
         });
+        System.out.println(this.types);
     }
-
 
     @Override
     public Type visitNegation(grammarTCLParser.NegationContext ctx) {
@@ -281,28 +281,26 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
     @Override
     public Type visitDeclaration(grammarTCLParser.DeclarationContext ctx) {
         System.out.println("visit declaration : type VAR (ASSIGN expr)? SEMICOL");
-        ParseTree p0 = ctx.getChild(0);
-        Type t0 = visit(p0);
-        if (t0 instanceof FunctionType) {
+        ParseTree typeNode = ctx.getChild(0);
+        Type type = visit(typeNode);
+        if (type instanceof FunctionType) {
             throw new Error("Type error: declaration of variable with non-variable type");
         }
+        ParseTree variableNode = ctx.getChild(1);
+        UnknownType variable = new UnknownType(variableNode);
+        HashMap<UnknownType, Type> constraints = new HashMap<>(variable.unify(type));
 
 
         UnknownType a = new UnknownType(ctx.getChild(1));
-        HashMap<UnknownType, Type> constraints = new HashMap<>();
-        constraints.put(a, t0);
+        constraints.put(a, type);
 
         // cas : "auto a = b;"
         if (ctx.getChildCount() == 5){
             ParseTree p3 = ctx.getChild(3);
             Type t3 = visit(p3);
             constraints.putAll(a.unify(t3));
-            System.out.println("!!!!!!" + a.unify(t3));
         }
-        System.out.println("constraints :"+ constraints);
         this.bigAssSubstitute(constraints);
-
-        System.out.println(this.types);
         return null;
     }
 
@@ -326,18 +324,23 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         ParseTree firstVariableNode = ctx.getChild(0);
         UnknownType firstVariable = new UnknownType(firstVariableNode);
         HashMap<UnknownType, Type> constraints = new HashMap<>();
-        if (ctx.getChildCount()==4){
+        int nbChildren = ctx.getChildCount();
+        if (nbChildren == 4) {
             ParseTree expressionNode = ctx.getChild(2);
             Type expression = visit(expressionNode);
             constraints.putAll(firstVariable.unify(expression));
-        }
-        else {
-            ParseTree tabIndexNode = ctx.getChild(2);
-            Type tabIndexType = visit(tabIndexNode);
-            constraints.putAll(tabIndexType.unify(new PrimitiveType(Type.Base.INT)));
-            ParseTree expressionNode = ctx.getChild(5);
+        } else {
+            int nbBrackets = (nbChildren-4)/3;
+            ParseTree expressionNode = ctx.getChild(nbChildren-2);
             Type expression = visit(expressionNode);
-            constraints.putAll(firstVariable.unify(new ArrayType(expression)));
+            for (int i = 0; i < nbBrackets; i++) {
+                int currentBracketIndex = 2+(3*i);
+                ParseTree tabIndexNode = ctx.getChild(currentBracketIndex);
+                Type tabIndexType = visit(tabIndexNode);
+                constraints.putAll(tabIndexType.unify(new PrimitiveType(Type.Base.INT)));
+                expression = new ArrayType(expression);
+            }
+            constraints.putAll(firstVariable.unify(expression));
         }
 
         this.bigAssSubstitute(constraints);
