@@ -89,3 +89,5 @@ nb-configuration.xml
 ##############################
 *.log
 !libraries/*
+
+prog.asm
