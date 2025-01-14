@@ -15,7 +15,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
     private final Map<UnknownType,Type> types; // links each variable with its type
 
     private final int SP = 0; // stackPointer should always be 1 over the last stacked variable, and shouldn't go over 4095
-    private final int TP = 1; // stackPointer for tabs, contains the address of the next free space in memory for tabs
+    private final int TP = 1; // stackPointer for arrays (tabPointer), contains the address of the next free space in memory for arrays
     private Integer nextRegister; // nextRegister should always be a non utilised register number
     private Integer nextLabel; // nextLabel should always be a non utilised label number
 
@@ -752,7 +752,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         program.addInstructions(this.assignRegister(TP, 4096)); // initialize TP, arbitrarily chose 4096 as stack height
         program.addInstruction(new JumpCall(JumpCall.Op.JMP, "*main")); // call main
         program.addInstruction(new Stop()); // STOP
-        program.addInstructions(getPrintProgram()); // a callable assembler function for printing tab (used in visitPrint)
+        program.addInstructions(getPrintProgram()); // a callable assembler function for printing arrays (used in visitPrint)
 
         for (int i = 0; i < nbChilds - 3; i++) { // decl_fct*
             program.addInstructions(visit(ctx.getChild(i)));

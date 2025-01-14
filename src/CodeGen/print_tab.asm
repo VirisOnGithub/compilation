@@ -51,7 +51,7 @@ fin_print_element: // *print_elem_end
 	OUT R8			# on affiche " "
 	ADDi R2 R2 1	# on pointe maintenant sur le prochain élément
 	JMP debut_boucle_print_tab
-fin_pour_print_tab: // *print_end
+fin_pour_print_tab: // *print_tab_end
 	XOR R4 R4 R4
 	ADDi R4 R4 93
 	OUT R4 			# on affiche "]"
