@@ -1,5 +1,5 @@
 int main() {
-    auto[] a = {18, 69};
+    auto[][] a = {{18}, {69}};
     print(a);
     return 0;
 }

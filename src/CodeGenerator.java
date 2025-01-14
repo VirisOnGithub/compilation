@@ -105,6 +105,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
      */
     private void assignVarRegister(String varName, int register) {
         varRegisters.getLast().put(varName, register);
+        System.out.println("R" + register + " : " + varName);
     }
 
     /**
@@ -496,9 +497,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         Type varType = types.get(variable);
         int arrayDepth = getArrayDepth(varType);
         Program p = new Program();
-        // la varialbe est maintenant dans nextRegister - 1
-        p.addInstructions(visit(ctx.VAR()));
-        int varRegister = nextRegister - 1;
+        int varRegister = getVarRegister(ctx.VAR().getText());
         if (arrayDepth == 0) {
             // on affiche la variable de type primitif
             p.addInstruction(new IO(IO.Op.PRINT, varRegister));
@@ -759,6 +758,8 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         Program program = new Program();
         int nbChilds = ctx.getChildCount();
 
+        program.addInstructions(getPrintProgram());
+
         this.enterBlock(); // a first enterBlock is needed for the whole program to work
         program.addInstructions(this.assignRegister(SP, 0)); // initialize SP
         program.addInstructions(this.assignRegister(TP, 4096)); // initialize TP
@@ -776,5 +777,19 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         this.exitBlock();
 
         return program;
+    }
+
+    private Program getPrintProgram() {
+        final int SQUARE_BRACKET_OPEN = 91;
+        final int SQUARE_BRACKET_CLOSE = 93;
+        final int SPACE = 32;
+
+        Program p = new Program();
+
+
+        p.addInstruction(new UALi(src.Asm.UALi.Op.SUB, SP, SP, 1));       
+        p.getInstructions().getFirst().setLabel("print_tab");
+
+        return p;
     }
 }
