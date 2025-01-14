@@ -233,7 +233,8 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         // INT # integer
         // INT : '-'?[0-9]+
         Program p = new Program();
-        p.addInstructions(assignRegister(nextRegister, Integer.parseInt(ctx.getChild(0).getText())));
+        int value = Integer.parseInt(ctx.INT().getText());
+        p.addInstructions(assignRegister(nextRegister, value));
         nextRegister++;
         return p;
     }
@@ -391,18 +392,25 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
     public Program visitTab_initialization(grammarTCLParser.Tab_initializationContext ctx) {
         int varCount = (ctx.getChildCount() - 2) / 2 + 1;
         Program p = new Program();
+        // registre contenant la longueur du tableau
         int lengthRegister = nextRegister;
         nextRegister++;
+        // registre contenant le pointeur sur le tableau (mutable)
         int pointerRegister = nextRegister;
+        nextRegister++;
+        // registre contenant le pointeur sur le tableau (valeur retournée)
+        int fixedPointerRegister = nextRegister;
         nextRegister++;
         // lengthRegister := varCount
         p.addInstructions(assignRegister(lengthRegister, varCount));
         
         // pointerRegister := TP
         p.addInstruction(new Mem(src.Asm.Mem.Op.LD, pointerRegister, TP));
+        // fixedPointerRegister := pointerRegister
+        p.addInstruction(new UALi(src.Asm.UALi.Op.ADD, fixedPointerRegister, pointerRegister, 0));
 
         // on empile la longueur du tableau
-        p.addInstruction(new Mem(Mem.Op.ST, nextRegister, pointerRegister));
+        p.addInstruction(new Mem(Mem.Op.ST, lengthRegister, pointerRegister));
         p.addInstruction(new UALi(src.Asm.UALi.Op.ADD, pointerRegister, pointerRegister, 1));
         
         // le TP pointe maintenant à la fin du tableau
@@ -416,13 +424,16 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
                 // on met à jour le prochain espace vide pour les tableaux
                 p.addInstruction(new UALi(UALi.Op.ADD, TP, TP, 11));
             }
-            // on a la valeur dans nextRegister - 3
+            // on a la valeur dans nextRegister - 1
             p.addInstructions(visit(ctx.getChild(2 * i + 1)));
             // on la rajoute dans le tableau
-            p.addInstruction(new Mem(Mem.Op.ST, nextRegister - 3, pointerRegister));
+            p.addInstruction(new Mem(Mem.Op.ST, nextRegister - 1, pointerRegister));
             // on pointe sur la case suivante
             p.addInstruction(new UALi(UALi.Op.ADD, pointerRegister, pointerRegister, 1));
         }
+        // nextRegister := fixedPointerRegister
+        p.addInstruction(new UALi(src.Asm.UALi.Op.ADD, nextRegister, fixedPointerRegister, 0));
+        nextRegister++;
         return p;
     }
 
@@ -471,9 +482,9 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         int nbChilds = ctx.getChildCount();
         assignVarRegister(ctx.getChild(1).getText(), nextRegister);
         if (nbChilds == 5) {
-            visit(ctx.getChild(3));
-            p.addInstruction(new UAL(UAL.Op.ADD, nextRegister, nextRegister, nextRegister));
-            p.addInstruction(new UAL(UAL.Op.ADD, nextRegister, nextRegister, nextRegister - 1));
+            p.addInstructions(visit(ctx.getChild(3)));
+            // nextRegister := nextRegister - 1
+            p.addInstruction(new UALi(src.Asm.UALi.Op.ADD, nextRegister, nextRegister - 1, 0));
         }
         nextRegister++;
         return p;
@@ -485,19 +496,21 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         Type varType = types.get(variable);
         int arrayDepth = getArrayDepth(varType);
         Program p = new Program();
-        int varRegister = variable.getVarIndex();
+        // la varialbe est maintenant dans nextRegister - 1
+        p.addInstructions(visit(ctx.VAR()));
+        int varRegister = nextRegister - 1;
         if (arrayDepth == 0) {
             // on affiche la variable de type primitif
             p.addInstruction(new IO(IO.Op.PRINT, varRegister));
         } else {
             int depthRegister = this.nextRegister;
+            this.nextRegister++;
             // on empile le tableau puis sa profondeur
             p.addInstructions(stackRegister(varRegister));
             p.addInstructions(assignRegister(depthRegister, arrayDepth));
             p.addInstructions(stackRegister(depthRegister));
             // on appelle la fonction print_tab
             p.addInstruction(new JumpCall(src.Asm.JumpCall.Op.CALL, "print_tab"));
-            this.nextRegister++;
         }
         return p;
     }

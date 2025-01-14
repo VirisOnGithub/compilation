@@ -1,5 +1,5 @@
 int main() {
-    auto a = 1;
-    auto b = a;
+    auto[] a = {18, 69};
+    print(a);
     return 0;
 }
