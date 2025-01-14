@@ -403,7 +403,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         p.addInstructions(assignRegister(lengthRegister, varCount));
         
         // pointerRegister := TP
-        p.addInstruction(new Mem(src.Asm.Mem.Op.LD, pointerRegister, TP));
+        p.addInstruction(new UALi(src.Asm.UALi.Op.ADD, pointerRegister, TP, 0));
         // fixedPointerRegister := pointerRegister
         p.addInstruction(new UALi(src.Asm.UALi.Op.ADD, fixedPointerRegister, pointerRegister, 0));
 
@@ -478,13 +478,14 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
     public Program visitDeclaration(grammarTCLParser.DeclarationContext ctx) {
         Program p = new Program();
         int nbChilds = ctx.getChildCount();
-        assignVarRegister(ctx.getChild(1).getText(), nextRegister);
+        int varRegister = nextRegister;
+        nextRegister++;
+        assignVarRegister(ctx.getChild(1).getText(), varRegister);
         if (nbChilds == 5) {
             p.addInstructions(visit(ctx.getChild(3)));
-            // nextRegister := nextRegister - 1
-            p.addInstruction(new UALi(src.Asm.UALi.Op.ADD, nextRegister, nextRegister - 1, 0));
+            // varRegister := nextRegister - 1
+            p.addInstruction(new UALi(src.Asm.UALi.Op.ADD, varRegister, nextRegister - 1, 0));
         }
-        nextRegister++;
         return p;
     }
 
@@ -750,7 +751,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         this.enterBlock(); // a first enterBlock is needed for the whole program to work
         program.addInstructions(this.assignRegister(SP, 0)); // initialize SP
         program.addInstructions(this.assignRegister(TP, 4096)); // initialize TP, arbitrarily chose 4096 as stack height
-        program.addInstruction(new JumpCall(JumpCall.Op.JMP, "*main")); // call main
+        program.addInstruction(new JumpCall(JumpCall.Op.CALL, "*main")); // call main
         program.addInstruction(new Stop()); // STOP
         program.addInstructions(getPrintProgram()); // a callable assembler function for printing arrays (used in visitPrint)
 
@@ -824,11 +825,13 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         program.addInstruction(new UALi(UALi.Op.SUB, SP, SP, 1));
         program.addInstruction(new Mem(Mem.Op.LD, r[3], SP));
         program.addInstruction(new JumpCall(JumpCall.Op.JMP, "*print_elem_end"));
-        program.addInstruction(new IO("*print_elem", IO.Op.PRINT, r[2]));
+        program.addInstruction(new Mem("*print_elem", Mem.Op.LD, r[0], r[2]));
+        program.addInstruction(new IO(IO.Op.PRINT, r[0]));
         program.addInstruction(new UAL("*print_elem_end", UAL.Op.XOR, r[8], r[8], r[8]));
         program.addInstruction(new UALi(UALi.Op.ADD, r[8], r[8], SPACE));
         program.addInstruction(new IO(IO.Op.OUT, r[8]));
         program.addInstruction(new UALi(UALi.Op.ADD, r[2], r[2], 1));
+        program.addInstruction(new UALi(UALi.Op.ADD, r[5], r[5], 1));
         program.addInstruction(new JumpCall(JumpCall.Op.JMP, "*loop_start"));
         program.addInstruction(new UAL("*loop_end", UAL.Op.XOR, r[4], r[4], r[4]));
         program.addInstruction(new UALi(UALi.Op.ADD, r[4], r[4], SQUARE_BRACKET_CLOSE));
