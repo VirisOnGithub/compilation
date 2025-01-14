@@ -16,7 +16,7 @@ print_tab: // *print_tab
 	OUT R4			# on affiche " "
 	XOR R5 R5 R5	# i = 0
 	ADDi R2 R2 1	# on pointe maintenant sur le premier élément
-	ADDi SP SP 2
+	ADDi SP SP 2	# on bouge le SP tout en haut
 debut_boucle_print_tab: // *loop_start
 	JEQU R5 R3 fin_pour_print_tab
 	XOR R6 R6 R6
