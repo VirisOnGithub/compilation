@@ -2,13 +2,15 @@
 import sys
 import random
 
+registerCount = 666
+
 def checkReg(reg):
     if reg == "":
         return False
     if reg[0]!='R':
         return False
     x = int(reg[1:])
-    if x<0 or x>31:
+    if x<0 or x>registerCount - 1:
         return False
     return True
 
@@ -104,7 +106,7 @@ def decodeIMM(I):
 # 32 registres initialises aleatoirement
 
 REG = []
-for i in range(32):
+for i in range(registerCount):
     REG.append(random.randint(0,1000))
 
 # memoire de 65536 mots inialises aleatoirement
