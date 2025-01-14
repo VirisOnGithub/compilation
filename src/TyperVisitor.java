@@ -87,7 +87,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         Type t = visit(p1);
         HashMap<UnknownType, Type> constraints = new HashMap<>(t.unify(new PrimitiveType(Type.Base.INT)));
         this.bigAssSubstitute(constraints);
-        return null;
+        return new PrimitiveType(Type.Base.INT);
     }
 
     @Override
@@ -277,7 +277,6 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         return array;
     }
 
-    // type VAR (ASSIGN expr)? SEMICOL
     @Override
     public Type visitDeclaration(grammarTCLParser.DeclarationContext ctx) {
         System.out.println("visit declaration : type VAR (ASSIGN expr)? SEMICOL");
@@ -286,10 +285,10 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         if (type instanceof FunctionType) {
             throw new Error("Type error: declaration of variable with non-variable type");
         }
+
         ParseTree variableNode = ctx.getChild(1);
         UnknownType variable = new UnknownType(variableNode);
         HashMap<UnknownType, Type> constraints = new HashMap<>(variable.unify(type));
-
 
         UnknownType a = new UnknownType(ctx.getChild(1));
         constraints.put(a, type);

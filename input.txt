@@ -1,5 +1,6 @@
 int main() {
-    auto a;
-    a[1][0][0]=1;
+    int a;
+    auto b;
+     b=-a;
     return 0;
 }
