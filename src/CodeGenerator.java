@@ -14,8 +14,8 @@ import src.Type.UnknownType;
 public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements grammarTCLVisitor<Program> {
     private final Map<UnknownType,Type> types; // links each variable with its type
 
-    private final int SP = 0; // stackPointer should always be 1 over the last stacked variable
-    private final int TP = 1; // stackPointer for tabs, conatins the address of the next free space in memory for tabs
+    private final int SP = 0; // stackPointer should always be 1 over the last stacked variable, and shouldn't go over 4095
+    private final int TP = 1; // stackPointer for tabs, contains the address of the next free space in memory for tabs
     private Integer nextRegister; // nextRegister should always be a non utilised register number
     private Integer nextLabel; // nextLabel should always be a non utilised label number
 
@@ -30,7 +30,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
      */
     public CodeGenerator(Map<UnknownType, Type> types) {
         this.types = types;
-        this.nextRegister = 1;
+        this.nextRegister = 2;
         this.nextLabel = 0;
         this.varRegisters = new ArrayList<>();
         this.lastAccessibleDepth = new Stack<>();
@@ -62,12 +62,25 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
     }
 
     /**
+     * Macro to assign a value to a register
+     * @param register the register we want to stock the value in
+     * @param value the value we want to stock in the register
+     * @return a program that assign the value to the register
+     */
+    private Program assignRegister(int register, int value) {
+        Program p = new Program();
+        p.addInstruction(new UAL(UAL.Op.XOR, register, register, register));
+        p.addInstruction(new UALi(UALi.Op.ADD, register, register, value));
+        return p;
+    }
+
+    /**
      * Macro to get a new valid non utilised label name
      * @return the label name
      */
     private String getLabel() {
         nextLabel++;
-        return "Label" + (nextLabel-1);
+        return "label" + (nextLabel-1);
     }
 
     /**
@@ -122,19 +135,6 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
      */
     private void exitBlock() {
         varRegisters.removeLast();
-    }
-
-    /**
-     * Assign a value to a register.
-     * register := value
-     * @param register
-     * @param value
-     */
-    private Program assignRegister(int register, int value) {
-        Program p = new Program();
-        p.addInstruction(new UAL(UAL.Op.XOR, register, register, register));
-        p.addInstruction(new UALi(UALi.Op.ADD, register, register, value));
-        return p;
     }
 
     /**
@@ -289,9 +289,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         // BOOL : 'true' | 'false'
         Program p = new Program();
         switch (ctx.getChild(0).getText()) {
-            case "true" -> {
-                p.addInstructions(assignRegister(nextRegister, 1));
-            }
+            case "true" -> p.addInstructions(assignRegister(nextRegister, 1));
             case "false" -> p.addInstruction(new UAL(UAL.Op.XOR, nextRegister, nextRegister, nextRegister));
         }
         nextRegister++;
@@ -736,16 +734,21 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         Program program = new Program();
         int nbChilds = ctx.getChildCount();
 
-        program.addInstruction(new UAL(UAL.Op.XOR, 0, 0, 0)); // initialize SP
+        this.enterBlock(); // a first enterBlock is needed for the whole program to work
+        program.addInstructions(this.assignRegister(SP, 0)); // initialize SP
+        program.addInstructions(this.assignRegister(TP, 4096)); // initialize TP
         program.addInstruction(new JumpCall(JumpCall.Op.JMP, "main")); // call main
         for (int i = 0; i < nbChilds - 3; i++) { // decl_fct*
             program.addInstructions(visit(ctx.getChild(i)));
         }
 
+        this.enterFunction(); // 'main' function declaration
         Program mainCoreProgram = visit(ctx.getChild(nbChilds - 2)); // core_fct
         mainCoreProgram.getInstructions().getFirst().setLabel("main"); // main label
         program.addInstructions(mainCoreProgram);
         program.addInstruction(new Stop()); // STOP
+        this.exitFunction();
+        this.exitBlock();
 
         return program;
     }
