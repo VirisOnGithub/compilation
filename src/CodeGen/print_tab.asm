@@ -44,12 +44,14 @@ debut_boucle_print_tab: // *loop_start
 	LD R3 SP						# on dépile la taille du tableau
 	JMP fin_print_element
 print_element: // *print_elem
-	PRINT R2
+	LD R12 R2
+	PRINT R12
 fin_print_element: // *print_elem_end
 	XOR R8 R8 R8
 	ADDi R8 R8 32
 	OUT R8			# on affiche " "
 	ADDi R2 R2 1	# on pointe maintenant sur le prochain élément
+	ADDi R5 R5 1	# i++
 	JMP debut_boucle_print_tab
 fin_pour_print_tab: // *print_tab_end
 	XOR R4 R4 R4
