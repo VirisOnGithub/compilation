@@ -2,8 +2,8 @@ int main() {
     auto b = {42, 666, 99};
     auto a = {{18}, {69}};
     print(b);
-    print(b);
-    print(b);
     print(a);
+    auto c = b[1];
+    print(c);
     return 0;
 }

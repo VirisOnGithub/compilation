@@ -239,8 +239,17 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
 
     @Override
     public Program visitTab_access(grammarTCLParser.Tab_accessContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitTab_access'");
+        Program p = new Program();
+        p.addInstructions(visit(ctx.getChild(0)));
+        int tabRegister = nextRegister - 1;
+        p.addInstructions(visit(ctx.getChild(2)));
+        int indexRegister = nextRegister - 1;
+        p.addInstructions(stackRegister(tabRegister));
+        p.addInstructions(stackRegister(indexRegister));
+        p.addInstruction(new JumpCall(JumpCall.Op.CALL, "*tab_access"));
+        p.addInstructions(unstackRegister(nextRegister));
+        nextRegister++;
+        return p;
     }
 
     /**
@@ -509,6 +518,10 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
             // on appelle la fonction print_tab
             p.addInstruction(new JumpCall(src.Asm.JumpCall.Op.CALL, "*print_tab"));
         }
+        final int NEW_LINE = 10;
+        p.addInstructions(assignRegister(nextRegister, NEW_LINE));
+        p.addInstruction(new IO(IO.Op.OUT, nextRegister));
+        nextRegister++;
         return p;
     }
 
@@ -755,6 +768,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         program.addInstruction(new JumpCall(JumpCall.Op.CALL, "*main")); // call main
         program.addInstruction(new Stop()); // STOP
         program.addInstructions(getPrintProgram()); // a callable assembler function for printing arrays (used in visitPrint)
+        program.addInstructions(getTabAccessProgram());
 
         for (int i = 0; i < nbChilds - 3; i++) { // decl_fct*
             program.addInstructions(visit(ctx.getChild(i)));
@@ -848,5 +862,54 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         program.addInstruction(new Ret());
 
         return program;
+    }
+
+    private Program getTabAccessProgram() {
+        Program p = new Program();
+
+        int[] r = new int[7];
+        for (int i = 0; i < 7; i++) {
+            r[i] = nextRegister;
+            nextRegister++;
+        }
+
+        p.addInstruction(new UAL("*tab_access", UAL.Op.XOR, r[6], r[6], r[6]));
+        p.addInstructions(unstackRegister(r[0]));
+        p.addInstructions(unstackRegister(r[1]));
+        p.addInstruction(new Mem(Mem.Op.LD, r[2], r[1]));
+        p.addInstruction(new UAL(UAL.Op.XOR, r[3], r[3], r[3]));
+        p.addInstruction(new CondJump(CondJump.Op.JIEQ, r[0], r[2], "*skip_resize"));
+        p.addInstruction(new UALi(UALi.Op.ADD, r[2], r[0], 1));
+        p.addInstruction(new Mem(Mem.Op.ST, r[1], r[2]));
+
+        p.addInstruction(new UALi("*skip_resize", UALi.Op.ADD, r[1], r[1], 1));
+
+        p.addInstruction(new UALi("*begin_loop", UALi.Op.MOD, r[5], r[3], 10));
+        
+        p.addInstruction(new CondJump(CondJump.Op.JNEQ, r[5], r[6], "*skip_tab_access_end"));
+        p.addInstruction(new CondJump(CondJump.Op.JEQU, r[3], r[6], "*skip_tab_access_end"));
+        p.addInstruction(new CondJump(CondJump.Op.JIEQ, r[3], r[2], "*skip_alloc"));
+        p.addInstruction(new Mem(Mem.Op.ST, TP, r[1]));
+        p.addInstruction(new UALi(UALi.Op.ADD, TP, TP, 11));
+
+        p.addInstruction(new Mem("*skip_alloc", Mem.Op.LD, r[1], r[1]));
+
+        p.addInstruction(new CondJump("*skip_tab_access_end", CondJump.Op.JIEQ, r[3], r[2], "*skip_fill"));
+        p.addInstruction(new Mem(Mem.Op.ST, r[6], r[1]));
+
+        p.addInstruction(new CondJump("*skip_fill", CondJump.Op.JNEQ, r[3], r[0], "*skip_return"));
+        p.addInstruction(new Mem(Mem.Op.LD, r[1], r[1]));
+        p.addInstructions(stackRegister(r[1]));
+        p.addInstruction(new Ret());
+
+        p.addInstruction(new UALi("*skip_return", UALi.Op.ADD, r[1], r[1], 1));
+        p.addInstruction(new UALi(UALi.Op.ADD, r[3], r[3], 1));
+
+        // p.addInstruction(new IO(IO.Op.PRINT, r[3]));
+        // p.addInstruction(new IO(IO.Op.PRINT, r[3]));
+        
+        p.addInstruction(new JumpCall(JumpCall.Op.JMP, "*begin_loop"));
+
+        return p;
     }
 }
