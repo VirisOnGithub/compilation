@@ -1,11 +1,6 @@
-int foo (int a, int b) {
-    return 1;
-}
-
 int main() {
     auto a;
-    if (a) {
-        return 1;
-    }
+    auto b;
+    a[b] = 2;
     return 0;
 }

@@ -322,15 +322,24 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitAssignment(grammarTCLParser.AssignmentContext ctx) {
-        System.out.println("visit assignment");
-        ParseTree p1 = ctx.getChild(0);
-        Type t1 = visit(p1);
-        ParseTree p2 = ctx.getChild(5);
-        Type t2 = visit(p2);
-        HashMap<UnknownType, Type> constraints = new HashMap<>(t1.unify(t2));
-        ParseTree p3 = ctx.getChild(2);
-        Type t3 = visit(p3);
-        constraints.putAll(t3.unify(new PrimitiveType(Type.Base.INT)));
+        System.out.println("visit assignment : VAR ('[' expr ']')* ASSIGN expr SEMICOL");
+        ParseTree firstVariableNode = ctx.getChild(0);
+        UnknownType firstVariable = new UnknownType(firstVariableNode);
+        HashMap<UnknownType, Type> constraints = new HashMap<>();
+        if (ctx.getChildCount()==4){
+            ParseTree expressionNode = ctx.getChild(2);
+            Type expression = visit(expressionNode);
+            constraints.putAll(firstVariable.unify(expression));
+        }
+        else {
+            ParseTree tabIndexNode = ctx.getChild(2);
+            Type tabIndexType = visit(tabIndexNode);
+            constraints.putAll(tabIndexType.unify(new PrimitiveType(Type.Base.INT)));
+            ParseTree expressionNode = ctx.getChild(5);
+            Type expression = visit(expressionNode);
+            constraints.putAll(firstVariable.unify(new ArrayType(expression)));
+        }
+
         this.bigAssSubstitute(constraints);
         return null;
     }
@@ -351,13 +360,13 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         ParseTree conditionNode = ctx.getChild(2);
         Type conditionType = visit(conditionNode);
         HashMap<UnknownType, Type> constraints = new HashMap<>(conditionType.unify(new PrimitiveType(Type.Base.BOOL)));
-        this.bigAssSubstitute(constraints);
-        ParseTree ifIsntrNode = ctx.getChild(4);
-        visit(ifIsntrNode);
+        ParseTree ifInstrNode = ctx.getChild(4);
+        visit(ifInstrNode);
         if (ctx.getChildCount() == 7) {
             ParseTree elseInstrNode = ctx.getChild(6);
             visit(elseInstrNode);
         }
+        this.bigAssSubstitute(constraints);
         return null;
     }
 
