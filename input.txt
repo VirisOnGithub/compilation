@@ -1,5 +1,9 @@
 int main() {
-    auto[][] a = {{18}, {69}};
+    auto b = {42, 666, 99};
+    auto a = {{18}, {69}};
+    print(b);
+    print(b);
+    print(b);
     print(a);
     return 0;
 }

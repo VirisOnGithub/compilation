@@ -781,7 +781,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         final int SPACE = 32;
 
         int[] r = new int[12];
-        for (int i = 1; i < 12; i++) {
+        for (int i = 0; i < 12; i++) {
             r[i] = nextRegister;
             nextRegister++;
         }
@@ -792,19 +792,6 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         program.addInstruction(new UALi(UALi.Op.SUB, SP, SP, 1));
         program.addInstruction(new Mem(Mem.Op.LD, r[2], SP));
         program.addInstruction(new Mem(Mem.Op.LD, r[3], r[2]));
-
-        // program.addInstruction(new IO(IO.Op.PRINT, r[2]));
-
-        // program.addInstruction(new UAL(UAL.Op.XOR, r[4], r[4], r[4]));
-        // program.addInstruction(new UALi(UALi.Op.ADD, r[4], r[4], SPACE));
-        // program.addInstruction(new IO(IO.Op.OUT, r[4]));
-
-        // program.addInstruction(new IO(IO.Op.PRINT, r[1]));
-
-        // program.addInstruction(new IO(IO.Op.OUT, r[4]));
-
-        // program.addInstruction(new IO(IO.Op.PRINT, r[3]));
-
         program.addInstruction(new UAL(UAL.Op.XOR, r[4], r[4], r[4]));
         program.addInstruction(new UALi(UALi.Op.ADD, r[4], r[4], SQUARE_BRACKET_OPEN));
         program.addInstruction(new IO(IO.Op.OUT, r[4]));
@@ -814,12 +801,14 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         program.addInstruction(new UAL(UAL.Op.XOR, r[5], r[5], r[5]));
         program.addInstruction(new UALi(UALi.Op.ADD, r[2], r[2], 1));
         program.addInstruction(new UALi(UALi.Op.ADD, SP, SP, 2));
+        
         program.addInstruction(new CondJump("*loop_start", CondJump.Op.JEQU, r[5], r[3], "*loop_end"));
         program.addInstruction(new UAL(UAL.Op.XOR, r[6], r[6], r[6]));
         program.addInstruction(new UALi(UALi.Op.MOD, r[7], r[5], 10));
         program.addInstruction(new CondJump(CondJump.Op.JNEQ, r[7], r[6], "*skip_tab_end"));
         program.addInstruction(new CondJump(CondJump.Op.JEQU, r[5], r[6], "*skip_tab_end"));
         program.addInstruction(new Mem(Mem.Op.LD, r[2], r[2]));
+        
         program.addInstruction(new UAL("*skip_tab_end", UAL.Op.XOR, r[9], r[9], r[9]));
         program.addInstruction(new UALi(UALi.Op.ADD, r[9], r[9], 1));
         program.addInstruction(new CondJump(CondJump.Op.JEQU, r[1], r[9], "*print_elem"));
@@ -831,35 +820,27 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         program.addInstruction(new UALi(UALi.Op.SUB, r[11], r[1], 1));
         program.addInstructions(stackRegister(r[11]));
         program.addInstruction(new JumpCall(JumpCall.Op.CALL, "*print_tab"));
-        //revenir au bon état
-        program.addInstruction(new UALi(UALi.Op.SUB, SP, SP, 10));
+        program.addInstruction(new UALi(UALi.Op.ADD, SP, SP, 1));
         program.addInstruction(new Mem(Mem.Op.LD, r[1], SP));
         program.addInstruction(new UALi(UALi.Op.ADD, r[1], r[1], 1));
         program.addInstruction(new UALi(UALi.Op.SUB, SP, SP, 1));
         program.addInstructions(unstackRegister(r[2]));
         program.addInstructions(unstackRegister(r[3]));
         program.addInstructions(unstackRegister(r[5]));
-
         program.addInstruction(new UAL(UAL.Op.XOR, r[4], r[4], r[4]));
         program.addInstruction(new UALi(UALi.Op.ADD, r[4], r[4], SPACE));
-        
-        program.addInstruction(new IO(IO.Op.PRINT, r[5]));
-        program.addInstruction(new IO(IO.Op.OUT, r[4]));
-        program.addInstruction(new IO(IO.Op.PRINT, r[3]));
-        program.addInstruction(new IO(IO.Op.OUT, r[4]));
-        program.addInstruction(new IO(IO.Op.PRINT, r[2]));
-        program.addInstruction(new IO(IO.Op.OUT, r[4]));
-        program.addInstruction(new IO(IO.Op.PRINT, r[1]));
-
         program.addInstruction(new JumpCall(JumpCall.Op.JMP, "*print_elem_end"));
+        
         program.addInstruction(new Mem("*print_elem", Mem.Op.LD, r[0], r[2]));
         program.addInstruction(new IO(IO.Op.PRINT, r[0]));
+        
         program.addInstruction(new UAL("*print_elem_end", UAL.Op.XOR, r[8], r[8], r[8]));
         program.addInstruction(new UALi(UALi.Op.ADD, r[8], r[8], SPACE));
         program.addInstruction(new IO(IO.Op.OUT, r[8]));
         program.addInstruction(new UALi(UALi.Op.ADD, r[2], r[2], 1));
         program.addInstruction(new UALi(UALi.Op.ADD, r[5], r[5], 1));
         program.addInstruction(new JumpCall(JumpCall.Op.JMP, "*loop_start"));
+        
         program.addInstruction(new UAL("*loop_end", UAL.Op.XOR, r[4], r[4], r[4]));
         program.addInstruction(new UALi(UALi.Op.ADD, r[4], r[4], SQUARE_BRACKET_CLOSE));
         program.addInstruction(new IO(IO.Op.OUT, r[4]));

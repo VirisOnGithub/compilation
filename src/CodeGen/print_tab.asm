@@ -66,5 +66,5 @@ fin_pour_print_tab: // *loop_end
 	XOR R4 R4 R4
 	ADDi R4 R4 93
 	OUT R4 			# on affiche "]"
-	SUBi SP SP 2
+	SUBi SP SP 2	# on rebouge le SP en bas
 	RET
