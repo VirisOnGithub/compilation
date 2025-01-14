@@ -1,5 +1,7 @@
 package src.Type;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -72,31 +74,57 @@ public class UnknownType extends Type {
 
     @Override
     public Map<UnknownType, Type> unify(Type t) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'unify'");
+        HashMap<UnknownType, Type> map = new HashMap<>();
+        if (t instanceof UnknownType && this.equals(t)) {
+            return map;
+        }
+        if (t.contains(this)) {
+            throw new Error("TypeError: cannot unify " + this + " to " + t);
+        }
+        map.put(this, t);
+
+        return map;
     }
+
 
     @Override
     public Type substitute(UnknownType v, Type t) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'substitute'");
+        if (this.equals(v)) {
+            return t;
+        }
+        else return this;
     }
 
     @Override
     public boolean contains(UnknownType v) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'contains'");
+        return this.equals(v);
+    }
+
+    @Override
+    public int hashCode() {
+        if (this.getVarName().equals("#")) {
+            return Objects.hash(varIndex);
+        } else {
+            return Objects.hash(varName);
+        }
+
     }
 
     @Override
     public boolean equals(Object t) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'equals'");
+        if (t instanceof UnknownType tempT) {
+            if (this.getVarName().equals("#") && tempT.getVarName().equals("#")) {
+                return this.getVarIndex() == tempT.getVarIndex();
+            }
+
+            return this.getVarName().equals(tempT.getVarName());
+        } else {
+            return false;
+        }
     }
 
     @Override
     public String toString() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'toString'");
+        return "UnknownType(" + varName + ", " + varIndex + ")";
     }
 }

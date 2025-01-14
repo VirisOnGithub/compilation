@@ -1,4 +1,6 @@
 package src.Type;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 
 public class ArrayType extends Type{
@@ -22,31 +24,45 @@ public class ArrayType extends Type{
 
     @Override
     public Map<UnknownType, Type> unify(Type t) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'unify'");
+        HashMap<UnknownType, Type> map = new HashMap<>();
+        if (t instanceof UnknownType) {
+            if (this.contains((UnknownType) t)) {
+                //cas Tab[X] ~ X
+                throw new Error("TypeError: cannot unify " + this + " to " + t);
+            } else {
+                //cas Tab[X] ~ Y
+                map.put((UnknownType) t, this.tabType);
+                return map;
+            }
+        }
+        if (t instanceof ArrayType) {
+            //cas Tab[X] ~ Tab[X]
+            //cas Tab[X] ~ Tab[Tab[X]]
+            return this.getTabType().unify(((ArrayType) t).getTabType());
+        } else {
+            //cas Tab[X] ~ INT, BOOL, Function...
+            throw new Error("TypeError: cannot unify " + this + " to " + t);
+        }
     }
 
     @Override
     public Type substitute(UnknownType v, Type t) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'substitute'");
+        return new ArrayType(this.tabType.substitute(v, t));
     }
 
     @Override
     public boolean contains(UnknownType v) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'contains'");
+        return tabType.contains(v);
     }
 
     @Override
     public boolean equals(Object t) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'equals'");
+        return t instanceof ArrayType
+                && tabType.equals(((ArrayType)t).tabType);
     }
 
     @Override
     public String toString() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'toString'");
+        return "tab["+tabType.toString()+"]";
     }
 }

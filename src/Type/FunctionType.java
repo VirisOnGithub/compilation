@@ -1,6 +1,8 @@
 package src.Type;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 
 public class FunctionType extends Type {
     private Type returnType;
@@ -43,31 +45,78 @@ public class FunctionType extends Type {
 
     @Override
     public Map<UnknownType, Type> unify(Type t) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'unify'");
+        HashMap<UnknownType, Type> map = new HashMap <> ();
+        if (t instanceof UnknownType){
+            if (this.contains((UnknownType)t)){
+                //cas FUNC(X,Y)->Z ~ X
+                throw new Error("TypeError: cannot unify " + this + " to " + t);
+            }
+            //cas FUNC(X,Y)->Z ~ W
+            UnknownType newreturn = new UnknownType();
+            map.put(newreturn, this.returnType);
+            if (this.argsTypes != null) {
+                for (Type i : this.argsTypes) {
+                    UnknownType temp = new UnknownType();
+                    map.put(temp, i);
+                }
+            }
+            return map;
+        }
+
+        else if (t instanceof FunctionType tempT) {
+            if (this.equals(t)) {
+                return map;
+            }
+            map.putAll(this.returnType.unify(tempT.getReturnType()));
+            if (this.getNbArgs() != tempT.getNbArgs()) {
+                throw new Error("TypeError: cannot unify " + this + " to " + t);
+            }
+            for (int i = 0; i<this.getNbArgs(); i++) {
+                    map.putAll(this.getArgsType(i).unify(tempT.getArgsType(i)));
+            }
+            return map;
+        }
+        throw new Error("TypeError: cannot unify " + this + " to " + t);
     }
 
     @Override
     public Type substitute(UnknownType v, Type t) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'substitute'");
+        ArrayList<Type> newArgsTypes = new ArrayList<>();
+        if (this.getNbArgs()!=0) {
+            for (Type i : this.argsTypes) {
+                newArgsTypes.add(i.substitute(v, t));
+            }
+        }
+        return new FunctionType(returnType.substitute(v, t), newArgsTypes);
     }
 
     @Override
     public boolean contains(UnknownType v) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'contains'");
+        boolean result = false;
+        if (this.argsTypes != null) {
+            for (Type i : this.argsTypes) {
+                result = result || i.contains(v);
+            }
+        }
+        result = result || this.returnType.contains(v);
+        return result;
+
     }
 
     @Override
     public boolean equals(Object t) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'equals'");
+        return t instanceof FunctionType
+                && returnType.equals(((FunctionType) t).returnType)
+                && argsTypes.equals(((FunctionType) t).argsTypes);
     }
 
     @Override
     public String toString() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'toString'");
+        String s = "( ";
+        for (Type i : argsTypes){
+            s += i.toString() + " ";
+        }
+        s += ")->" + returnType.toString();
+        return s;
     }
 }
