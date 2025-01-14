@@ -421,7 +421,6 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         UnknownType functionName = new UnknownType(functionNameNode);
         Type functionReturnType = visit(functionReturnTypeNode);
 
-        int i = 4;
         int childCount = ctx.getChildCount();
         boolean noParameters = childCount == 5;
         if (noParameters) {
@@ -436,8 +435,9 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
             int paramNumber = (childCount - 4)/3;
             for (int k = 0; k < paramNumber; k++) {
-                ParseTree paramTypeNode = ctx.getChild(k);
-                ParseTree paramNameNode = ctx.getChild(k+1);
+                int currentTypeIndex = (3*k)+3;
+                ParseTree paramTypeNode = ctx.getChild(currentTypeIndex);
+                ParseTree paramNameNode = ctx.getChild(currentTypeIndex+1);
                 Type paramType = visit(paramTypeNode);
                 UnknownType paramName = new UnknownType(paramNameNode);
 
