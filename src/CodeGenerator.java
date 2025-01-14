@@ -682,10 +682,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
     @Override
     public Program visitMain(grammarTCLParser.MainContext ctx) {
         // decl_fct* 'int main()' core_fct EOF
-
-        
         Program program = new Program();
-        int nbChilds = ctx.getChildCount();
         
         enterBlock();
         program.addInstruction(new UAL(UAL.Op.XOR, SP, SP, SP)); // initialize SP
