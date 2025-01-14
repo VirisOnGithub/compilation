@@ -309,10 +309,22 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         return p;
     }
 
+    /**
+     * Visit a node that contains a variable call and create the corresponding linear code
+     * @param ctx the context within the parse tree
+     * @return a program containing the linear code
+     */
     @Override
     public Program visitVariable(grammarTCLParser.VariableContext ctx) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitVariable'");
+        // VAR
+
+        Program program = new Program();
+        int varRegister = this.getVarRegister(ctx.getChild(0).getText()); // the register in which VAR is
+
+        program.addInstruction(new UALi(UALi.Op.ADD, nextRegister, varRegister, 0)); // return the variable in R(nextRegister-1)
+        nextRegister++;
+
+        return program;
     }
 
     @Override

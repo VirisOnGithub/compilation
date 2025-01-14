@@ -38,7 +38,6 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitNegation(grammarTCLParser.NegationContext ctx) {
-        System.out.println("visit negation : NOT expr");
         ParseTree p1 = ctx.getChild(1);
         Type t = visit(p1);
         HashMap<UnknownType, Type> constraints = new HashMap<>(t.unify(new PrimitiveType(Type.Base.BOOL)));
@@ -48,7 +47,6 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitComparison(grammarTCLParser.ComparisonContext ctx) {
-        System.out.println("visit comparison : expr op expr");
         ParseTree p1 = ctx.getChild(0);
         Type t1 = visit(p1);
         ParseTree p3 = ctx.getChild(2);
@@ -61,7 +59,6 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitOr(grammarTCLParser.OrContext ctx) {
-        System.out.println("visit or");
         ParseTree p1 = ctx.getChild(0);
         Type t1 = visit(p1);
         ParseTree p3 = ctx.getChild(2);
@@ -74,7 +71,6 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitOpposite(grammarTCLParser.OppositeContext ctx) {
-        System.out.println("visit opposite");
         ParseTree p1 = ctx.getChild(1);
         Type t = visit(p1);
         HashMap<UnknownType, Type> constraints = new HashMap<>(t.unify(new PrimitiveType(Type.Base.INT)));
@@ -84,13 +80,11 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitInteger(grammarTCLParser.IntegerContext ctx) {
-        System.out.println("visit int");
         return new PrimitiveType(Type.Base.INT);
     }
 
     @Override
     public Type visitTab_access(grammarTCLParser.Tab_accessContext ctx) {
-        System.out.println("visit tabAccess");
         ParseTree p0 = ctx.getChild(0);
         Type t0 = visit(p0);
         ParseTree p2 = ctx.getChild(2);
@@ -103,14 +97,12 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitBrackets(grammarTCLParser.BracketsContext ctx) {
-        System.out.println("visit brackets");
         ParseTree p1 = ctx.getChild(1);
         return visit(p1);
     }
 
     @Override
     public Type visitCall(grammarTCLParser.CallContext ctx) {
-        System.out.println("visit call");
         ParseTree p0 = ctx.getChild(0);
         UnknownType key = new UnknownType(p0);
         if (!types.containsKey(key)){
@@ -136,16 +128,12 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitBoolean(grammarTCLParser.BooleanContext ctx) {
-        System.out.println("visit bool");
-
         ParseTree p1 = ctx.getChild(0);
-        System.out.println(p1);
         return new PrimitiveType(Type.Base.BOOL);
     }
 
     @Override
     public Type visitAnd(grammarTCLParser.AndContext ctx) {
-        System.out.println("visit and");
         ParseTree p1 = ctx.getChild(0);
         Type t1 = visit(p1);
         ParseTree p3 = ctx.getChild(2);
@@ -158,23 +146,15 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitVariable(grammarTCLParser.VariableContext ctx) {
-        System.out.println("visit variable");
         Type type;
-
-        System.out.println(this.types);
-
         ParseTree p0 = ctx.getChild(0);
         UnknownType ut = new UnknownType(p0);
-        System.out.println("ut : "+ut);
-
         Type result;
         boolean temp = this.types.containsKey(ut);
         if (temp) {
-            System.out.println("1");
             result = this.types.get(ut);
         }
         else {
-            System.out.println("2");
             result = ut;
             type = new UnknownType();
             this.types.put(ut, type);
@@ -184,8 +164,6 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitMultiplication(grammarTCLParser.MultiplicationContext ctx) {
-        System.out.println("Visit Multiplication");
-
         ParseTree p1 = ctx.getChild(0);
         Type t1 = visit(p1);
         ParseTree p3 = ctx.getChild(2);
@@ -198,7 +176,6 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitEquality(grammarTCLParser.EqualityContext ctx) {
-        System.out.println("visit equality");
         ParseTree p1 = ctx.getChild(0);
         Type t1 = visit(p1);
         ParseTree p3 = ctx.getChild(2);
@@ -210,7 +187,6 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitTab_initialization(grammarTCLParser.Tab_initializationContext ctx) {
-        System.out.println("visit tab initialization");
         HashMap<UnknownType, Type> constraints = new HashMap<>();
         Type type = new UnknownType();
 
@@ -233,7 +209,6 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitAddition(grammarTCLParser.AdditionContext ctx) {
-        System.out.println("visit addition");
         ParseTree p1 = ctx.getChild(0);
         Type t1 = visit(p1);
         ParseTree p3 = ctx.getChild(2);
@@ -246,7 +221,6 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitBase_type(grammarTCLParser.Base_typeContext ctx) {
-        System.out.println("Visit base type : BASE_TYPE");
         ParseTree p0 = ctx.getChild(0);
         if (!Objects.equals(p0.getText(), "int") && !Objects.equals(p0.getText(), "bool") && !Objects.equals(p0.getText(), "auto")) {
             throw new Error("Not a base type.");
@@ -261,7 +235,6 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitTab_type(grammarTCLParser.Tab_typeContext ctx) {
-        System.out.println("Visit tab type");
         ParseTree p0 = ctx.getChild(0);
         Type t = visit(p0);
         ArrayType array = new ArrayType(t);
@@ -272,13 +245,11 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
     // type VAR (ASSIGN expr)? SEMICOL
     @Override
     public Type visitDeclaration(grammarTCLParser.DeclarationContext ctx) {
-        System.out.println("visit declaration : type VAR (ASSIGN expr)? SEMICOL");
         ParseTree p0 = ctx.getChild(0);
         Type t0 = visit(p0);
         if (t0 instanceof FunctionType) {
             throw new Error("Type error: declaration of variable with non-variable type");
         }
-
 
         UnknownType a = new UnknownType(ctx.getChild(1));
         HashMap<UnknownType, Type> constraints = new HashMap<>();
@@ -289,18 +260,14 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
             ParseTree p3 = ctx.getChild(3);
             Type t3 = visit(p3);
             constraints.putAll(a.unify(t3));
-            System.out.println("!!!!!!" + a.unify(t3));
         }
-        System.out.println("constraints :"+ constraints);
         this.bigAssSubstitute(constraints);
 
-        System.out.println(this.types);
         return null;
     }
 
     @Override
     public Type visitPrint(grammarTCLParser.PrintContext ctx) {
-        System.out.println("visit print : PRINT '(' VAR ')' SEMICOL ");
         UnknownType parameter = new UnknownType(ctx.getChild(2));
 
         if (!(this.types.containsKey(parameter))) {
@@ -314,7 +281,6 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitAssignment(grammarTCLParser.AssignmentContext ctx) {
-        System.out.println("visit assignment");
         ParseTree p1 = ctx.getChild(0);
         Type t1 = visit(p1);
         ParseTree p2 = ctx.getChild(5);
@@ -329,7 +295,6 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitBlock(grammarTCLParser.BlockContext ctx) {
-        System.out.println("visit block");
         for (int i = 1; i < ctx.getChildCount() - 1; i++) {
             ParseTree p = ctx.getChild(i);
             visit(p);
@@ -339,7 +304,6 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitIf(grammarTCLParser.IfContext ctx) {
-        System.out.println("visit if : IF '(' expr ')' instr (ELSE instr)?");
         ParseTree conditionNode = ctx.getChild(2);
         Type conditionType = visit(conditionNode);
         HashMap<UnknownType, Type> constraints = new HashMap<>(conditionType.unify(new PrimitiveType(Type.Base.BOOL)));
@@ -355,7 +319,6 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitWhile(grammarTCLParser.WhileContext ctx) {
-        System.out.println("visit while");
         ParseTree p1 = ctx.getChild(1);
         Type t1 = visit(p1);
         HashMap<UnknownType, Type> constraints = new HashMap<>(t1.unify(new PrimitiveType(Type.Base.BOOL)));
@@ -367,7 +330,6 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitFor(grammarTCLParser.ForContext ctx) {
-        System.out.println("visit for");
         ParseTree p1 = ctx.getChild(2);
         visit(p1);
         ParseTree p2 = ctx.getChild(3);
@@ -383,7 +345,6 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitReturn(grammarTCLParser.ReturnContext ctx) {
-        System.out.println("visit return");
         ParseTree p1 = ctx.getChild(1);
         visit(p1);
         return null;
@@ -391,7 +352,6 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitCore_fct(grammarTCLParser.Core_fctContext ctx) {
-        System.out.println("Visit core function");
         int nbChildrenWithoutInstr = 5; // '{' instr* RETURN expr SEMICOL '}';
         int nbChildren = ctx.getChildCount();
         for (int i = 1; i <= nbChildren - nbChildrenWithoutInstr; i++){
@@ -406,7 +366,6 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitDecl_fct(grammarTCLParser.Decl_fctContext ctx) {
-        System.out.println("Visit declare function : type VAR '(' (type VAR (',' type VAR)*)? ')' core_fct;");
         ParseTree functionReturnTypeNode = ctx.getChild(0);
         ParseTree functionNameNode       = ctx.getChild(1);
 
@@ -440,8 +399,6 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitMain(grammarTCLParser.MainContext ctx) {
-        System.out.println("visit main : decl_fct* 'int main()' core_fct EOF;");
-
         UnknownType main = new UnknownType("main", 12);
         Type mainType = new FunctionType(new PrimitiveType(Type.Base.INT), new ArrayList<>());
         this.types.put(main, mainType);
