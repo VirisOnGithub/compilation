@@ -5,9 +5,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
 
 import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.TerminalNode;
 import src.Type.*;
 
 public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements grammarTCLVisitor<Type> {
@@ -314,8 +316,8 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         if (!(this.types.containsKey(parameter))) {
             throw new Error("Type error: variable "+parameter+" isn't defined");
         }
-        if (this.types.get(parameter) instanceof UnknownType) {
-            throw new Error("Type error: variable's type isn't defined");
+        if (this.types.get(parameter) instanceof FunctionType) {
+            throw new Error("Type error: function type cannot be printed");
         }
         return null;
     }
@@ -357,6 +359,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
     @Override
     public Type visitIf(grammarTCLParser.IfContext ctx) {
         System.out.println("visit if : IF '(' expr ')' instr (ELSE instr)?");
+
         ParseTree conditionNode = ctx.getChild(2);
         Type conditionType = visit(conditionNode);
         HashMap<UnknownType, Type> constraints = new HashMap<>(conditionType.unify(new PrimitiveType(Type.Base.BOOL)));
@@ -400,9 +403,9 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @Override
     public Type visitReturn(grammarTCLParser.ReturnContext ctx) {
-        System.out.println("visit return");
-        ParseTree p1 = ctx.getChild(1);
-        visit(p1);
+        System.out.println("visit return : RETURN expr SEMICOL ");
+        ParseTree expr = ctx.getChild(1);
+        Type exprType = visit(expr);
         return null;
     }
 

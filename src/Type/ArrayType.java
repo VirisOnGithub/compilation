@@ -1,9 +1,9 @@
 package src.Type;
-import java.util.ArrayList;
+
 import java.util.HashMap;
 import java.util.Map;
 
-public class ArrayType extends Type{
+public class ArrayType extends Type {
     private Type tabType;
     
     /**

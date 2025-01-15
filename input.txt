@@ -1,6 +1,9 @@
 int main() {
-    auto a;
-    auto b;
-    a[b] = 2;
+    auto a = 1;
+    b = true;
+    auto c;
+    if (b) {
+        print(c);
+    }
     return 0;
 }
