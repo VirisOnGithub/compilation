@@ -55,31 +55,22 @@ public class ControlGraph extends OrientedGraph<Instruction> {
 
         // Ajout des arêtes pour les sauts conditionnels et les appels de fonction après avoir construit le graphe
         for (Instruction instruction : program.getInstructions()) {
-            if (instruction instanceof CondJump) {
-                CondJump condJump = (CondJump) instruction;
-                String targetLabel = condJump.getAddress();          
-                if (labelMap.containsKey(targetLabel)) {
-                    this.addEdge(condJump, labelMap.get(targetLabel));
-                }
-            }else if(instruction instanceof JumpCall){
-                JumpCall jumpCall = (JumpCall) instruction;
-                String targetLabel = jumpCall.getAddress();          
-                if (labelMap.containsKey(targetLabel)) {
-                    this.addEdge(jumpCall, labelMap.get(targetLabel));
-                }
-            }
-        }
+            String targetLabel = null;
+
+         if (instruction instanceof CondJump) {
+           CondJump condJump = (CondJump) instruction;
+           targetLabel = condJump.getAddress();
+    } else if (instruction instanceof JumpCall) {
+           JumpCall jumpCall = (JumpCall) instruction;
+          targetLabel = jumpCall.getAddress();
     }
 
-    /**
-     * Extrait le label cible d'une instruction de saut conditionnel ou d'appel de fonction
-     * @param instruction l'instruction de saut conditionnel ou d'appel de fonction
-     * @return le label cible
-     */
-    private String getTargetLabel(Instruction instruction) {
-        String[] parts = instruction.getName().split(" ");
-        return parts[parts.length - 1];
-    }
+             if (targetLabel != null && labelMap.containsKey(targetLabel)) {
+                 this.addEdge(instruction, labelMap.get(targetLabel));
+     }
+            }
+}
+
 
     /**
      * Retourne l'ensemble des sommets du graphe 
