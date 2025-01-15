@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
 
@@ -12,9 +13,13 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import src.Type.*;
 
+import javax.naming.Context;
+
 public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements grammarTCLVisitor<Type> {
 
     private final Map<UnknownType,Type> types = new HashMap<>();
+    private final VarStack<Type> stack = new VarStack<>();
+    private final CallStack callStack = new CallStack();
 
     public Map<UnknownType, Type> getTypes() {
         return types;
@@ -44,6 +49,24 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
             }
         });
         System.out.println(this.types);
+    }
+
+    private void throwCustomError(String message) {
+        System.err.println(message);
+        System.exit(1);
+    }
+
+    private int getLine(ParserRuleContext ctx) {
+        if (ctx instanceof TerminalNode) {
+            return ((TerminalNode)ctx).getSymbol().getLine();
+        } else {
+            if (ctx != null) {
+                return ctx.getStart().getLine();
+            }
+            else {
+                throw new Error("Illegal UnknownType construction");
+            }
+        }
     }
 
     @Override
@@ -124,7 +147,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         ParseTree p0 = ctx.getChild(0);
         UnknownType key = new UnknownType(p0);
         if (!types.containsKey(key)){
-            throw new RuntimeException("call does not exist");
+            throwCustomError("Call does not exist at line " + getLine(ctx));
         }
         Type t = types.get(key);
         ArrayList<Type> arguments = new ArrayList<>();
@@ -256,7 +279,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         System.out.println("Visit base type : BASE_TYPE");
         ParseTree p0 = ctx.getChild(0);
         if (!Objects.equals(p0.getText(), "int") && !Objects.equals(p0.getText(), "bool") && !Objects.equals(p0.getText(), "auto")) {
-            throw new Error("Not a base type.");
+            throwCustomError("The supplied type is not a base type\nType provided : " + p0.getText() + "\nat line " + getLine(ctx));
         }
         return switch (p0.getText()) {
             case "int"  -> new PrimitiveType(Type.Base.INT);
@@ -282,7 +305,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         ParseTree typeNode = ctx.getChild(0);
         Type type = visit(typeNode);
         if (type instanceof FunctionType) {
-            throw new Error("Type error: declaration of variable with non-variable type");
+            throwCustomError("Type error: function type cannot be declared at line " + getLine(ctx));
         }
 
         ParseTree variableNode = ctx.getChild(1);
@@ -306,10 +329,10 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         UnknownType parameter = new UnknownType(ctx.getChild(2));
 
         if (!(this.types.containsKey(parameter))) {
-            throw new Error("Type error: variable "+parameter+" isn't defined");
+            throwCustomError("Type error: variable "+parameter+" isn't defined at line " + getLine(ctx));
         }
         if (this.types.get(parameter) instanceof FunctionType) {
-            throw new Error("Type error: function type cannot be printed");
+            throwCustomError("Type error: function type cannot be printed at line " + getLine(ctx));
         }
         return null;
     }
