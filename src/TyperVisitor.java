@@ -288,14 +288,13 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         ParseTree variableNode = ctx.getChild(1);
         UnknownType variable = new UnknownType(variableNode);
         HashMap<UnknownType, Type> constraints = new HashMap<>(variable.unify(type));
-        UnknownType a = new UnknownType(ctx.getChild(1));
-        constraints.put(a, type);
 
         // cas : "auto a = b;"
         if (ctx.getChildCount() == 5){
-            ParseTree p3 = ctx.getChild(3);
-            Type t3 = visit(p3);
-            constraints.putAll(a.unify(t3));
+            ParseTree exprNode = ctx.getChild(3);
+            UnknownType expr = new UnknownType(exprNode);
+            Type exprType = visit(exprNode);
+            constraints.putAll(type.unify(exprType));
         }
         this.bigAssSubstitute(constraints);
         return null;
