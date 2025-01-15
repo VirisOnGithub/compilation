@@ -1,6 +1,9 @@
 int main() {
-    int a;
-    auto b;
-     b=-a;
+    auto a = 10;
+    auto b = 0;
+    while (a>b) {
+        auto d = true;
+        b = b + 1;
+    }
     return 0;
 }

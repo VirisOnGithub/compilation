@@ -138,6 +138,6 @@ public class Main {
 
 		visitor.visit(tree);
 
-		System.out.println("Types finales"+ visitor.getTypes());
+		System.out.println("Final Types "+ visitor.getTypes());
 	}
 }
