@@ -15,6 +15,8 @@ import src.Type.*;
 public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements grammarTCLVisitor<Type> {
 
     private final Map<UnknownType,Type> types = new HashMap<>();
+    private final VarStack<Type> stack = new VarStack<>();
+    private final CallStack callStack = new CallStack();
 
     public Map<UnknownType, Type> getTypes() {
         return types;
