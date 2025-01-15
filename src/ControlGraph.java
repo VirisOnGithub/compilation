@@ -97,7 +97,7 @@ public class ControlGraph extends OrientedGraph<Instruction> {
         Instruction instr1 = new Instruction("L1", "XOR R1000 R1000 R1000") {};
         Instruction instr2 = new Instruction("L2", "SUBi R1000 R1000 1") {};
         Instruction instr3 = new Instruction("L3", "PRINT R1001") {};
-        Instruction instr4 = new Instruction("L4", "JEQU R1000 R1001 LABEL2") {};
+        Instruction instr4 = new CondJump("L4", CondJump.Op.JEQU, 1000, 1001, "LABEL2") {};
         Instruction instr5 = new Instruction("L5", "JINF R1000 R1001 L6") {};
         Instruction instr6 = new Instruction("L6", "JSUP R1000 R1001 L7") {};
         Instruction instr7 = new Instruction("L7", "CALL FUNC1") {};
