@@ -2,7 +2,10 @@ package src;
 
 import src.Graph.OrientedGraph;
 import src.Asm.Program;
+import src.Asm.CondJump;
 import src.Asm.Instruction;
+import src.Asm.JumpCall;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.HashSet;
@@ -42,31 +45,13 @@ public class ControlGraph extends OrientedGraph<Instruction> {
 
         // Ajout des arêtes pour les sauts conditionnels et les appels de fonction après avoir construit le graphe
         for (Instruction instruction : program.getInstructions()) {
-            if (isConditionalJump(instruction) || isCall(instruction)) {
+            if (instruction instanceof CondJump || instruction instanceof JumpCall) {
                 String targetLabel = getTargetLabel(instruction);
                 if (labelMap.containsKey(targetLabel)) {
                     this.addEdge(instruction, labelMap.get(targetLabel));
                 }
             }
         }
-    }
-
-    /**
-     * Vérifie si une instruction est un saut conditionnel
-     * @param instruction l'instruction à vérifier
-     * @return true si l'instruction est un saut conditionnel, false sinon
-     */
-    private boolean isConditionalJump(Instruction instruction) {
-        return instruction.getName().startsWith("JEQU") || instruction.getName().startsWith("JINF") || instruction.getName().startsWith("JSUP") || instruction.getName().startsWith("JMP");
-    }
-
-    /**
-     * Vérifie si une instruction est un appel de fonction
-     * @param instruction l'instruction à vérifier
-     * @return true si l'instruction est un appel de fonction, false sinon
-     */
-    private boolean isCall(Instruction instruction) {
-        return instruction.getName().startsWith("CALL");
     }
 
     /**
