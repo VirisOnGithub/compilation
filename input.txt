@@ -12,7 +12,7 @@ int main() {
         print(b);
     a[1] = {8, 58, 75, 89};
         print(a);
-    a[0][2] = 69;
+    a[1][2] = 69;
         print(a);
     c = a[0];
         print(c);
