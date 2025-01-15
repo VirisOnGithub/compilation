@@ -345,7 +345,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
     @Override
     public Type visitBlock(grammarTCLParser.BlockContext ctx) {
         System.out.println("visit block");
-        for (int i = 1; i < ctx.getChildCount() - 2; i++) {
+        for (int i = 1; i < ctx.getChildCount() - 1; i++) {
             ParseTree instruction = ctx.getChild(i);
             visit(instruction);
         }
