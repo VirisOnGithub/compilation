@@ -45,6 +45,15 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
     }
 
     private void leaveFunction() {
+        System.out.println("Contraintes :");
+		
+        for (var constraint : this.constraints.getLast().entrySet()) {
+            System.out.println(constraint.getKey() + " ~ " + constraint.getValue());
+        }
+
+        System.out.println("\n\n\n");
+
+        this.bigAssSubstitute();
         this.varStack.leaveFunction();
         this.constraints.pop();
     }
@@ -67,31 +76,38 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
     }
 
     private void bigAssSubstitute() {
-        this.constraints.getLast().forEach((variable, type) -> {
-            if (this.types.containsKey(variable)) {
-                Type newType = variable.substitute(variable, type);
-                Type oldType = this.types.get(variable);
-                if (oldType instanceof UnknownType) {
-                    this.types.put(variable, newType);
-                    // System.out.println("New type !");
-                    // this.typeStack.updateVar(variable.getVarName(), type);
-                }
-                if (type instanceof UnknownType ut) {
-                    this.types.put(ut, oldType);
-                }
-            } else {
-                if (this.types.containsValue(variable)) {
-                    this.types.forEach((key, value) -> {
-                        if (value.contains(variable)) {
-                            this.types.put(key, value.substitute(variable, type));
-                        }
-                    });
-                } else {
-                    this.types.put(variable, type);
-                }
-            }
-        });
-        System.out.println(this.types);
+        for (var cons : this.constraints) {
+            cons.forEach((variable, type) -> {
+                assert(this.types.containsKey(variable));
+
+                variable.substitute(variable, type);
+            });
+        // cons.forEach((variable, type) -> {
+        //     if (this.types.containsKey(variable)) {
+        //         Type newType = variable.substitute(variable, type);
+        //         Type oldType = this.types.get(variable);
+        //         if (oldType instanceof UnknownType) {
+        //             this.types.put(variable, newType);
+        //             // System.out.println("New type !");
+        //             // this.typeStack.updateVar(variable.getVarName(), type);
+        //         }
+        //         if (type instanceof UnknownType ut) {
+        //             this.types.put(ut, oldType);
+        //         }
+        //     } else {
+        //         if (this.types.containsValue(variable)) {
+        //             this.types.forEach((key, value) -> {
+        //                 if (value.contains(variable)) {
+        //                     this.types.put(key, value.substitute(variable, type));
+        //                 }
+        //             });
+        //         } else {
+        //             this.types.put(variable, type);
+        //         }
+        //     }
+        // });
+    }
+        // System.out.println(this.types);
     }
 
     private void throwCustomError(String message) {
@@ -361,7 +377,6 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
             throwCustomError("Type error: variable " + parameter + " isn't defined at line " + getLine(ctx));
         }
 
-        // TODO: forcer la substitution
         this.bigAssSubstitute();
 
         Type varType = getVarType(varName);
@@ -524,7 +539,10 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
                 UnknownType paramName = new UnknownType(paramNameNode);
 
                 this.varStack.assignVar(paramNameNode.getText(), paramName);
-
+                
+                // TODO: remove
+                addConstraint(paramName.unify(paramType));
+                
                 this.types.put(paramName, paramType);
                 paramList.add(paramType);
             }
@@ -571,6 +589,9 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         visit(core_fctNode);
         
         leaveFunction();
+
+
+        
 
         return null;
     }
