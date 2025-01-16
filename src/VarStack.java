@@ -70,9 +70,10 @@ public class VarStack<T> {
 	 * @apiNote Should be called when a variable is declared
 	 * @param varName the name of the variable
 	 * @param value the value we want to map the variable to
+	 * @return true if the var did not exist
 	 */
-	public void assignVar(String varName, T value) {
-		this.stack.getLast().put(varName, value);
+	public boolean assignVar(String varName, T value) {
+		return this.stack.getLast().put(varName, value) == null;
 	}
 
 	public boolean varExists(String varName) {
