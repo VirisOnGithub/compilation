@@ -59,9 +59,9 @@ public class TyperError extends RuntimeException {
         int lineIndex = ctx.start.getLine();
         int columnIndex = ctx.start.getCharPositionInLine();
         String line = fileContent.split("\n")[lineIndex - 1];
-        System.err.println("Error line "
+        System.err.println("TypeError: line "
                 + lineIndex + " column "
-                + columnIndex + " : " + this.getMessage()
+                + columnIndex + ": " + this.getMessage()
                 + "\n" + line
                 + "\n" + " ".repeat(columnIndex + offset) + "^"
         );
