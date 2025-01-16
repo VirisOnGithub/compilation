@@ -151,7 +151,12 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
             }
         }
         FunctionType f = new FunctionType(new UnknownType(), arguments);
-        HashMap<UnknownType, Type> constraints = new HashMap<>(t.unify(f));
+        HashMap<UnknownType, Type> constraints;
+        try {
+            constraints = new HashMap<>(t.unify(f));
+        } catch (Error e) {
+            throw new TyperError(e.getMessage(), ctx);
+        }
         this.substituteTypes(constraints);
         return null;
     }
@@ -452,7 +457,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         System.out.println("visit return : RETURN expr SEMICOL ");
         ParseTree expr = ctx.getChild(1);
         Type exprType = visit(expr);
-        return null;
+        return exprType;
     }
 
     @Override
@@ -465,9 +470,8 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
             visit(p);
         }
         int returnExprIndex = nbChildren - 3;
-        ParseTree p = ctx.getChild(returnExprIndex);
-        visit(p);
-        return null;
+        ParseTree returnExpr = ctx.getChild(returnExprIndex);
+        return visit(returnExpr);
     }
 
     @Override
@@ -486,7 +490,15 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
             int core_fctIndex = 4;
             ParseTree core_fctNode = ctx.getChild(core_fctIndex);
-            visit(core_fctNode);
+            Type core_fctType = visit(core_fctNode);
+
+            HashMap<UnknownType, Type> constraints;
+            try {
+                constraints = new HashMap<>(functionReturnType.unify(core_fctType));
+            } catch (Error e) {
+                throw new TyperError(e.getMessage(), ctx);
+            }
+            this.substituteTypes(constraints);
 
         } else {
             ArrayList<Type> paramList = new ArrayList<>();
