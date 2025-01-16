@@ -1,9 +1,6 @@
 package src;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Stack;
 
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
 import src.Asm.*;
@@ -11,16 +8,20 @@ import src.Type.ArrayType;
 import src.Type.Type;
 import src.Type.UnknownType;
 
+/**
+ * A class that generates linear code from a valid TCL program tree, called like this: program = codeGenerator.visit(tree).
+ * The type analysis must have already been done.
+ */
 public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements grammarTCLVisitor<Program> {
     private final Map<UnknownType,Type> types; // links each variable with its type
 
     private final int SP = 0; // stackPointer should always be 1 over the last stacked variable, and shouldn't go over 4095
     private final int TP = 1; // stackPointer for arrays (tabPointer), contains the address of the next free space in memory for arrays
+
     private Integer nextRegister; // nextRegister should always be a non utilised register number
     private Integer nextLabel; // nextLabel should always be a non utilised label number
 
-    private final ArrayList<Map<String, Integer>> varRegisters; // links each variable with its register number, for each depth
-    private final Stack<Integer> lastAccessibleDepth; // stack top is the furthest that we can search in varRegisters
+    private final VarStack<Integer> varRegisters; // links each variable with its register number, for each depth
 
     /**
      * Constructor
@@ -30,8 +31,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         this.types = types;
         this.nextRegister = 2;
         this.nextLabel = 0;
-        this.varRegisters = new ArrayList<>();
-        this.lastAccessibleDepth = new Stack<>();
+        this.varRegisters = new VarStack<>();
     }
 
     /**
@@ -79,62 +79,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         nextLabel++;
         return "*label" + (nextLabel-1);
     }
-
-    /**
-     * Get the number of the register were a given variable is stocked in
-     * @param varName the name of the variable we try to find the register for
-     * @return the number of the register where varName is, RuntimeException else
-     */
-    private int getVarRegister(String varName) {
-        for (int depth = varRegisters.size() - 1; depth >= lastAccessibleDepth.getLast(); depth--) { // we unstack all the accessible maps in varRegisters
-            var varMap = varRegisters.get(depth);
-            if (varMap.containsKey(varName)) { // we stop at the first corresponding variable name
-                return varMap.get(varName);
-            }
-        }
-        throw new RuntimeException("The variable " + varName + " has not been assigned"); // if none was found
-    }
-
-    /**
-     * Set the register number of a given variable
-     * @param varName the name of the variable
-     * @param register the register we want to put the variable in
-     */
-    private void assignVarRegister(String varName, int register) {
-        varRegisters.getLast().put(varName, register);
-        System.out.println("R" + register + " : " + varName);
-    }
-
-    /**
-     * Needs to be called just before entering a function
-     */
-    private void enterFunction() {
-        lastAccessibleDepth.add(varRegisters.size());
-        this.enterBlock();
-    }
-
-    /**
-     * Needs to be called just after leaving a function
-     */
-    private void exitFunction() {
-        this.exitBlock();
-        lastAccessibleDepth.pop();
-    }
-
-    /**
-     * Needs to be called just before entering a {} block
-     */
-    private void enterBlock() {
-        varRegisters.add(new HashMap<>());
-    }
-
-    /**
-     * Needs to be called just after leaving a {} block
-     */
-    private void exitBlock() {
-        varRegisters.removeLast();
-    }
-
+    
     /**
      * Returns the depth (or dimension) of a given variable
      * @param type the type we want to know the depth of
@@ -333,7 +278,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         // VAR
 
         Program program = new Program();
-        int varRegister = this.getVarRegister(ctx.getChild(0).getText()); // the register in which VAR is
+        int varRegister = this.varRegisters.getVar(ctx.getChild(0).getText()); // the register in which VAR is
 
         program.addInstruction(new UALi(UALi.Op.ADD, nextRegister, varRegister, 0)); // return the variable in R(nextRegister-1)
         nextRegister++;
@@ -495,7 +440,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         int nbChilds = ctx.getChildCount();
         int varRegister = nextRegister;
         nextRegister++;
-        assignVarRegister(ctx.getChild(1).getText(), varRegister);
+        this.varRegisters.assignVar(ctx.getChild(1).getText(), varRegister);
         if (nbChilds == 5) {
             p.addInstructions(visit(ctx.getChild(3)));
             // varRegister := nextRegister - 1
@@ -510,7 +455,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         Type varType = types.get(variable);
         int arrayDepth = getArrayDepth(varType);
         Program p = new Program();
-        int varRegister = getVarRegister(ctx.VAR().getText());
+        int varRegister = this.varRegisters.getVar(ctx.VAR().getText());
         if (arrayDepth == 0) {
             // on affiche la variable de type primitif
             p.addInstruction(new IO(IO.Op.PRINT, varRegister));
@@ -538,7 +483,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         p.addInstructions(visit(ctx.getChild(ctx.getChildCount() - 2)));
         int rightRegister = nextRegister - 1;
 
-        int varRegister = getVarRegister(ctx.VAR().getText());
+        int varRegister = this.varRegisters.getVar(ctx.VAR().getText());
 
         int bracketsCount = (ctx.getChildCount() - 4) / 3;
         int leftRegister = nextRegister;
@@ -583,11 +528,11 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         Program program = new Program();
         int nbInstr = ctx.getChildCount() - 2;
 
-        this.enterBlock(); // '{'
+        this.varRegisters.enterBlock(); // '{'
         for (int i = 0; i < nbInstr; i++) { // instr+
             program.addInstructions(visit(ctx.getChild(i + 1)));
         }
-        this.exitBlock(); // '}'
+        this.varRegisters.leaveBlock(); // '}'
 
         return program;
     }
@@ -619,16 +564,16 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         nextRegister++;
         program.addInstruction(new CondJump(CondJump.Op.JNEQ, nextRegister-2, nextRegister-1, labelIf)); // test if condition is true (!=0) => jump if
         if (ctx.getChildCount() == 7) { // if there is an else
-            this.enterBlock(); // {
+            this.varRegisters.enterBlock(); // {
             program.addInstructions(visit(ctx.getChild(7))); // else instructions
-            this.exitBlock(); // }
+            this.varRegisters.leaveBlock(); // }
         }
         program.addInstruction(new JumpCall(JumpCall.Op.JMP, labelEnd)); // JMP end
 
         Program ifInstrProgram = new Program();
-        this.enterBlock(); // {
+        this.varRegisters.enterBlock(); // {
         ifInstrProgram.addInstructions(visit(ctx.getChild(5))); // if instructions
-        this.exitBlock(); // }
+        this.varRegisters.leaveBlock(); // }
         ifInstrProgram.getInstructions().getFirst().setLabel(labelIf);
         program.addInstructions(ifInstrProgram);
 
@@ -666,9 +611,9 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         program.addInstruction(new UAL(UAL.Op.XOR, nextRegister, nextRegister, nextRegister)); // set new register to 0 for later test
         nextRegister++;
         program.addInstruction(new CondJump(CondJump.Op.JEQU, nextRegister-2, nextRegister-1, labelEndLoop)); // test if condition is false => stop looping
-        this.enterBlock(); // start of the loop {
+        this.varRegisters.enterBlock(); // start of the loop {
         program.addInstructions(visit(ctx.getChild(4))); // instructions inside the loop
-        this.exitBlock(); // } end of the loop
+        this.varRegisters.leaveBlock(); // } end of the loop
         program.addInstruction(new JumpCall(JumpCall.Op.JMP, labelStartLoop)); // go back to the start of the loop
 
         Program endLoopProgram = new Program();
@@ -702,7 +647,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         String labelStartLoop = this.getLabel();
         String labelEndLoop = this.getLabel();
 
-        this.enterBlock(); // needed because the for can declare variables locally (for (int i = 0;...)
+        this.varRegisters.enterBlock(); // needed because the for can declare variables locally (for (int i = 0;...)
         program.addInstructions(visit(ctx.getChild(2))); // initialization
         Program condLoopProgram = visit(ctx.getChild(4)); // loop condition
         condLoopProgram.getInstructions().getFirst().setLabel(labelStartLoop); // set looping label
@@ -710,9 +655,9 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         program.addInstruction(new UAL(UAL.Op.XOR, nextRegister, nextRegister, nextRegister)); // set new register to 0 for later test
         nextRegister++;
         program.addInstruction(new CondJump(CondJump.Op.JEQU, nextRegister-2, nextRegister-1, labelEndLoop)); // test if condition is false => stop looping
-        this.enterBlock(); // start of the loop {
+        this.varRegisters.enterBlock(); // start of the loop {
         program.addInstructions(visit(ctx.getChild(8))); // instructions inside the loop
-        this.exitBlock(); // } end of the loop
+        this.varRegisters.leaveBlock(); // } end of the loop
         program.addInstructions(visit(ctx.getChild(6))); // iteration
         program.addInstruction(new JumpCall(JumpCall.Op.JMP, labelStartLoop)); // go back to the start of the loop
 
@@ -720,7 +665,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         endLoopProgram.addInstruction(new UALi(UALi.Op.ADD, nextRegister-1, nextRegister-1, 0)); // dummy instruction to set end loop label
         endLoopProgram.getInstructions().getFirst().setLabel(labelEndLoop);
         program.addInstructions(endLoopProgram);
-        this.exitBlock();
+        this.varRegisters.leaveBlock();
 
         return program;
     }
@@ -776,15 +721,15 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         int nbChilds = ctx.getChildCount();
         int nbArguments = (nbChilds == 5 ? 0 : (nbChilds - 4)/3);
 
-        this.enterFunction();
+        this.varRegisters.enterFunction();
         for (int i = 0; i < nbArguments; i++) { // the arguments are stacked before the call so we unstack them
             program.addInstructions(this.unstackRegister(nextRegister));
             nextRegister++;
-            this.assignVarRegister(ctx.getChild((3 * i) + 5).getText(), nextRegister-1); // arguments counts as new definitions of variables
+            this.varRegisters.assignVar(ctx.getChild((3 * i) + 5).getText(), nextRegister-1); // arguments counts as new definitions of variables
         }
         program.addInstructions(visit(ctx.getChild(nbChilds - 1))); // core_fct
         program.getInstructions().getFirst().setLabel(ctx.getChild(1).toString()); // function label
-        this.exitFunction();
+        this.varRegisters.leaveFunction();
 
         return program;
     }
@@ -801,7 +746,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         Program program = new Program();
         int nbChilds = ctx.getChildCount();
 
-        this.enterBlock(); // a first enterBlock is needed for the whole program to work
+        this.varRegisters.enterBlock(); // a first enterBlock is needed for the whole program to work
         program.addInstructions(this.assignRegister(SP, 0)); // initialize SP
         program.addInstructions(this.assignRegister(TP, 4096)); // initialize TP, arbitrarily chose 4096 as stack height
         program.addInstruction(new JumpCall(JumpCall.Op.CALL, "*main")); // call main
@@ -814,12 +759,12 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
             program.addInstructions(visit(ctx.getChild(i)));
         }
 
-        this.enterFunction(); // 'main' function declaration
+        this.varRegisters.enterFunction(); // 'main' function declaration
         Program mainCoreProgram = visit(ctx.getChild(nbChilds - 2)); // core_fct
         mainCoreProgram.getInstructions().getFirst().setLabel("*main"); // main label
         program.addInstructions(mainCoreProgram);
-        this.exitFunction();
-        this.exitBlock();
+        this.varRegisters.leaveFunction();
+        this.varRegisters.leaveBlock();
 
         return program;
     }
@@ -904,6 +849,10 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         return program;
     }
 
+    /**
+     * Creates the linear code of an assembler function that access an element of an array
+     * @return the corresponding linear code
+     */
     private Program getTabAccessProgram() {
         Program p = new Program();
 
@@ -960,6 +909,10 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         return p;
     }
 
+    /**
+     * Creates the linear code of an assembler function that dumps the memory (excluding the stack)
+     * @return the corresponding linear code
+     */
     private Program getDumpMemory() {
         Program p = new Program();
 
