@@ -965,7 +965,6 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
 
         final int SPACE = 32;
         final int NEW_LINE = 10;
-        final int TAB = 9; 
 
         int[] r = new int[7];
         for (int i = 0; i < 7; i++) {
