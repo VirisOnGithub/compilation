@@ -48,7 +48,12 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         System.out.println("visit negation : NOT expr");
         ParseTree p1 = ctx.getChild(1);
         Type t = visit(p1);
-        HashMap<UnknownType, Type> constraints = new HashMap<>(t.unify(new PrimitiveType(Type.Base.BOOL)));
+        HashMap<UnknownType, Type> constraints;
+        try {
+            constraints = new HashMap<>(t.unify(new PrimitiveType(Type.Base.BOOL)));
+        } catch (Error e) {
+            throw new TyperError(e.getMessage(), ctx);
+        }
         this.substituteTypes(constraints);
         return new PrimitiveType(Type.Base.BOOL);
     }
