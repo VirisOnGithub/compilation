@@ -75,19 +75,13 @@ public class VarStack<T> {
 		this.stack.getLast().put(varName, value);
 	}
 
-	/**
-	 * Update the value of a given variable
-	 * @apiNote Must be called only if the variable has already been assigned
-	 * @param varName the name of the variable
-	 * @param value the value we want to map the variable to
-	 */
-	public void updateVar(String varName, T newValue) {
+	public boolean varExists(String varName) {
 		for (int depth = stack.size() - 1; depth >= lastAccessibleDepth.getLast(); depth--) { // we unstack all the accessible maps
 			var varMap = stack.get(depth);
 			if (varMap.containsKey(varName)) { // we stop at the first corresponding variable name
-				varMap.put(varName, newValue);	// and we replace it with the new value
+				return true;
 			}
 		}
-		throw new RuntimeException("The variable " + varName + " has not been found"); // if none was found
+		return false;
 	}
 }
