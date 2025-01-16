@@ -518,9 +518,9 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
             if (i > 0)
                 program.addInstruction(new Mem(Mem.Op.LD, leftRegister, leftRegister));
             program.addInstructions(this.stackRegister(leftRegister));
-            program.addInstructions(this.stackRegister(depthRegister));
-            program.addInstructions(this.assignRegister(depthRegister, arrayDepth - 1 - i));
             program.addInstructions(this.stackRegister(nextRegister - 1));
+            program.addInstructions(this.assignRegister(depthRegister, arrayDepth - 1 - i));
+            program.addInstructions(this.stackRegister(depthRegister));
             program.addInstruction(new JumpCall(JumpCall.Op.CALL, "*tab_access"));
             program.addInstructions(this.unstackRegister(leftRegister));
         }
@@ -566,7 +566,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         /* pseudo-assembler: if (cond) then instr1 else instr2
          *   cond
          *   XOR R1 R1 R1
-         *   JEQU this.nextRegister-2 this.nextRegister-1 if //-2 = cond return, -1 = XOR'd register
+         *   JEQU nextRegister-2 nextRegister-1 if //-2 = cond return, -1 = XOR'd register
          *   instr2 // only if there is an else
          *   JMP end
          * if: instr1
@@ -613,7 +613,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         /* pseudo-assembler: while(i<10) instr
          * loop: visit(cond)
          *   XOR R1 R1 R1
-         *   JEQU this.nextRegister-2 this.nextRegister-1 end_loop //-2 = cond return, -1 = XOR'd register
+         *   JEQU nextRegister-2 nextRegister-1 end_loop //-2 = cond return, -1 = XOR'd register
          *   instr
          *   JMP loop
          * end_loop: following code...
@@ -654,7 +654,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
          *   ST R0 1
          * loop: visit(cond)
          *   XOR R1 R1 R1
-         *   JEQU this.nextRegister-2 this.nextRegister-1 end_loop //-2 = cond return, -1 = XOR'd register
+         *   JEQU nextRegister-2 nextRegister-1 end_loop //-2 = cond return, -1 = XOR'd register
          *   instr
          *   ADDi R0 R0 1
          *   JMP loop
