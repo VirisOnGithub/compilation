@@ -554,15 +554,12 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
             p.addInstructions(visit(ctx.getChild(child)));
             if (i > 0)
                 p.addInstruction(new Mem(Mem.Op.LD, leftRegister, leftRegister));
-            // p.addInstruction(new IO(IO.Op.PRINT, leftRegister));
             p.addInstructions(stackRegister(leftRegister));
             p.addInstructions(stackRegister(nextRegister - 1));
             p.addInstructions(assignRegister(depthRegister, arrayDepth - 1 - i));
             p.addInstructions(stackRegister(depthRegister));
             p.addInstruction(new JumpCall(JumpCall.Op.CALL, "*tab_access"));
             p.addInstructions(unstackRegister(leftRegister));
-            // p.addInstruction(new Mem(Mem.Op.LD, leftRegister, leftRegister));
-            // p.addInstruction(new IO(IO.Op.PRINT, leftRegister));
         }
 
         if (bracketsCount == 0) {
@@ -811,10 +808,12 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         program.addInstruction(new Stop()); // STOP
         program.addInstructions(getPrintProgram()); // a callable assembler function for printing arrays (used in visitPrint)
         program.addInstructions(getTabAccessProgram());
-        // program.addInstructions(getDumpMemmory());
+        // program.addInstructions(getDumpMemory()); // in case of debugging
+
         for (int i = 0; i < nbChilds - 3; i++) { // decl_fct*
             program.addInstructions(visit(ctx.getChild(i)));
         }
+
         this.enterFunction(); // 'main' function declaration
         Program mainCoreProgram = visit(ctx.getChild(nbChilds - 2)); // core_fct
         mainCoreProgram.getInstructions().getFirst().setLabel("*main"); // main label
@@ -961,7 +960,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         return p;
     }
 
-    private Program getDumpMemmory() {
+    private Program getDumpMemory() {
         Program p = new Program();
 
         final int SPACE = 32;
