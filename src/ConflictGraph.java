@@ -68,7 +68,11 @@ public class ConflictGraph extends UnorientedGraph<String> {
         String[] parts = instruction.getName().split(" ");
         switch (parts[0]) {
             case "XOR":
-            case "SUBi":
+            case "OR":
+            case "AND":
+            case "NOT":
+            case "MOV":
+            case "SUB":
             case "ADD":
             case "MUL":
             case "DIV":
@@ -95,8 +99,16 @@ public class ConflictGraph extends UnorientedGraph<String> {
         String[] parts = instruction.getName().split(" ");
         switch (parts[0]) {
             case "XOR":
+            case "OR":
+            case "AND":
+            case "NOT":
+            case "MOV":
+            case "ADDi":
             case "SUBi":
+            case "MULi":
+            case "DIVi":
             case "ADD":
+            case "SUB":
             case "MUL":
             case "DIV":
                 def.add(parts[1]);
