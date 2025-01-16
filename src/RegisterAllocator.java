@@ -1,6 +1,8 @@
 package src;
 
 import src.Asm.Program;
+import src.Asm.Ret;
+import src.Asm.Stop;
 import src.Asm.Instruction;
 import src.Asm.CondJump;
 import src.Asm.JumpCall;
@@ -61,20 +63,20 @@ public class RegisterAllocator {
         Instruction instr1 = new Instruction("L1", "XOR R1000 R1000 R1000") {};
         Instruction instr2 = new Instruction("L2", "SUBi R1000 R1000 1") {};
         Instruction instr3 = new Instruction("L3", "PRINT R1001") {};
-        Instruction instr4 = new CondJump("L4", CondJump.Op.JEQU, 1000, 1001, "LABEL2");
+        Instruction instr4 = new CondJump("L4", CondJump.Op.JEQU, 1000, 1001, "LABEL2") {};
         Instruction instr5 = new Instruction("L5", "JINF R1000 R1001 L6") {};
         Instruction instr6 = new Instruction("L6", "JSUP R1000 R1001 L7") {};
-        Instruction instr7 = new JumpCall("L7", JumpCall.Op.JMP, "FUNC1");
+        Instruction instr7 = new JumpCall("L7", JumpCall.Op.CALL, "FUNC1") {};
         Instruction instr8 = new JumpCall("L8", JumpCall.Op.JMP, "END") {};
-        Instruction instr9 = new Instruction("L9", "STOP") {};
+        Instruction instr9 = new Stop("L9") {};
         Instruction instr10 = new Instruction("LABEL1", "ADD R1002 R1000 R1001") {};
         Instruction instr11 = new Instruction("L11", "MUL R1003 R1002 R1000") {};
         Instruction instr12 = new Instruction("L12", "JMP END") {};
         Instruction instr13 = new Instruction("LABEL2", "DIV R1004 R1003 R1001") {};
         Instruction instr14 = new Instruction("L14", "PRINT R1004") {};
-        Instruction instr15 = new Instruction("END", "RET") {};
+        Instruction instr15 = new Ret("END") {};
         Instruction instr16 = new Instruction("FUNC1", "ADD R1005 R1000 R1001") {};
-        Instruction instr17 = new Instruction("L17", "RET") {};
+        Instruction instr17 = new Ret("L17") {};
 
         program.addInstruction(instr1);
         program.addInstruction(instr2);

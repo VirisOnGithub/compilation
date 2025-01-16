@@ -58,9 +58,13 @@ public class ControlGraph extends OrientedGraph<Instruction> {
             if (prevInstruction != null && !(prevInstruction instanceof Stop)) {
                 this.addEdge(prevInstruction, instruction);
             }
-            prevInstruction = instruction;
+            if (!(instruction instanceof Stop)) {
+                prevInstruction = instruction;
+            } else {
+                prevInstruction = null;
+            }
         }
-
+    
         // Ajout des arêtes pour les sauts conditionnels et les appels de fonction après avoir construit le graphe
         for (Instruction instruction : program.getInstructions()) {
             String targetLabel = null;
@@ -119,8 +123,8 @@ public class ControlGraph extends OrientedGraph<Instruction> {
         Instruction instr2 = new Instruction("L2", "SUBi R1000 R1000 1") {};
         Instruction instr3 = new Instruction("L3", "PRINT R1001") {};
         Instruction instr4 = new CondJump("L4", CondJump.Op.JEQU, 1000, 1001, "LABEL2") {};
-        Instruction instr5 = new Instruction("L5", "JINF R1000 R1001 L6") {};
-        Instruction instr6 = new Instruction("L6", "JSUP R1000 R1001 L7") {};
+        Instruction instr5 = new CondJump("L5", CondJump.Op.JINF, 1000, 1001, "FUNC1") {};
+        Instruction instr6 = new CondJump("L6", CondJump.Op.JSUP, 1000, 1001, "LABEL1") {};
         Instruction instr7 = new JumpCall("L7", JumpCall.Op.CALL, "FUNC1") {};
         Instruction instr8 = new JumpCall("L8", JumpCall.Op.JMP, "END") {};
         Instruction instr9 = new Stop("L9") {};
