@@ -1,10 +1,11 @@
+auto f(int a, bool b, int c){
+auto h;
+return h;}
+
 int main() {
-    auto a = 10;
-    auto b = 0;
-    if (a<b) {
-        auto c = a-b;
-    } else {
-        auto d = (a==b);
-    }
-    return 0;
+auto a;
+auto b;
+auto c;
+auto d = f(a, b, c);
+return 0;
 }

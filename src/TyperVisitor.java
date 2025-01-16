@@ -25,19 +25,23 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
                 Type oldType = this.types.get(variable);
                 if (oldType instanceof UnknownType) {
                     this.types.put(variable, newType);
+                    System.out.println("Add : " + variable + " : " + newType);
                 }
                 if (type instanceof UnknownType) {
                     this.types.put((UnknownType) type, oldType);
+                    System.out.println("Add : " + type + " : " + oldType);
                 }
             } else {
                 if (this.types.containsValue(variable)) {
                     this.types.forEach((key, value) -> {
                         if (value.contains(variable)) {
                             this.types.put(key, value.substitute(variable, type));
+                            System.out.println("Add : " + variable + " : " + type);
                         }
                     });
                 } else {
                     this.types.put(variable, type);
+                    System.out.println("Add : " + variable + " : " + type);
                 }
             }
         });
@@ -151,31 +155,30 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
     @Override
     public Type visitCall(grammarTCLParser.CallContext ctx) throws TyperError {
         System.out.println("visit call");
-        ParseTree p0 = ctx.getChild(0);
-        UnknownType key = new UnknownType(p0);
+        ParseTree calledFunctionNode = ctx.getChild(0);
+        UnknownType key = new UnknownType(calledFunctionNode);
         if (!types.containsKey(key)){
             throw new TyperError("Call does not exist", ctx);
         }
-        Type t = types.get(key);
+        Type functionType = types.get(key);
         ArrayList<Type> arguments = new ArrayList<>();
         int NbChildren = ctx.getChildCount();
         if(NbChildren != 3){
-            ParseTree p1 = ctx.getChild(2);
-            visit(p1);
-            for(int i = 0; i < (NbChildren - 3 - 1)/2; i++){
-                ParseTree p2 = ctx.getChild(4+2*i);
-                Type type = visit(p2);
-                arguments.add(type);
+            for(int i = 0; i <= (NbChildren - 3 - 1)/2; i++){
+                ParseTree attributeNode = ctx.getChild(2 + 2 * i);
+                Type attributeType = visit(attributeNode);
+                arguments.add(attributeType);
             }
         }
         FunctionType f = new FunctionType(new UnknownType(), arguments);
         HashMap<UnknownType, Type> constraints;
         try {
-            constraints = new HashMap<>(t.unify(f));
+            constraints = new HashMap<>(functionType.unify(f));
         } catch (Error e) {
             throw new TyperError(e.getMessage(), ctx);
         }
         this.substituteTypes(constraints);
+        System.out.println("TEST : SubstituteTypes du call ok");
         return null;
     }
 
@@ -246,11 +249,11 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
     @Override
     public Type visitEquality(grammarTCLParser.EqualityContext ctx) throws TyperError {
         System.out.println("visit equality");
-        ParseTree p1 = ctx.getChild(0);
-        Type t1 = visit(p1);
-        ParseTree p3 = ctx.getChild(2);
-        Type t3 = visit(p3);
-        HashMap<UnknownType, Type> constraints = new HashMap<>(t1.unify(t3));
+        ParseTree leftExpressionNode = ctx.getChild(0);
+        Type leftExpressionType = visit(leftExpressionNode);
+        ParseTree rightExpressionNode = ctx.getChild(2);
+        Type rightExpressionType = visit(rightExpressionNode);
+        HashMap<UnknownType, Type> constraints = new HashMap<>(leftExpressionType.unify(rightExpressionType));
         this.substituteTypes(constraints);
         return new PrimitiveType(Type.Base.BOOL);
     }
