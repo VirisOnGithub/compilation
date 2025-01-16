@@ -5,15 +5,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-import org.antlr.v4.runtime.Parser;
-import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
 
 import org.antlr.v4.runtime.tree.ParseTree;
-import org.antlr.v4.runtime.tree.TerminalNode;
 import src.Type.*;
-
-import javax.naming.Context;
 
 public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements grammarTCLVisitor<Type> {
 
@@ -25,7 +20,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         return types;
     }
 
-    private void bigAssSubstitute(HashMap<UnknownType, Type> constraints) {
+    private void substituteTypes(HashMap<UnknownType, Type> constraints) {
         constraints.forEach((variable, type) -> {
             if (this.types.containsKey(variable)) {
                 Type newType = variable.substitute(variable, type);
@@ -57,7 +52,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         ParseTree p1 = ctx.getChild(1);
         Type t = visit(p1);
         HashMap<UnknownType, Type> constraints = new HashMap<>(t.unify(new PrimitiveType(Type.Base.BOOL)));
-        this.bigAssSubstitute(constraints);
+        this.substituteTypes(constraints);
         return new PrimitiveType(Type.Base.BOOL);
     }
 
@@ -74,7 +69,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         } catch (Error e) {
             throw new TyperError(e.getMessage(), ctx);
         }
-        this.bigAssSubstitute(constraints);
+        this.substituteTypes(constraints);
         return new PrimitiveType(Type.Base.BOOL);
     }
 
@@ -91,7 +86,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         } catch (Error e) {
             throw new TyperError(e.getMessage(), ctx);
         }
-        this.bigAssSubstitute(constraints);
+        this.substituteTypes(constraints);
         return new PrimitiveType(Type.Base.BOOL);
     }
 
@@ -101,7 +96,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         ParseTree p1 = ctx.getChild(1);
         Type t = visit(p1);
         HashMap<UnknownType, Type> constraints = new HashMap<>(t.unify(new PrimitiveType(Type.Base.INT)));
-        this.bigAssSubstitute(constraints);
+        this.substituteTypes(constraints);
         return new PrimitiveType(Type.Base.INT);
     }
 
@@ -124,7 +119,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         } catch (Error e) {
             throw new TyperError(e.getMessage(), ctx);
         }
-        this.bigAssSubstitute(constraints);
+        this.substituteTypes(constraints);
         return ((ArrayType)t0).getTabType();
     }
 
@@ -157,7 +152,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         }
         FunctionType f = new FunctionType(new UnknownType(), arguments);
         HashMap<UnknownType, Type> constraints = new HashMap<>(t.unify(f));
-        this.bigAssSubstitute(constraints);
+        this.substituteTypes(constraints);
         return null;
     }
 
@@ -181,7 +176,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         } catch (Error e) {
             throw new TyperError(e.getMessage(), ctx);
         }
-        this.bigAssSubstitute(constraints);
+        this.substituteTypes(constraints);
         return new PrimitiveType(Type.Base.BOOL);
     }
 
@@ -221,7 +216,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         Type t3 = visit(p3);
         HashMap<UnknownType, Type> constraints = new HashMap<>(t1.unify(new PrimitiveType(Type.Base.INT)));
         constraints.putAll(t3.unify(new PrimitiveType(Type.Base.INT)));
-        this.bigAssSubstitute(constraints);
+        this.substituteTypes(constraints);
         return new PrimitiveType(Type.Base.INT);
     }
 
@@ -233,7 +228,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         ParseTree p3 = ctx.getChild(2);
         Type t3 = visit(p3);
         HashMap<UnknownType, Type> constraints = new HashMap<>(t1.unify(t3));
-        this.bigAssSubstitute(constraints);
+        this.substituteTypes(constraints);
         return new PrimitiveType(Type.Base.BOOL);
     }
 
@@ -256,7 +251,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
             }
         }
-        this.bigAssSubstitute(constraints);
+        this.substituteTypes(constraints);
         return new ArrayType(type);
     }
 
@@ -269,7 +264,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         Type t3 = visit(p3);
         HashMap<UnknownType, Type> constraints = new HashMap<>(t1.unify(new PrimitiveType(Type.Base.INT)));
         constraints.putAll(t3.unify(new PrimitiveType(Type.Base.INT)));
-        this.bigAssSubstitute(constraints);
+        this.substituteTypes(constraints);
         return new PrimitiveType(Type.Base.INT);
     }
 
@@ -322,7 +317,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
                 throw new TyperError(e.getMessage(), ctx);
             }
         }
-        this.bigAssSubstitute(constraints);
+        this.substituteTypes(constraints);
         return null;
     }
 
@@ -374,7 +369,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
             }
         }
 
-        this.bigAssSubstitute(constraints);
+        this.substituteTypes(constraints);
         return null;
     }
 
@@ -407,7 +402,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
             ParseTree elseInstrNode = ctx.getChild(6);
             visit(elseInstrNode);
         }
-        this.bigAssSubstitute(constraints);
+        this.substituteTypes(constraints);
         return null;
     }
 
@@ -424,7 +419,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         }
         ParseTree instructionNode = ctx.getChild(4);
         visit(instructionNode);
-        this.bigAssSubstitute(constraints);
+        this.substituteTypes(constraints);
         return null;
     }
 
@@ -444,7 +439,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         } catch (Error e) {
             throw new TyperError(e.getMessage(), ctx);
         }
-        this.bigAssSubstitute(constraints);
+        this.substituteTypes(constraints);
         ParseTree postLoopInstructionNode = ctx.getChild(5); // i = i + 1
         visit(postLoopInstructionNode);
         ParseTree contentNode = ctx.getChild(7); // bloc d'instructions
