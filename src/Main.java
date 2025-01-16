@@ -136,7 +136,11 @@ public class Main {
 
 		TyperVisitor visitor = new TyperVisitor(); // lancement de l'évaluateur
 
-		visitor.visit(tree);
+		try {
+			visitor.visit(tree);
+		} catch (TyperError e){
+			e.printError(input.toString());
+		}
 
 		System.out.println("Final Types "+ visitor.getTypes());
 	}
