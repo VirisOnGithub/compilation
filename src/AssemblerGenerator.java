@@ -2,7 +2,6 @@ package src;
 
 import src.Asm.Program;
 import src.Asm.Instruction;
-import java.util.Map;
 
 public class AssemblerGenerator {
     private Program program;
@@ -43,10 +42,26 @@ public class AssemblerGenerator {
                 String reg2 = allocator.getRegister(parts[3]);
                 String destReg = allocator.getRegister(parts[1]);
 
-                result.append("LD R30, ").append(reg1).append("\n");
-                result.append("LD R31, ").append(reg2).append("\n");
+                if (reg1.startsWith("DYNAMIC")) {
+                    result.append("LD R30, [SP + ").append(reg1.substring(8, reg1.length() - 1)).append("]\n");
+                } else {
+                    result.append("LD R30, ").append(reg1).append("\n");
+                }
+
+                if (reg2.startsWith("DYNAMIC")) {
+                    result.append("LD R31, [SP + ").append(reg2.substring(8, reg2.length() - 1)).append("]\n");
+                } else {
+                    result.append("LD R31, ").append(reg2).append("\n");
+                }
+
                 result.append(parts[0]).append(" R30, R30, R31\n");
-                result.append("ST R30, ").append(destReg).append("\n");
+
+                if (destReg.startsWith("DYNAMIC")) {
+                    result.append("ADDi SP, SP, ").append(destReg.substring(8, destReg.length() - 1)).append("\n");
+                    result.append("ST R30, SP\n");
+                } else {
+                    result.append("ST R30, ").append(destReg).append("\n");
+                }
                 break;
             case "PRINT":
                 result.append(parts[0]).append(" ")
