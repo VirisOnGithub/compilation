@@ -329,7 +329,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         UnknownType parameter = new UnknownType(ctx.getChild(2));
 
         if (!(this.types.containsKey(parameter))) {
-            throwCustomError("Type error: variable "+parameter+" isn't defined at line " + getLine(ctx));
+            throwCustomError("Type error: variable "+parameter.getVarName()+" isn't defined at line " + getLine(ctx));
         }
         if (this.types.get(parameter) instanceof FunctionType) {
             throwCustomError("Type error: function type cannot be printed at line " + getLine(ctx));
