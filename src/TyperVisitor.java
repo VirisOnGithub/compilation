@@ -1,9 +1,6 @@
 package src;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
 
@@ -344,6 +341,10 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
     public Type visitAssignment(grammarTCLParser.AssignmentContext ctx) throws TyperError {
         System.out.println("visit assignment : VAR ('[' expr ']')* ASSIGN expr SEMICOL");
         ParseTree firstVariableNode = ctx.getChild(0);
+        ArrayList<String> reservedKeywords = new ArrayList<>(List.of("int", "bool", "auto", "void", "if", "else", "while", "for", "return", "main"));
+        if(reservedKeywords.contains(firstVariableNode.getText())){
+            throw new TyperError("Keyword is not allowed for variable name", ctx, 1);
+        }
         UnknownType firstVariable = new UnknownType(firstVariableNode);
         HashMap<UnknownType, Type> constraints = new HashMap<>();
         int nbChildren = ctx.getChildCount();
