@@ -1,60 +1,103 @@
 package src;
 
+import src.Asm.Program;
+import src.Asm.Instruction;
+import src.Asm.CondJump;
+import src.Asm.JumpCall;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Map;
+
 
 public class RegisterAllocator {
-    private static final int NUM_REGISTERS = 30;
-    private HashMap<String, String> registerMap;
-    private HashMap<String, Integer> memoryMap;
-    private Set<String> memoryVariables;
-    private int nextRegister;
-    private int nextMemoryAddress;
+    private ConflictGraph conflictGraph;
+    private Map<String, String> registerMap;
+    private Map<String, Integer> dynamicArrayMap;
+    private int dynamicArrayIndex;
 
-    public RegisterAllocator() {
+    public RegisterAllocator(ConflictGraph conflictGraph) {
+        this.conflictGraph = conflictGraph;
         this.registerMap = new HashMap<>();
-        this.memoryMap = new HashMap<>();
-        this.memoryVariables = new HashSet<>();
-        this.nextRegister = 0;
-        this.nextMemoryAddress = 0;
+        this.dynamicArrayMap = new HashMap<>();
+        this.dynamicArrayIndex = 0;
+        allocateRegisters();
     }
 
-    public void allocateRegisters(ConflictGraph conflictGraph) {
-        Set<String> variables = conflictGraph.getVertices();
-        for (String variable : variables) {
-            if (nextRegister < NUM_REGISTERS) {
-                registerMap.put(variable, "R" + nextRegister);
-                nextRegister++;
+    private void allocateRegisters() {
+        int registerIndex = 0;
+        for (String variable : conflictGraph.getVertices()) {
+            if (registerIndex < 30) {
+                registerMap.put(variable, "R" + registerIndex);
+                registerIndex++;
             } else {
-                memoryVariables.add(variable);
-                memoryMap.put(variable, nextMemoryAddress);
-                nextMemoryAddress++;
+                dynamicArrayMap.put(variable, dynamicArrayIndex);
+                dynamicArrayIndex++;
             }
         }
     }
 
     public String getRegister(String variable) {
-        return registerMap.getOrDefault(variable, "MEM[" + memoryMap.get(variable) + "]");
+        if (registerMap.containsKey(variable)) {
+            return registerMap.get(variable);
+        } else if (dynamicArrayMap.containsKey(variable)) {
+            return "DYNAMIC[" + dynamicArrayMap.get(variable) + "]";
+        } else {
+            throw new IllegalArgumentException("Variable not found in register allocation: " + variable);
+        }
     }
 
-    public boolean isInMemory(String variable) {
-        return memoryVariables.contains(variable);
+    public void printAllocation() {
+        System.out.println("Register Allocation:");
+        for (Map.Entry<String, String> entry : registerMap.entrySet()) {
+            System.out.println(entry.getKey() + " -> " + entry.getValue());
+        }
+        for (Map.Entry<String, Integer> entry : dynamicArrayMap.entrySet()) {
+            System.out.println(entry.getKey() + " -> DYNAMIC[" + entry.getValue() + "]");
+        }
     }
 
-    public int getMemoryAddress(String variable) {
-        return memoryMap.get(variable);
-    }
+    public static void main(String[] args) {
+        Program program = new Program();
 
-    public Set<String> getMemoryVariables() {
-        return memoryVariables;
-    }
+        Instruction instr1 = new Instruction("L1", "XOR R1000 R1000 R1000") {};
+        Instruction instr2 = new Instruction("L2", "SUBi R1000 R1000 1") {};
+        Instruction instr3 = new Instruction("L3", "PRINT R1001") {};
+        Instruction instr4 = new CondJump("L4", CondJump.Op.JEQU, 1000, 1001, "LABEL2");
+        Instruction instr5 = new Instruction("L5", "JINF R1000 R1001 L6") {};
+        Instruction instr6 = new Instruction("L6", "JSUP R1000 R1001 L7") {};
+        Instruction instr7 = new JumpCall("L7", JumpCall.Op.JMP, "FUNC1");
+        Instruction instr8 = new JumpCall("L8", JumpCall.Op.JMP, "END") {};
+        Instruction instr9 = new Instruction("L9", "STOP") {};
+        Instruction instr10 = new Instruction("LABEL1", "ADD R1002 R1000 R1001") {};
+        Instruction instr11 = new Instruction("L11", "MUL R1003 R1002 R1000") {};
+        Instruction instr12 = new Instruction("L12", "JMP END") {};
+        Instruction instr13 = new Instruction("LABEL2", "DIV R1004 R1003 R1001") {};
+        Instruction instr14 = new Instruction("L14", "PRINT R1004") {};
+        Instruction instr15 = new Instruction("END", "RET") {};
+        Instruction instr16 = new Instruction("FUNC1", "ADD R1005 R1000 R1001") {};
+        Instruction instr17 = new Instruction("L17", "RET") {};
 
-    public void mapLabelToAddress(String label, int address) {
-        memoryMap.put(label, address);
-    }
+        program.addInstruction(instr1);
+        program.addInstruction(instr2);
+        program.addInstruction(instr3);
+        program.addInstruction(instr4);
+        program.addInstruction(instr5);
+        program.addInstruction(instr6);
+        program.addInstruction(instr7);
+        program.addInstruction(instr8);
+        program.addInstruction(instr9);
+        program.addInstruction(instr10);
+        program.addInstruction(instr11);
+        program.addInstruction(instr12);
+        program.addInstruction(instr13);
+        program.addInstruction(instr14);
+        program.addInstruction(instr15);
+        program.addInstruction(instr16);
+        program.addInstruction(instr17);
 
-    public Integer getLabelAddress(String label) {
-        return memoryMap.get(label);
+        ControlGraph controlGraph = new ControlGraph(program);
+        ConflictGraph conflictGraph = new ConflictGraph(controlGraph, program);
+
+        RegisterAllocator allocator = new RegisterAllocator(conflictGraph);
+        allocator.printAllocation();
     }
 }

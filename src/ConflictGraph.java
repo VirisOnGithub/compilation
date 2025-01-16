@@ -2,9 +2,8 @@ package src;
 
 import src.Graph.UnorientedGraph;
 import src.Asm.Program;
-import java.util.Set;
-
 import src.Asm.Instruction;
+import java.util.Set;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -66,30 +65,36 @@ public class ConflictGraph extends UnorientedGraph<String> {
     private Set<String> getUse(Instruction instruction) {
         Set<String> use = new HashSet<>();
         String[] parts = instruction.getName().split(" ");
-        switch (parts[0]) {
-            case "XOR":
-            case "OR":
-            case "AND":
-            case "NOT":
-            case "MOV":
-            case "SUB":
-            case "ADD":
-            case "MUL":
-            case "DIV":
-                use.add(parts[2]);
-                use.add(parts[3]);
-                break;
-            case "PRINT":
-            case "JEQU":
-            case "JINF":
-            case "JSUP":
-                use.add(parts[1]);
-                break;
-            case "CALL":
-                // No use variables for CALL
-                break;
-            default:
-                break;
+        if (parts.length > 1) {
+            switch (parts[0]) {
+                case "XOR":
+                case "OR":
+                case "AND":
+                case "NOT":
+                case "MOV":
+                case "SUB":
+                case "ADD":
+                case "MUL":
+                case "DIV":
+                    if (parts.length > 3) {
+                        use.add(parts[2]);
+                        use.add(parts[3]);
+                    }
+                    break;
+                case "PRINT":
+                case "JEQU":
+                case "JINF":
+                case "JSUP":
+                    if (parts.length > 1) {
+                        use.add(parts[1]);
+                    }
+                    break;
+                case "CALL":
+                    // No use variables for CALL
+                    break;
+                default:
+                    break;
+            }
         }
         return use;
     }
@@ -97,34 +102,38 @@ public class ConflictGraph extends UnorientedGraph<String> {
     private Set<String> getDef(Instruction instruction) {
         Set<String> def = new HashSet<>();
         String[] parts = instruction.getName().split(" ");
-        switch (parts[0]) {
-            case "XOR":
-            case "OR":
-            case "AND":
-            case "NOT":
-            case "MOV":
-            case "ADDi":
-            case "SUBi":
-            case "MULi":
-            case "DIVi":
-            case "ADD":
-            case "SUB":
-            case "MUL":
-            case "DIV":
-                def.add(parts[1]);
-                break;
-            case "PRINT":
-            case "JEQU":
-            case "JINF":
-            case "JSUP":
-            case "CALL":
-            case "RET":
-            case "JMP":
-            case "STOP":
-                // No def variables for these instructions
-                break;
-            default:
-                break;
+        if (parts.length > 1) {
+            switch (parts[0]) {
+                case "XOR":
+                case "OR":
+                case "AND":
+                case "NOT":
+                case "MOV":
+                case "ADDi":
+                case "SUBi":
+                case "MULi":
+                case "DIVi":
+                case "ADD":
+                case "SUB":
+                case "MUL":
+                case "DIV":
+                    if (parts.length > 1) {
+                        def.add(parts[1]);
+                    }
+                    break;
+                case "PRINT":
+                case "JEQU":
+                case "JINF":
+                case "JSUP":
+                case "CALL":
+                case "RET":
+                case "JMP":
+                case "STOP":
+                    // No def variables for these instructions
+                    break;
+                default:
+                    break;
+            }
         }
         return def;
     }
