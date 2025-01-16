@@ -914,6 +914,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
             nextRegister++;
         }
 
+        // inserting code from compilation/src/CodeGen/tab_access.asm
         p.addInstructions(unstackRegister(r[0]));
         p.getInstructions().getFirst().setLabel("*tab_access");
         p.addInstructions(unstackRegister(r[1]));
@@ -973,6 +974,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
             nextRegister++;
         }
 
+        // inserting code from compilation/src/CodeGen/dump_memory.asm
         p.addInstructions(assignRegister(r[0], 4096));
         p.getInstructions().getFirst().setLabel("*dump_memory");
         p.addInstructions(assignRegister(r[1], SPACE));

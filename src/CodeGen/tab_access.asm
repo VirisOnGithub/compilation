@@ -1,19 +1,19 @@
 tab_access:
 	SUBi SP SP 1
-	LD R0 SP				# profondeur
+	LD R0 SP				        # profondeur
 	SUBi SP SP 1
-	LD R1 SP				# index
+	LD R1 SP				        # index
 	SUBi SP SP 1
-	LD R2 SP				# pointeur
-	LD R3 R2				# longueur
-	ADDi R4 R3 0			# nouvelle_longueur = longueur
-	JIEQ R1 R3 skip_resize	# if (index > longueur)
-	ADDi R4 R1 1			# nouvelle_longueur = index + 1
+	LD R2 SP				        # pointeur
+	LD R3 R2				        # longueur
+	ADDi R4 R3 0			        # nouvelle_longueur = longueur
+	JIEQ R1 R3 skip_resize	        # if (index > longueur)
+	ADDi R4 R1 1			        # nouvelle_longueur = index + 1
 skip_resize:
-	ST R4 R2				# *pointeur = nouvelle_longueur
-	ADDi R2 R2 1			# pointeur++
-	XOR R5 R5 R5			# i = 0
-	XOR R6 R6 R6			# constante à 0
+	ST R4 R2				        # *pointeur = nouvelle_longueur
+	ADDi R2 R2 1			        # pointeur++
+	XOR R5 R5 R5			        # i = 0
+	XOR R6 R6 R6			        # constante à 0
 begin_loop:
 	MODi R7 R5 10					# R7 := i % 10
 	JNEQ R7 R6 skip_tab_access_end	# i % 10 != 0
@@ -37,10 +37,10 @@ skip_simple_init:					# else
 	ADDi R2 R8 0					# pointeur = oldPointeur
 skip_fill:
 	JNEQ R5 R1 skip_return			# if (i == index)
-	ST R2 SP			# on empile le pointeur dans le tableau
+	ST R2 SP			            # on empile le pointeur dans le tableau
 	ADDi SP SP 1
-	RET					# et on le retourne
+	RET					            # et on le retourne
 skip_return:
-	ADDi R2 R2 1		# pointeur++
-	ADDi R5 R5 1		# i++
+	ADDi R2 R2 1		            # pointeur++
+	ADDi R5 R5 1		            # i++
 	JMP begin_loop

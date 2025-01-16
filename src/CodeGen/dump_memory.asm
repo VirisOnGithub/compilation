@@ -1,5 +1,5 @@
 dump_memory:
-	XOR R0 R0 R0	# i = 4096
+	XOR R0 R0 R0	        # i = 4096
 	ADDi R0 R0 4096
 	XOR R1 R1 R1
 	ADDi R1 R1 ESPACE
