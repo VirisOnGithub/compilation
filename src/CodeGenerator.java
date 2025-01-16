@@ -25,7 +25,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
 
     /**
      * Constructor
-     * @param types types de chaque variable du code source
+     * @param types types of each variable of the source code
      */
     public CodeGenerator(Map<UnknownType, Type> types) {
         this.types = types;
@@ -41,8 +41,8 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
      */
     private Program stackRegister(int register) {
         Program program = new Program();
-        program.addInstruction(new Mem(Mem.Op.ST, register, SP));
-        program.addInstruction(new UALi(UALi.Op.ADD, SP, SP, 1));
+        program.addInstruction(new Mem(Mem.Op.ST, register, this.SP));
+        program.addInstruction(new UALi(UALi.Op.ADD, this.SP, this.SP, 1));
         return program;
     }
 
@@ -53,8 +53,8 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
      */
     private Program unstackRegister(int register) {
         Program program = new Program();
-        program.addInstruction(new UALi(UALi.Op.SUB, SP, SP, 1));
-        program.addInstruction(new Mem(Mem.Op.LD, register, SP));
+        program.addInstruction(new UALi(UALi.Op.SUB, this.SP, this.SP, 1));
+        program.addInstruction(new Mem(Mem.Op.LD, register, this.SP));
         return program;
     }
 
@@ -65,10 +65,10 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
      * @return a program that assign the value to the register
      */
     private Program assignRegister(int register, int value) {
-        Program p = new Program();
-        p.addInstruction(new UAL(UAL.Op.XOR, register, register, register));
-        p.addInstruction(new UALi(UALi.Op.ADD, register, register, value));
-        return p;
+        Program program= new Program();
+        program.addInstruction(new UAL(UAL.Op.XOR, register, register, register));
+        program.addInstruction(new UALi(UALi.Op.ADD, register, register, value));
+        return program;
     }
 
     /**
@@ -76,7 +76,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
      * @return the label name
      */
     private String getLabel() {
-        nextLabel++;
+        this.nextLabel++;
         return "*label" + (nextLabel-1);
     }
     
@@ -93,114 +93,114 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
 
     @Override
     public Program visitNegation(grammarTCLParser.NegationContext ctx) {
-        Program p = new Program();
-        p.addInstructions(visit(ctx.getChild(1)));
-        p.addInstruction(new UALi(UALi.Op.XOR, nextRegister + 1, nextRegister, 1));
-        nextRegister += 2;
-        return p;
+        Program program= new Program();
+        program.addInstructions(visit(ctx.getChild(1)));
+        program.addInstruction(new UALi(UALi.Op.XOR, this.nextRegister + 1, this.nextRegister, 1));
+        this.nextRegister += 2;
+        return program;
     }
 
     @Override
     public Program visitComparison(grammarTCLParser.ComparisonContext ctx) {
         // expr op=(SUP | INF | SUPEQ | INFEQ) expr # comparison
-        Program p = new Program();
-        p.addInstructions(visit(ctx.getChild(0)));
-        p.addInstructions(visit(ctx.getChild(2)));
-        // Get value of Child(0) in nextRegister - 2
-        p.addInstructions(assignRegister(nextRegister, nextRegister - 1));
-        nextRegister++;
-        // Get value of Child(2) in nextRegister - 1
-        p.addInstructions(assignRegister(nextRegister, nextRegister - 2));
-        nextRegister++;
+        Program program= new Program();
+        program.addInstructions(visit(ctx.getChild(0)));
+        program.addInstructions(visit(ctx.getChild(2)));
+        // Get value of Child(0) in this.nextRegister - 2
+        program.addInstructions(this.assignRegister(nextRegister, this.nextRegister - 1));
+        this.nextRegister++;
+        // Get value of Child(2) in this.nextRegister - 1
+        program.addInstructions(this.assignRegister(nextRegister, this.nextRegister - 2));
+        this.nextRegister++;
         switch (ctx.getChild(1).getText()) {
             case ">" ->
-                p.addInstruction(
-                        new CondJump(CondJump.Op.JSUP, nextRegister - 2, nextRegister - 1, "Label" + nextLabel));
+                program.addInstruction(
+                        new CondJump(CondJump.Op.JSUP, this.nextRegister - 2, this.nextRegister - 1, "Label" + this.nextLabel));
             case "<" ->
-                p.addInstruction(
-                        new CondJump(CondJump.Op.JINF, nextRegister - 2, nextRegister - 1, "Label" + nextLabel));
+                program.addInstruction(
+                        new CondJump(CondJump.Op.JINF, this.nextRegister - 2, this.nextRegister - 1, "Label" + this.nextLabel));
             case ">=" ->
-                p.addInstruction(
-                        new CondJump(CondJump.Op.JSEQ, nextRegister - 2, nextRegister - 1, "Label" + nextLabel));
+                program.addInstruction(
+                        new CondJump(CondJump.Op.JSEQ, this.nextRegister - 2, this.nextRegister - 1, "Label" + this.nextLabel));
             case "<=" ->
-                p.addInstruction(
-                        new CondJump(CondJump.Op.JIEQ, nextRegister - 2, nextRegister - 1, "Label" + nextLabel));
+                program.addInstruction(
+                        new CondJump(CondJump.Op.JIEQ, this.nextRegister - 2, this.nextRegister - 1, "Label" + this.nextLabel));
         }
         // Return 0 if Child(0) !comparison Child(2), then JMP to end of comparison
-        p.addInstruction(new UAL(UAL.Op.XOR, nextRegister, nextRegister, nextRegister));
-        p.addInstruction(new JumpCall(JumpCall.Op.JMP, "Label" + nextLabel + 1));
+        program.addInstruction(new UAL(UAL.Op.XOR, this.nextRegister, this.nextRegister, this.nextRegister));
+        program.addInstruction(new JumpCall(JumpCall.Op.JMP, "Label" + this.nextLabel + 1));
         // Return 1 if Child(0) comparison Child(2), then JMP to end of comparison
-        UAL asm = new UAL(UAL.Op.XOR, nextRegister, nextRegister, nextRegister);
-        asm.setLabel("Label" + nextLabel);
-        p.addInstruction(asm);
-        p.addInstruction(new UALi(UALi.Op.ADD, nextRegister, nextRegister, 1));
-        p.addInstruction(new JumpCall(JumpCall.Op.JMP, "Label" + nextLabel + 1));
-        nextLabel++;
+        UAL asm = new UAL(UAL.Op.XOR, this.nextRegister, this.nextRegister, this.nextRegister);
+        asm.setLabel("Label" + this.nextLabel);
+        program.addInstruction(asm);
+        program.addInstruction(new UALi(UALi.Op.ADD, this.nextRegister, this.nextRegister, 1));
+        program.addInstruction(new JumpCall(JumpCall.Op.JMP, "Label" + this.nextLabel + 1));
+        this.nextLabel++;
         // Line to JMP to when comparison is finished
         // This line doesn't do anything but is needed to JMP to the end of comparison
         // It explains why we still use the same register and why we increment its value
         // only after
-        UALi asmi = new UALi(UALi.Op.ADD, nextRegister, nextRegister, 0);
-        asmi.setLabel("Label" + nextLabel);
-        p.addInstruction(asmi);
-        nextRegister++;
-        nextLabel++;
-        return p;
+        UALi asmi = new UALi(UALi.Op.ADD, this.nextRegister, this.nextRegister, 0);
+        asmi.setLabel("Label" + this.nextLabel);
+        program.addInstruction(asmi);
+        this.nextRegister++;
+        this.nextLabel++;
+        return program;
     }
 
     @Override
     public Program visitOr(grammarTCLParser.OrContext ctx) {
         // expr OR expr # or
         // OR : '||';
-        Program p = new Program();
-        p.addInstructions(visit(ctx.getChild(0)));
-        int valueRegister = nextRegister - 1;
-        p.addInstructions(visit(ctx.getChild(2)));
-        p.addInstruction(new UAL(UAL.Op.OR, nextRegister, valueRegister, nextRegister - 1));
-        nextRegister++;
-        return p;
+        Program program= new Program();
+        program.addInstructions(visit(ctx.getChild(0)));
+        int valueRegister = this.nextRegister - 1;
+        program.addInstructions(visit(ctx.getChild(2)));
+        program.addInstruction(new UAL(UAL.Op.OR, this.nextRegister, valueRegister, this.nextRegister - 1));
+        this.nextRegister++;
+        return program;
     }
 
     @Override
     public Program visitOpposite(grammarTCLParser.OppositeContext ctx) {
-        Program p = new Program();
-        p.addInstructions(visit(ctx.getChild(1)));
-        p.addInstruction(new UALi(UALi.Op.XOR, nextRegister, nextRegister - 1, 0xFFFFFFFF));
-        p.addInstruction(new UALi(UALi.Op.SUB, nextRegister, nextRegister, 1));
-        nextRegister++;
-        return p;
+        Program program= new Program();
+        program.addInstructions(visit(ctx.getChild(1)));
+        program.addInstruction(new UALi(UALi.Op.XOR, this.nextRegister, this.nextRegister - 1, 0xFFFFFFFF));
+        program.addInstruction(new UALi(UALi.Op.SUB, this.nextRegister, this.nextRegister, 1));
+        this.nextRegister++;
+        return program;
     }
 
     @Override
     public Program visitInteger(grammarTCLParser.IntegerContext ctx) {
         // INT # integer
         // INT : '-'?[0-9]+
-        Program p = new Program();
+        Program program= new Program();
         int value = Integer.parseInt(ctx.INT().getText());
-        p.addInstructions(assignRegister(nextRegister, value));
-        nextRegister++;
-        return p;
+        program.addInstructions(this.assignRegister(nextRegister, value));
+        this.nextRegister++;
+        return program;
     }
 
     @Override
     public Program visitTab_access(grammarTCLParser.Tab_accessContext ctx) {
-        Program p = new Program();
-        p.addInstructions(visit(ctx.getChild(0)));
-        int tabRegister = nextRegister - 1;
-        p.addInstructions(visit(ctx.getChild(2)));
-        int indexRegister = nextRegister - 1;
+        Program program= new Program();
+        program.addInstructions(visit(ctx.getChild(0)));
+        int tabRegister = this.nextRegister - 1;
+        program.addInstructions(visit(ctx.getChild(2)));
+        int indexRegister = this.nextRegister - 1;
         int profondeur = getArrayDepth(this.types.get(new UnknownType(ctx.getChild(0)))) - 1;
-        p.addInstructions(stackRegister(tabRegister));
-        p.addInstructions(stackRegister(indexRegister));
-        p.addInstructions(assignRegister(nextRegister, profondeur));
-        p.addInstructions(stackRegister(nextRegister));
-        nextRegister++;
-        p.addInstruction(new JumpCall(JumpCall.Op.CALL, "*tab_access"));
-        p.addInstructions(unstackRegister(nextRegister));
+        program.addInstructions(this.stackRegister(tabRegister));
+        program.addInstructions(this.stackRegister(indexRegister));
+        program.addInstructions(this.assignRegister(nextRegister, profondeur));
+        program.addInstructions(this.stackRegister(nextRegister));
+        this.nextRegister++;
+        program.addInstruction(new JumpCall(JumpCall.Op.CALL, "*tab_access"));
+        program.addInstructions(this.unstackRegister(nextRegister));
         // on récupère la valeur pointée
-        p.addInstruction(new Mem(Mem.Op.LD, nextRegister, nextRegister));
-        nextRegister++;
-        return p;
+        program.addInstruction(new Mem(Mem.Op.LD, this.nextRegister, this.nextRegister));
+        this.nextRegister++;
+        return program;
     }
 
     /**
@@ -234,8 +234,8 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
 
         for (int i = 0; i < nbArguments; i++) { // expr*
             program.addInstructions(visit(ctx.getChild((2*i)+3))); // value of expression will be stocked in R(nextRegister-1)
-            program.addInstructions(stackRegister(nextRegister-1)); // stack argument
-            nextRegister++;
+            program.addInstructions(this.stackRegister(nextRegister-1)); // stack argument
+            this.nextRegister++;
         }
         program.addInstruction(new JumpCall(JumpCall.Op.JMP, ctx.getChild(0).getText())); // call the function
 
@@ -246,26 +246,26 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
     public Program visitBoolean(grammarTCLParser.BooleanContext ctx) {
         // BOOL # boolean
         // BOOL : 'true' | 'false'
-        Program p = new Program();
+        Program program= new Program();
         switch (ctx.getChild(0).getText()) {
-            case "true" -> p.addInstructions(assignRegister(nextRegister, 1));
-            case "false" -> p.addInstruction(new UAL(UAL.Op.XOR, nextRegister, nextRegister, nextRegister));
+            case "true" -> program.addInstructions(this.assignRegister(nextRegister, 1));
+            case "false" -> program.addInstruction(new UAL(UAL.Op.XOR, this.nextRegister, this.nextRegister, this.nextRegister));
         }
-        nextRegister++;
-        return p;
+        this.nextRegister++;
+        return program;
     }
 
     @Override
     public Program visitAnd(grammarTCLParser.AndContext ctx) {
         // expr AND expr # and
         // AND : '&&'
-        Program p = new Program();
-        p.addInstructions(visit(ctx.getChild(0)));
-        int valueRegister = nextRegister - 1;
-        p.addInstructions(visit(ctx.getChild(2)));
-        p.addInstruction(new UAL(UAL.Op.AND, nextRegister, valueRegister, nextRegister - 1));
-        nextRegister++;
-        return p;
+        Program program= new Program();
+        program.addInstructions(visit(ctx.getChild(0)));
+        int valueRegister = this.nextRegister - 1;
+        program.addInstructions(visit(ctx.getChild(2)));
+        program.addInstruction(new UAL(UAL.Op.AND, this.nextRegister, valueRegister, this.nextRegister - 1));
+        this.nextRegister++;
+        return program;
     }
 
     /**
@@ -280,8 +280,8 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         Program program = new Program();
         int varRegister = this.varRegisters.getVar(ctx.getChild(0).getText()); // the register in which VAR is
 
-        program.addInstruction(new UALi(UALi.Op.ADD, nextRegister, varRegister, 0)); // return the variable in R(nextRegister-1)
-        nextRegister++;
+        program.addInstruction(new UALi(UALi.Op.ADD, this.nextRegister, varRegister, 0)); // return the variable in R(nextRegister-1)
+        this.nextRegister++;
 
         return program;
     }
@@ -289,17 +289,17 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
     @Override
     public Program visitMultiplication(grammarTCLParser.MultiplicationContext ctx) {
         // expr op=(MUL | DIV | MODULO) expr # multiplication
-        Program p = new Program();
-        p.addInstructions(visit(ctx.getChild(0)));
-        int valueRegister = nextRegister - 1;
-        p.addInstructions(visit(ctx.getChild(2)));
+        Program program= new Program();
+        program.addInstructions(visit(ctx.getChild(0)));
+        int valueRegister = this.nextRegister - 1;
+        program.addInstructions(visit(ctx.getChild(2)));
         switch (ctx.getChild(1).getText()) {
-            case "*" -> p.addInstruction(new UAL(UAL.Op.MUL, nextRegister, valueRegister, nextRegister - 1));
-            case "/" -> p.addInstruction(new UAL(UAL.Op.DIV, nextRegister, nextRegister - 1, valueRegister));
-            case "%" -> p.addInstruction(new UAL(UAL.Op.MOD, nextRegister, nextRegister - 1, valueRegister));
+            case "*" -> program.addInstruction(new UAL(UAL.Op.MUL, this.nextRegister, valueRegister, this.nextRegister - 1));
+            case "/" -> program.addInstruction(new UAL(UAL.Op.DIV, this.nextRegister, this.nextRegister - 1, valueRegister));
+            case "%" -> program.addInstruction(new UAL(UAL.Op.MOD, this.nextRegister, this.nextRegister - 1, valueRegister));
         }
-        nextRegister++;
-        return p;
+        this.nextRegister++;
+        return program;
     }
 
     @Override
@@ -307,107 +307,107 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         // expr op=(EQUALS | DIFF) expr # equality
         // EQUALS : '==';
         // DIFF : '!=';
-        Program p = new Program();
-        p.addInstructions(visit(ctx.getChild(0)));
-        p.addInstructions(visit(ctx.getChild(2)));
-        // Get value of Child(0) in nextRegister - 2
-        p.addInstructions(assignRegister(nextRegister, nextRegister - 1));
-        nextRegister++;
-        // Get value of Child(2) in nextRegister - 1
-        p.addInstructions(assignRegister(nextRegister, nextRegister - 2));
-        nextRegister++;
+        Program program= new Program();
+        program.addInstructions(visit(ctx.getChild(0)));
+        program.addInstructions(visit(ctx.getChild(2)));
+        // Get value of Child(0) in this.nextRegister - 2
+        program.addInstructions(this.assignRegister(nextRegister, this.nextRegister - 1));
+        this.nextRegister++;
+        // Get value of Child(2) in this.nextRegister - 1
+        program.addInstructions(this.assignRegister(nextRegister, this.nextRegister - 2));
+        this.nextRegister++;
         switch (ctx.getChild(1).getText()) {
             case "==" ->
-                p.addInstruction(
-                        new CondJump(CondJump.Op.JEQU, nextRegister - 2, nextRegister - 1, "Label" + nextLabel));
+                program.addInstruction(
+                        new CondJump(CondJump.Op.JEQU, this.nextRegister - 2, this.nextRegister - 1, "Label" + this.nextLabel));
             case "!=" ->
-                p.addInstruction(
-                        new CondJump(CondJump.Op.JNEQ, nextRegister - 2, nextRegister - 1, "Label" + nextLabel));
+                program.addInstruction(
+                        new CondJump(CondJump.Op.JNEQ, this.nextRegister - 2, this.nextRegister - 1, "Label" + this.nextLabel));
         }
         // Return 0 if Child(0) !equality Child(2), then JMP to end of equality
-        p.addInstruction(new UAL(UAL.Op.XOR, nextRegister, nextRegister, nextRegister));
-        p.addInstruction(new JumpCall(JumpCall.Op.JMP, "Label" + nextLabel + 1));
+        program.addInstruction(new UAL(UAL.Op.XOR, this.nextRegister, this.nextRegister, this.nextRegister));
+        program.addInstruction(new JumpCall(JumpCall.Op.JMP, "Label" + this.nextLabel + 1));
         // Return 1 if Child(0) equality Child(2), then JMP to end of equality
-        UAL asm = new UAL(UAL.Op.XOR, nextRegister, nextRegister, nextRegister);
-        asm.setLabel("Label" + nextLabel);
-        p.addInstruction(asm);
-        p.addInstruction(new UALi(UALi.Op.ADD, nextRegister, nextRegister, 1));
-        p.addInstruction(new JumpCall(JumpCall.Op.JMP, "Label" + nextLabel + 1));
-        nextLabel++;
+        UAL asm = new UAL(UAL.Op.XOR, this.nextRegister, this.nextRegister, this.nextRegister);
+        asm.setLabel("Label" + this.nextLabel);
+        program.addInstruction(asm);
+        program.addInstruction(new UALi(UALi.Op.ADD, this.nextRegister, this.nextRegister, 1));
+        program.addInstruction(new JumpCall(JumpCall.Op.JMP, "Label" + this.nextLabel + 1));
+        this.nextLabel++;
         // Line to JMP to when equality is finished
         // This line doesn't do anything but is needed to JMP to the end of equality
         // It explains why we still use the same register and why we increment its value
         // only after
-        UALi asmi = new UALi(UALi.Op.ADD, nextRegister, nextRegister, 0);
-        asmi.setLabel("Label" + nextLabel);
-        p.addInstruction(asmi);
-        nextRegister++;
-        nextLabel++;
-        return p;
+        UALi asmi = new UALi(UALi.Op.ADD, this.nextRegister, this.nextRegister, 0);
+        asmi.setLabel("Label" + this.nextLabel);
+        program.addInstruction(asmi);
+        this.nextRegister++;
+        this.nextLabel++;
+        return program;
     }
 
     @Override
     public Program visitTab_initialization(grammarTCLParser.Tab_initializationContext ctx) {
         int varCount = (ctx.getChildCount() - 2) / 2 + 1;
-        Program p = new Program();
+        Program program= new Program();
         // registre contenant la longueur du tableau
-        int lengthRegister = nextRegister;
-        nextRegister++;
+        int lengthRegister = this.nextRegister;
+        this.nextRegister++;
         // registre contenant le pointeur sur le tableau (mutable)
-        int pointerRegister = nextRegister;
-        nextRegister++;
+        int pointerRegister = this.nextRegister;
+        this.nextRegister++;
         // registre contenant le pointeur sur le tableau (valeur retournée)
-        int fixedPointerRegister = nextRegister;
-        nextRegister++;
+        int fixedPointerRegister = this.nextRegister;
+        this.nextRegister++;
         // lengthRegister := varCount
-        p.addInstructions(assignRegister(lengthRegister, varCount));
+        program.addInstructions(this.assignRegister(lengthRegister, varCount));
         
         // pointerRegister := TP
-        p.addInstruction(new UALi(src.Asm.UALi.Op.ADD, pointerRegister, TP, 0));
+        program.addInstruction(new UALi(src.Asm.UALi.Op.ADD, pointerRegister, this.TP, 0));
         // fixedPointerRegister := pointerRegister
-        p.addInstruction(new UALi(src.Asm.UALi.Op.ADD, fixedPointerRegister, pointerRegister, 0));
+        program.addInstruction(new UALi(src.Asm.UALi.Op.ADD, fixedPointerRegister, pointerRegister, 0));
 
         // on empile la longueur du tableau
-        p.addInstruction(new Mem(Mem.Op.ST, lengthRegister, pointerRegister));
-        p.addInstruction(new UALi(src.Asm.UALi.Op.ADD, pointerRegister, pointerRegister, 1));
+        program.addInstruction(new Mem(Mem.Op.ST, lengthRegister, pointerRegister));
+        program.addInstruction(new UALi(src.Asm.UALi.Op.ADD, pointerRegister, pointerRegister, 1));
         
         // le TP pointe maintenant à la fin du tableau
-        p.addInstruction(new UALi(UALi.Op.ADD, TP, TP, 12));
+        program.addInstruction(new UALi(UALi.Op.ADD, this.TP, this.TP, 12));
         for (int i = 0; i < varCount; i++) {
             if (i % 10 == 0 && i > 0) {
                 // on ajoute le pointeur sur la suite à la fin du tableau
-                p.addInstruction(new Mem(src.Asm.Mem.Op.ST, TP, pointerRegister));
+                program.addInstruction(new Mem(src.Asm.Mem.Op.ST, this.TP, pointerRegister));
                 // on bouge le pointeur au début du prochain tableau
-                p.addInstruction(new UALi(UALi.Op.ADD, pointerRegister, TP, 0));
+                program.addInstruction(new UALi(UALi.Op.ADD, pointerRegister, this.TP, 0));
                 // on met à jour le prochain espace vide pour les tableaux
-                p.addInstruction(new UALi(UALi.Op.ADD, TP, TP, 11));
+                program.addInstruction(new UALi(UALi.Op.ADD, this.TP, this.TP, 11));
             }
             // on a la valeur dans nextRegister - 1
-            p.addInstructions(visit(ctx.getChild(2 * i + 1)));
+            program.addInstructions(visit(ctx.getChild(2 * i + 1)));
             // on la rajoute dans le tableau
-            p.addInstruction(new Mem(Mem.Op.ST, nextRegister - 1, pointerRegister));
+            program.addInstruction(new Mem(Mem.Op.ST, this.nextRegister - 1, pointerRegister));
             // on pointe sur la case suivante
-            p.addInstruction(new UALi(UALi.Op.ADD, pointerRegister, pointerRegister, 1));
+            program.addInstruction(new UALi(UALi.Op.ADD, pointerRegister, pointerRegister, 1));
         }
         // nextRegister := fixedPointerRegister
-        p.addInstruction(new UALi(src.Asm.UALi.Op.ADD, nextRegister, fixedPointerRegister, 0));
-        nextRegister++;
-        return p;
+        program.addInstruction(new UALi(src.Asm.UALi.Op.ADD, this.nextRegister, fixedPointerRegister, 0));
+        this.nextRegister++;
+        return program;
     }
 
     @Override
     public Program visitAddition(grammarTCLParser.AdditionContext ctx) {
         // expr op=(ADD | SUB) expr # addition
-        Program p = new Program();
-        p.addInstructions(visit(ctx.getChild(0)));
-        int valueRegister = nextRegister - 1;
-        p.addInstructions(visit(ctx.getChild(2)));
+        Program program= new Program();
+        program.addInstructions(visit(ctx.getChild(0)));
+        int valueRegister = this.nextRegister - 1;
+        program.addInstructions(visit(ctx.getChild(2)));
         switch (ctx.getChild(1).getText()) {
-            case "+" -> p.addInstruction(new UAL(UAL.Op.ADD, nextRegister, valueRegister, nextRegister - 1));
-            case "-" -> p.addInstruction(new UAL(UAL.Op.SUB, nextRegister, nextRegister - 1, valueRegister));
+            case "+" -> program.addInstruction(new UAL(UAL.Op.ADD, this.nextRegister, valueRegister, this.nextRegister - 1));
+            case "-" -> program.addInstruction(new UAL(UAL.Op.SUB, this.nextRegister, this.nextRegister - 1, valueRegister));
         }
-        nextRegister++;
-        return p;
+        this.nextRegister++;
+        return program;
     }
 
     /**
@@ -434,86 +434,104 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         throw new RuntimeException("Method 'visitTab_type' should not be called");
     }
 
+    /**
+     * Visit a node that contains a variable declaration and create the corresponding linear code
+     * @param ctx the context within the parse tree
+     * @return a program containing the linear code
+     */
     @Override
     public Program visitDeclaration(grammarTCLParser.DeclarationContext ctx) {
-        Program p = new Program();
+        // type VAR (ASSIGN expr)? SEMICOL
+
+        Program program= new Program();
         int nbChilds = ctx.getChildCount();
-        int varRegister = nextRegister;
-        nextRegister++;
-        this.varRegisters.assignVar(ctx.getChild(1).getText(), varRegister);
+        int varRegister = this.nextRegister;
+        this.nextRegister++;
+
+        this.varRegisters.assignVar(ctx.VAR().getText(), varRegister);
         if (nbChilds == 5) {
-            p.addInstructions(visit(ctx.getChild(3)));
-            // varRegister := nextRegister - 1
-            p.addInstruction(new UALi(src.Asm.UALi.Op.ADD, varRegister, nextRegister - 1, 0));
+            program.addInstructions(visit(ctx.getChild(3)));
+            program.addInstruction(new UALi(src.Asm.UALi.Op.ADD, varRegister, this.nextRegister - 1, 0)); // varRegister := nextRegister - 1
         }
-        return p;
+
+        return program;
     }
 
+    /**
+     * Visit a node that contains a print call and create the corresponding linear code
+     * @param ctx the context within the parse tree
+     * @return a program containing the linear code
+     */
     @Override
     public Program visitPrint(grammarTCLParser.PrintContext ctx) {
+        // PRINT '(' VAR ')' SEMICOL
+
+        Program program= new Program();
         UnknownType variable = new UnknownType(ctx.VAR());
-        Type varType = types.get(variable);
+        Type varType = this.types.get(variable);
         int arrayDepth = getArrayDepth(varType);
-        Program p = new Program();
         int varRegister = this.varRegisters.getVar(ctx.VAR().getText());
-        if (arrayDepth == 0) {
-            // on affiche la variable de type primitif
-            p.addInstruction(new IO(IO.Op.PRINT, varRegister));
-        } else {
-            int depthRegister = this.nextRegister;
-            this.nextRegister++;
-            // on empile le tableau puis sa profondeur
-            p.addInstructions(stackRegister(varRegister));
-            p.addInstructions(assignRegister(depthRegister, arrayDepth));
-            p.addInstructions(stackRegister(depthRegister));
-            // on appelle la fonction print_tab
-            p.addInstruction(new JumpCall(src.Asm.JumpCall.Op.CALL, "*print_tab"));
+        int depthRegister = this.nextRegister;
+        this.nextRegister++;
+
+        if (arrayDepth == 0) { // primitive type
+            program.addInstruction(new IO(IO.Op.PRINT, varRegister));
+        } else { // array type
+            program.addInstructions(this.stackRegister(varRegister)); // we stack the array
+            program.addInstructions(this.assignRegister(depthRegister, arrayDepth));
+            program.addInstructions(this.stackRegister(depthRegister)); // we stack its depth
+            program.addInstruction(new JumpCall(src.Asm.JumpCall.Op.CALL, "*print_tab")); // we call the print_tab function
         }
+
         final int NEW_LINE = 10;
-        p.addInstructions(assignRegister(nextRegister, NEW_LINE));
-        p.addInstruction(new IO(IO.Op.OUT, nextRegister));
-        nextRegister++;
-        return p;
+        program.addInstructions(this.assignRegister(nextRegister, NEW_LINE));
+        program.addInstruction(new IO(IO.Op.OUT, this.nextRegister)); // once finished printing, we jump to the next line
+        this.nextRegister++;
+
+        return program;
     }
 
+    /**
+     * Visit a node that contains a variable assignment and create the corresponding linear code
+     * @param ctx the context within the parse tree
+     * @return a program containing the linear code
+     */
     @Override
     public Program visitAssignment(grammarTCLParser.AssignmentContext ctx) {
-        Program p = new Program();
+        // VAR ('[' expr ']')* ASSIGN expr SEMICOL
 
-        p.addInstructions(visit(ctx.getChild(ctx.getChildCount() - 2)));
-        int rightRegister = nextRegister - 1;
-
+        Program program= new Program();
         int varRegister = this.varRegisters.getVar(ctx.VAR().getText());
-
         int bracketsCount = (ctx.getChildCount() - 4) / 3;
-        int leftRegister = nextRegister;
-        p.addInstruction(new UALi(UALi.Op.ADD, leftRegister, varRegister, 0));
-        nextRegister++;
+        int arrayDepth = getArrayDepth(this.types.get(new UnknownType(ctx.VAR())));
+        int rightRegister = this.nextRegister - 1;
+        int leftRegister = this.nextRegister;
+        this.nextRegister++;
+        int depthRegister = this.nextRegister;
+        this.nextRegister++;
 
-        int arrayDepth = getArrayDepth(types.get(new UnknownType(ctx.getChild(0))));
-
-        int depthRegister = nextRegister;
-        nextRegister++;
+        program.addInstructions(visit(ctx.getChild(ctx.getChildCount() - 2)));
+        program.addInstruction(new UALi(UALi.Op.ADD, leftRegister, varRegister, 0));
         for (int i = 0; i < bracketsCount; i++) {
-            int child = 2 + i * 3;
-            p.addInstructions(visit(ctx.getChild(child)));
+            int child = 2 + (i * 3);
+            program.addInstructions(visit(ctx.getChild(child)));
             if (i > 0)
-                p.addInstruction(new Mem(Mem.Op.LD, leftRegister, leftRegister));
-            p.addInstructions(stackRegister(leftRegister));
-            p.addInstructions(stackRegister(nextRegister - 1));
-            p.addInstructions(assignRegister(depthRegister, arrayDepth - 1 - i));
-            p.addInstructions(stackRegister(depthRegister));
-            p.addInstruction(new JumpCall(JumpCall.Op.CALL, "*tab_access"));
-            p.addInstructions(unstackRegister(leftRegister));
+                program.addInstruction(new Mem(Mem.Op.LD, leftRegister, leftRegister));
+            program.addInstructions(this.stackRegister(leftRegister));
+            program.addInstructions(this.stackRegister(depthRegister));
+            program.addInstructions(this.assignRegister(depthRegister, arrayDepth - 1 - i));
+            program.addInstructions(this.stackRegister(nextRegister - 1));
+            program.addInstruction(new JumpCall(JumpCall.Op.CALL, "*tab_access"));
+            program.addInstructions(this.unstackRegister(leftRegister));
         }
 
         if (bracketsCount == 0) {
-            p.addInstruction(new UALi(UALi.Op.ADD, varRegister, rightRegister, 0));
+            program.addInstruction(new UALi(UALi.Op.ADD, varRegister, rightRegister, 0));
         } else {
-            p.addInstruction(new Mem(Mem.Op.ST, rightRegister, leftRegister));
+            program.addInstruction(new Mem(Mem.Op.ST, rightRegister, leftRegister));
         }
 
-        return p;
+        return program;
     }
 
     /**
@@ -548,7 +566,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         /* pseudo-assembler: if (cond) then instr1 else instr2
          *   cond
          *   XOR R1 R1 R1
-         *   JEQU nextRegister-2 nextRegister-1 if //-2 = cond return, -1 = XOR'd register
+         *   JEQU this.nextRegister-2 this.nextRegister-1 if //-2 = cond return, -1 = XOR'd register
          *   instr2 // only if there is an else
          *   JMP end
          * if: instr1
@@ -560,9 +578,9 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         String labelEnd = this.getLabel();
 
         program.addInstructions(visit(ctx.getChild(2))); // if condition
-        program.addInstruction(new UAL(UAL.Op.XOR, nextRegister, nextRegister, nextRegister)); // set new register to 0 for later test
-        nextRegister++;
-        program.addInstruction(new CondJump(CondJump.Op.JNEQ, nextRegister-2, nextRegister-1, labelIf)); // test if condition is true (!=0) => jump if
+        program.addInstruction(new UAL(UAL.Op.XOR, this.nextRegister, this.nextRegister, this.nextRegister)); // set new register to 0 for later test
+        this.nextRegister++;
+        program.addInstruction(new CondJump(CondJump.Op.JNEQ, this.nextRegister-2, this.nextRegister-1, labelIf)); // test if condition is true (!=0) => jump if
         if (ctx.getChildCount() == 7) { // if there is an else
             this.varRegisters.enterBlock(); // {
             program.addInstructions(visit(ctx.getChild(7))); // else instructions
@@ -578,7 +596,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         program.addInstructions(ifInstrProgram);
 
         Program endIfProgram = new Program();
-        endIfProgram.addInstruction(new UALi(UALi.Op.ADD, nextRegister-1, nextRegister-1, 0)); // dummy instruction to set end if label
+        endIfProgram.addInstruction(new UALi(UALi.Op.ADD, this.nextRegister-1, this.nextRegister-1, 0)); // dummy instruction to set end if label
         endIfProgram.getInstructions().getFirst().setLabel(labelEnd);
         program.addInstructions(endIfProgram);
         return program;
@@ -595,7 +613,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         /* pseudo-assembler: while(i<10) instr
          * loop: visit(cond)
          *   XOR R1 R1 R1
-         *   JEQU nextRegister-2 nextRegister-1 end_loop //-2 = cond return, -1 = XOR'd register
+         *   JEQU this.nextRegister-2 this.nextRegister-1 end_loop //-2 = cond return, -1 = XOR'd register
          *   instr
          *   JMP loop
          * end_loop: following code...
@@ -608,16 +626,16 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         Program condLoopProgram = visit(ctx.getChild(2)); // loop condition
         condLoopProgram.getInstructions().getFirst().setLabel(labelStartLoop); // set looping label
         program.addInstructions(condLoopProgram);
-        program.addInstruction(new UAL(UAL.Op.XOR, nextRegister, nextRegister, nextRegister)); // set new register to 0 for later test
-        nextRegister++;
-        program.addInstruction(new CondJump(CondJump.Op.JEQU, nextRegister-2, nextRegister-1, labelEndLoop)); // test if condition is false => stop looping
+        program.addInstruction(new UAL(UAL.Op.XOR, this.nextRegister, this.nextRegister, this.nextRegister)); // set new register to 0 for later test
+        this.nextRegister++;
+        program.addInstruction(new CondJump(CondJump.Op.JEQU, this.nextRegister-2, this.nextRegister-1, labelEndLoop)); // test if condition is false => stop looping
         this.varRegisters.enterBlock(); // start of the loop {
         program.addInstructions(visit(ctx.getChild(4))); // instructions inside the loop
         this.varRegisters.leaveBlock(); // } end of the loop
         program.addInstruction(new JumpCall(JumpCall.Op.JMP, labelStartLoop)); // go back to the start of the loop
 
         Program endLoopProgram = new Program();
-        endLoopProgram.addInstruction(new UALi(UALi.Op.ADD, nextRegister-1, nextRegister-1, 0)); // dummy instruction to set end loop label
+        endLoopProgram.addInstruction(new UALi(UALi.Op.ADD, this.nextRegister-1, this.nextRegister-1, 0)); // dummy instruction to set end loop label
         endLoopProgram.getInstructions().getFirst().setLabel(labelEndLoop);
         program.addInstructions(endLoopProgram);
 
@@ -636,7 +654,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
          *   ST R0 1
          * loop: visit(cond)
          *   XOR R1 R1 R1
-         *   JEQU nextRegister-2 nextRegister-1 end_loop //-2 = cond return, -1 = XOR'd register
+         *   JEQU this.nextRegister-2 this.nextRegister-1 end_loop //-2 = cond return, -1 = XOR'd register
          *   instr
          *   ADDi R0 R0 1
          *   JMP loop
@@ -652,9 +670,9 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         Program condLoopProgram = visit(ctx.getChild(4)); // loop condition
         condLoopProgram.getInstructions().getFirst().setLabel(labelStartLoop); // set looping label
         program.addInstructions(condLoopProgram);
-        program.addInstruction(new UAL(UAL.Op.XOR, nextRegister, nextRegister, nextRegister)); // set new register to 0 for later test
-        nextRegister++;
-        program.addInstruction(new CondJump(CondJump.Op.JEQU, nextRegister-2, nextRegister-1, labelEndLoop)); // test if condition is false => stop looping
+        program.addInstruction(new UAL(UAL.Op.XOR, this.nextRegister, this.nextRegister, this.nextRegister)); // set new register to 0 for later test
+        this.nextRegister++;
+        program.addInstruction(new CondJump(CondJump.Op.JEQU, this.nextRegister-2, this.nextRegister-1, labelEndLoop)); // test if condition is false => stop looping
         this.varRegisters.enterBlock(); // start of the loop {
         program.addInstructions(visit(ctx.getChild(8))); // instructions inside the loop
         this.varRegisters.leaveBlock(); // } end of the loop
@@ -662,7 +680,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         program.addInstruction(new JumpCall(JumpCall.Op.JMP, labelStartLoop)); // go back to the start of the loop
 
         Program endLoopProgram = new Program();
-        endLoopProgram.addInstruction(new UALi(UALi.Op.ADD, nextRegister-1, nextRegister-1, 0)); // dummy instruction to set end loop label
+        endLoopProgram.addInstruction(new UALi(UALi.Op.ADD, this.nextRegister-1, this.nextRegister-1, 0)); // dummy instruction to set end loop label
         endLoopProgram.getInstructions().getFirst().setLabel(labelEndLoop);
         program.addInstructions(endLoopProgram);
         this.varRegisters.leaveBlock();
@@ -681,7 +699,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
 
         Program program = new Program();
 
-        program.addInstructions(visit(ctx.getChild(1))); // expr, return value will be in R(nextRegister-1)
+        program.addInstructions(visit(ctx.expr())); // expr, return value will be in R(nextRegister-1)
         program.addInstruction(new Ret()); // return;
 
         return program;
@@ -702,7 +720,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         for (int i = 0; i < nbInstructions; i++) { // instr*
             program.addInstructions(visit(ctx.getChild(i + 1)));
         }
-        program.addInstructions(visit(ctx.getChild(ctx.getChildCount() - 3))); // expr, return value will be in R(nextRegister-1)
+        program.addInstructions(visit(ctx.expr())); // expr, return value will be in R(nextRegister-1)
         program.addInstruction(new Ret()); // return;
 
         return program;
@@ -724,10 +742,10 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         this.varRegisters.enterFunction();
         for (int i = 0; i < nbArguments; i++) { // the arguments are stacked before the call so we unstack them
             program.addInstructions(this.unstackRegister(nextRegister));
-            nextRegister++;
-            this.varRegisters.assignVar(ctx.getChild((3 * i) + 5).getText(), nextRegister-1); // arguments counts as new definitions of variables
+            this.nextRegister++;
+            this.varRegisters.assignVar(ctx.getChild((3 * i) + 5).getText(), this.nextRegister-1); // arguments counts as new definitions of variables
         }
-        program.addInstructions(visit(ctx.getChild(nbChilds - 1))); // core_fct
+        program.addInstructions(visit(ctx.core_fct())); // core_fct
         program.getInstructions().getFirst().setLabel(ctx.getChild(1).toString()); // function label
         this.varRegisters.leaveFunction();
 
@@ -751,16 +769,16 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         program.addInstructions(this.assignRegister(TP, 4096)); // initialize TP, arbitrarily chose 4096 as stack height
         program.addInstruction(new JumpCall(JumpCall.Op.CALL, "*main")); // call main
         program.addInstruction(new Stop()); // STOP
-        program.addInstructions(getPrintProgram()); // a callable assembler function for printing arrays (used in visitPrint)
-        program.addInstructions(getTabAccessProgram());
-        // program.addInstructions(getDumpMemory()); // in case of debugging
+        program.addInstructions(this.getPrintProgram()); // a callable assembler function for printing arrays (used in visitPrint)
+        program.addInstructions(this.getTabAccessProgram());
+        // program.addInstructions(this.getDumpMemory()); // in case of debugging
 
         for (int i = 0; i < nbChilds - 3; i++) { // decl_fct*
             program.addInstructions(visit(ctx.getChild(i)));
         }
 
         this.varRegisters.enterFunction(); // 'main' function declaration
-        Program mainCoreProgram = visit(ctx.getChild(nbChilds - 2)); // core_fct
+        Program mainCoreProgram = visit(ctx.core_fct()); // core_fct
         mainCoreProgram.getInstructions().getFirst().setLabel("*main"); // main label
         program.addInstructions(mainCoreProgram);
         this.varRegisters.leaveFunction();
@@ -781,15 +799,15 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
 
         int[] r = new int[12];
         for (int i = 0; i < 12; i++) {
-            r[i] = nextRegister;
-            nextRegister++;
+            r[i] = this.nextRegister;
+            this.nextRegister++;
         }
 
         // inserting code from compilation/src/CodeGen/print_tab.asm
-        program.addInstruction(new UALi("*print_tab", UALi.Op.SUB, SP, SP, 1));
-        program.addInstruction(new Mem(Mem.Op.LD, r[1], SP));
-        program.addInstruction(new UALi(UALi.Op.SUB, SP, SP, 1));
-        program.addInstruction(new Mem(Mem.Op.LD, r[2], SP));
+        program.addInstruction(new UALi("*print_tab", UALi.Op.SUB, this.SP, this.SP, 1));
+        program.addInstruction(new Mem(Mem.Op.LD, r[1], this.SP));
+        program.addInstruction(new UALi(UALi.Op.SUB, this.SP, this.SP, 1));
+        program.addInstruction(new Mem(Mem.Op.LD, r[2], this.SP));
         program.addInstruction(new Mem(Mem.Op.LD, r[3], r[2]));
         program.addInstruction(new UAL(UAL.Op.XOR, r[4], r[4], r[4]));
         program.addInstruction(new UALi(UALi.Op.ADD, r[4], r[4], SQUARE_BRACKET_OPEN));
@@ -799,7 +817,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         program.addInstruction(new IO(IO.Op.OUT, r[4]));
         program.addInstruction(new UAL(UAL.Op.XOR, r[5], r[5], r[5]));
         program.addInstruction(new UALi(UALi.Op.ADD, r[2], r[2], 1));
-        program.addInstruction(new UALi(UALi.Op.ADD, SP, SP, 2));
+        program.addInstruction(new UALi(UALi.Op.ADD, this.SP, this.SP, 2));
         
         program.addInstruction(new CondJump("*loop_start", CondJump.Op.JEQU, r[5], r[3], "*loop_end"));
         program.addInstruction(new UAL(UAL.Op.XOR, r[6], r[6], r[6]));
@@ -811,21 +829,21 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         program.addInstruction(new UAL("*skip_tab_end", UAL.Op.XOR, r[9], r[9], r[9]));
         program.addInstruction(new UALi(UALi.Op.ADD, r[9], r[9], 1));
         program.addInstruction(new CondJump(CondJump.Op.JEQU, r[1], r[9], "*print_elem"));
-        program.addInstructions(stackRegister(r[5]));
-        program.addInstructions(stackRegister(r[3]));
-        program.addInstructions(stackRegister(r[2]));
+        program.addInstructions(this.stackRegister(r[5]));
+        program.addInstructions(this.stackRegister(r[3]));
+        program.addInstructions(this.stackRegister(r[2]));
         program.addInstruction(new Mem(Mem.Op.LD, r[2], r[2]));
-        program.addInstructions(stackRegister(r[2]));
+        program.addInstructions(this.stackRegister(r[2]));
         program.addInstruction(new UALi(UALi.Op.SUB, r[11], r[1], 1));
-        program.addInstructions(stackRegister(r[11]));
+        program.addInstructions(this.stackRegister(r[11]));
         program.addInstruction(new JumpCall(JumpCall.Op.CALL, "*print_tab"));
-        program.addInstruction(new UALi(UALi.Op.ADD, SP, SP, 1));
-        program.addInstruction(new Mem(Mem.Op.LD, r[1], SP));
+        program.addInstruction(new UALi(UALi.Op.ADD, this.SP, this.SP, 1));
+        program.addInstruction(new Mem(Mem.Op.LD, r[1], this.SP));
         program.addInstruction(new UALi(UALi.Op.ADD, r[1], r[1], 1));
-        program.addInstruction(new UALi(UALi.Op.SUB, SP, SP, 1));
-        program.addInstructions(unstackRegister(r[2]));
-        program.addInstructions(unstackRegister(r[3]));
-        program.addInstructions(unstackRegister(r[5]));
+        program.addInstruction(new UALi(UALi.Op.SUB, this.SP, this.SP, 1));
+        program.addInstructions(this.unstackRegister(r[2]));
+        program.addInstructions(this.unstackRegister(r[3]));
+        program.addInstructions(this.unstackRegister(r[5]));
         program.addInstruction(new UAL(UAL.Op.XOR, r[4], r[4], r[4]));
         program.addInstruction(new UALi(UALi.Op.ADD, r[4], r[4], SPACE));
         program.addInstruction(new JumpCall(JumpCall.Op.JMP, "*print_elem_end"));
@@ -843,7 +861,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         program.addInstruction(new UAL("*loop_end", UAL.Op.XOR, r[4], r[4], r[4]));
         program.addInstruction(new UALi(UALi.Op.ADD, r[4], r[4], SQUARE_BRACKET_CLOSE));
         program.addInstruction(new IO(IO.Op.OUT, r[4]));
-        program.addInstruction(new UALi(UALi.Op.SUB, SP, SP, 2));
+        program.addInstruction(new UALi(UALi.Op.SUB, this.SP, this.SP, 2));
         program.addInstruction(new Ret());
 
         return program;
@@ -854,59 +872,59 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
      * @return the corresponding linear code
      */
     private Program getTabAccessProgram() {
-        Program p = new Program();
+        Program program= new Program();
 
         int[] r = new int[9];
         for (int i = 0; i < 9; i++) {
-            r[i] = nextRegister;
-            nextRegister++;
+            r[i] = this.nextRegister;
+            this.nextRegister++;
         }
 
         // inserting code from compilation/src/CodeGen/tab_access.asm
-        p.addInstructions(unstackRegister(r[0]));
-        p.getInstructions().getFirst().setLabel("*tab_access");
-        p.addInstructions(unstackRegister(r[1]));
-        p.addInstructions(unstackRegister(r[2]));
-        p.addInstruction(new Mem(Mem.Op.LD, r[3], r[2]));
-        p.addInstruction(new UALi(UALi.Op.ADD, r[4], r[3], 0));
-        p.addInstruction(new CondJump(CondJump.Op.JIEQ, r[1], r[3], "*skip_resize"));
-        p.addInstruction(new UALi(UALi.Op.ADD, r[4], r[1], 1));
+        program.addInstructions(this.unstackRegister(r[0]));
+        program.getInstructions().getFirst().setLabel("*tab_access");
+        program.addInstructions(this.unstackRegister(r[1]));
+        program.addInstructions(this.unstackRegister(r[2]));
+        program.addInstruction(new Mem(Mem.Op.LD, r[3], r[2]));
+        program.addInstruction(new UALi(UALi.Op.ADD, r[4], r[3], 0));
+        program.addInstruction(new CondJump(CondJump.Op.JIEQ, r[1], r[3], "*skip_resize"));
+        program.addInstruction(new UALi(UALi.Op.ADD, r[4], r[1], 1));
 
-        p.addInstruction(new Mem("*skip_resize", Mem.Op.ST, r[4], r[2]));
-        p.addInstruction(new UALi(UALi.Op.ADD, r[2], r[2], 1));
-        p.addInstruction(new UAL(UAL.Op.XOR, r[5], r[5], r[5]));
-        p.addInstruction(new UAL(UAL.Op.XOR, r[6], r[6], r[6]));
+        program.addInstruction(new Mem("*skip_resize", Mem.Op.ST, r[4], r[2]));
+        program.addInstruction(new UALi(UALi.Op.ADD, r[2], r[2], 1));
+        program.addInstruction(new UAL(UAL.Op.XOR, r[5], r[5], r[5]));
+        program.addInstruction(new UAL(UAL.Op.XOR, r[6], r[6], r[6]));
         
-        p.addInstruction(new UALi("*begin_loop", UALi.Op.MOD, r[7], r[5], 10));
-        p.addInstruction(new CondJump(CondJump.Op.JNEQ, r[7], r[6], "*skip_tab_access_end"));
-        p.addInstruction(new CondJump(CondJump.Op.JEQU, r[5], r[6], "*skip_tab_access_end"));
-        p.addInstruction(new CondJump(CondJump.Op.JIEQ, r[3], r[0], "*skip_alloc"));
-        p.addInstruction(new Mem(Mem.Op.ST, TP, r[2]));
-        p.addInstruction(new UALi(UALi.Op.ADD, TP, TP, 11));
+        program.addInstruction(new UALi("*begin_loop", UALi.Op.MOD, r[7], r[5], 10));
+        program.addInstruction(new CondJump(CondJump.Op.JNEQ, r[7], r[6], "*skip_tab_access_end"));
+        program.addInstruction(new CondJump(CondJump.Op.JEQU, r[5], r[6], "*skip_tab_access_end"));
+        program.addInstruction(new CondJump(CondJump.Op.JIEQ, r[3], r[0], "*skip_alloc"));
+        program.addInstruction(new Mem(Mem.Op.ST, this.TP, r[2]));
+        program.addInstruction(new UALi(UALi.Op.ADD, this.TP, this.TP, 11));
 
-        p.addInstruction(new Mem("*skip_alloc", Mem.Op.LD, r[2], r[2]));
+        program.addInstruction(new Mem("*skip_alloc", Mem.Op.LD, r[2], r[2]));
 
-        p.addInstruction(new CondJump("*skip_tab_access_end", CondJump.Op.JINF, r[5], r[3], "*skip_fill"));
-        p.addInstruction(new CondJump(CondJump.Op.JNEQ, r[0], r[6], "*skip_simple_init"));
-        p.addInstruction(new Mem(Mem.Op.ST, r[6], r[2]));
-        p.addInstruction(new JumpCall(JumpCall.Op.JMP, "*skip_fill"));
+        program.addInstruction(new CondJump("*skip_tab_access_end", CondJump.Op.JINF, r[5], r[3], "*skip_fill"));
+        program.addInstruction(new CondJump(CondJump.Op.JNEQ, r[0], r[6], "*skip_simple_init"));
+        program.addInstruction(new Mem(Mem.Op.ST, r[6], r[2]));
+        program.addInstruction(new JumpCall(JumpCall.Op.JMP, "*skip_fill"));
 
-        p.addInstruction(new UALi("*skip_simple_init", UALi.Op.ADD, r[8], r[2], 0));
-        p.addInstruction(new Mem(Mem.Op.ST, TP, r[2]));
-        p.addInstruction(new UALi(UALi.Op.ADD, TP, TP, 12));
-        p.addInstruction(new Mem(Mem.Op.LD, r[2], r[2]));
-        p.addInstruction(new Mem(Mem.Op.ST, r[6], r[2]));
-        p.addInstruction(new UALi(UALi.Op.ADD, r[2], r[8], 0));
+        program.addInstruction(new UALi("*skip_simple_init", UALi.Op.ADD, r[8], r[2], 0));
+        program.addInstruction(new Mem(Mem.Op.ST, this.TP, r[2]));
+        program.addInstruction(new UALi(UALi.Op.ADD, this.TP, this.TP, 12));
+        program.addInstruction(new Mem(Mem.Op.LD, r[2], r[2]));
+        program.addInstruction(new Mem(Mem.Op.ST, r[6], r[2]));
+        program.addInstruction(new UALi(UALi.Op.ADD, r[2], r[8], 0));
 
-        p.addInstruction(new CondJump("*skip_fill", CondJump.Op.JNEQ, r[5], r[1], "*skip_return"));
-        p.addInstructions(stackRegister(r[2]));
-        p.addInstruction(new Ret());
+        program.addInstruction(new CondJump("*skip_fill", CondJump.Op.JNEQ, r[5], r[1], "*skip_return"));
+        program.addInstructions(this.stackRegister(r[2]));
+        program.addInstruction(new Ret());
 
-        p.addInstruction(new UALi("*skip_return", UALi.Op.ADD, r[2], r[2], 1));
-        p.addInstruction(new UALi(UALi.Op.ADD, r[5], r[5], 1));
-        p.addInstruction(new JumpCall(JumpCall.Op.JMP, "*begin_loop"));
+        program.addInstruction(new UALi("*skip_return", UALi.Op.ADD, r[2], r[2], 1));
+        program.addInstruction(new UALi(UALi.Op.ADD, r[5], r[5], 1));
+        program.addInstruction(new JumpCall(JumpCall.Op.JMP, "*begin_loop"));
         
-        return p;
+        return program;
     }
 
     /**
@@ -914,33 +932,33 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
      * @return the corresponding linear code
      */
     private Program getDumpMemory() {
-        Program p = new Program();
+        Program program= new Program();
 
         final int SPACE = 32;
         final int NEW_LINE = 10;
 
         int[] r = new int[7];
         for (int i = 0; i < 7; i++) {
-            r[i] = nextRegister;
-            nextRegister++;
+            r[i] = this.nextRegister;
+            this.nextRegister++;
         }
 
         // inserting code from compilation/src/CodeGen/dump_memory.asm
-        p.addInstructions(assignRegister(r[0], 4096));
-        p.getInstructions().getFirst().setLabel("*dump_memory");
-        p.addInstructions(assignRegister(r[1], SPACE));
-        p.addInstructions(assignRegister(r[2], NEW_LINE));
-        p.addInstructions(assignRegister(r[3], 4500));
+        program.addInstructions(this.assignRegister(r[0], 4096));
+        program.getInstructions().getFirst().setLabel("*dump_memory");
+        program.addInstructions(this.assignRegister(r[1], SPACE));
+        program.addInstructions(this.assignRegister(r[2], NEW_LINE));
+        program.addInstructions(this.assignRegister(r[3], 4500));
 
-        p.addInstruction(new CondJump("*debut_jump", CondJump.Op.JEQU, r[0], r[3], "*fin_dump"));
-        p.addInstruction(new Mem(Mem.Op.LD, r[4], r[0]));
-        p.addInstruction(new IO(IO.Op.PRINT, r[4]));
-        p.addInstruction(new IO(IO.Op.OUT, r[1]));
-        p.addInstruction(new UALi(UALi.Op.ADD, r[0], r[0], 1));
-        p.addInstruction(new JumpCall(JumpCall.Op.JMP, "*debut_jump"));
+        program.addInstruction(new CondJump("*debut_jump", CondJump.Op.JEQU, r[0], r[3], "*fin_dump"));
+        program.addInstruction(new Mem(Mem.Op.LD, r[4], r[0]));
+        program.addInstruction(new IO(IO.Op.PRINT, r[4]));
+        program.addInstruction(new IO(IO.Op.OUT, r[1]));
+        program.addInstruction(new UALi(UALi.Op.ADD, r[0], r[0], 1));
+        program.addInstruction(new JumpCall(JumpCall.Op.JMP, "*debut_jump"));
 
-        p.addInstruction(new Ret("*fin_dump"));
+        program.addInstruction(new Ret("*fin_dump"));
 
-        return p;
+        return program;
     }
 }
