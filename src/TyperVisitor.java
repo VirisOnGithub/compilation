@@ -69,7 +69,11 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         ParseTree p3 = ctx.getChild(2);
         Type t3 = visit(p3);
         HashMap<UnknownType, Type> constraints = new HashMap<>(t1.unify(new PrimitiveType(Type.Base.INT)));
-        constraints.putAll(t3.unify(new PrimitiveType(Type.Base.INT)));
+        try {
+            constraints.putAll(t3.unify(new PrimitiveType(Type.Base.INT)));
+        } catch (Error e) {
+            throw new TyperError(e.getMessage(), ctx);
+        }
         this.bigAssSubstitute(constraints);
         return new PrimitiveType(Type.Base.BOOL);
     }
@@ -82,7 +86,11 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         ParseTree p3 = ctx.getChild(2);
         Type t3 = visit(p3);
         HashMap<UnknownType, Type> constraints = new HashMap<>(t1.unify(new PrimitiveType(Type.Base.BOOL)));
-        constraints.putAll(t3.unify(new PrimitiveType(Type.Base.BOOL)));
+        try {
+            constraints.putAll(t3.unify(new PrimitiveType(Type.Base.BOOL)));
+        } catch (Error e) {
+            throw new TyperError(e.getMessage(), ctx);
+        }
         this.bigAssSubstitute(constraints);
         return new PrimitiveType(Type.Base.BOOL);
     }
@@ -111,7 +119,11 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         ParseTree p2 = ctx.getChild(2);
         Type t2 = visit(p2);
         HashMap<UnknownType, Type> constraints = new HashMap<>(t0.unify(new ArrayType(new UnknownType())));
-        constraints.putAll(t2.unify(new PrimitiveType(Type.Base.INT)));
+        try {
+            constraints.putAll(t2.unify(new PrimitiveType(Type.Base.INT)));
+        } catch (Error e) {
+            throw new TyperError(e.getMessage(), ctx);
+        }
         this.bigAssSubstitute(constraints);
         return ((ArrayType)t0).getTabType();
     }
@@ -162,8 +174,13 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         Type t1 = visit(p1);
         ParseTree p3 = ctx.getChild(2);
         Type t3 = visit(p3);
-        HashMap<UnknownType, Type> constraints = new HashMap<>(t1.unify(new PrimitiveType(Type.Base.BOOL)));
-        constraints.putAll(t3.unify(new PrimitiveType(Type.Base.BOOL)));
+        HashMap<UnknownType, Type> constraints;
+        try {
+            constraints = new HashMap<>(t1.unify(new PrimitiveType(Type.Base.BOOL)));
+            constraints.putAll(t3.unify(new PrimitiveType(Type.Base.BOOL)));
+        } catch (Error e) {
+            throw new TyperError(e.getMessage(), ctx);
+        }
         this.bigAssSubstitute(constraints);
         return new PrimitiveType(Type.Base.BOOL);
     }
@@ -299,7 +316,11 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
             ParseTree exprNode = ctx.getChild(3);
             UnknownType expr = new UnknownType(exprNode);
             Type exprType = visit(exprNode);
-            constraints.putAll(type.unify(exprType));
+            try {
+                constraints.putAll(type.unify(exprType));
+            } catch (Error e) {
+                throw new TyperError(e.getMessage(), ctx);
+            }
         }
         this.bigAssSubstitute(constraints);
         return null;
@@ -327,9 +348,14 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         HashMap<UnknownType, Type> constraints = new HashMap<>();
         int nbChildren = ctx.getChildCount();
         if (nbChildren == 4) {
+            // Si on n'a pas de tableau
             ParseTree expressionNode = ctx.getChild(2);
             Type expression = visit(expressionNode);
-            constraints.putAll(firstVariable.unify(expression));
+            try {
+                constraints.putAll(firstVariable.unify(expression));
+            } catch (Error e) {
+                throw new TyperError(e.getMessage(), ctx);
+            }
         } else {
             int nbBrackets = (nbChildren-4)/3;
             ParseTree expressionNode = ctx.getChild(nbChildren-2);
@@ -341,7 +367,11 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
                 constraints.putAll(tabIndexType.unify(new PrimitiveType(Type.Base.INT)));
                 expression = new ArrayType(expression);
             }
-            constraints.putAll(firstVariable.unify(expression));
+            try {
+                constraints.putAll(firstVariable.unify(expression));
+            } catch (Error e) {
+                throw new TyperError(e.getMessage(), ctx);
+            }
         }
 
         this.bigAssSubstitute(constraints);
@@ -364,10 +394,16 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
         ParseTree conditionNode = ctx.getChild(2);
         Type conditionType = visit(conditionNode);
-        HashMap<UnknownType, Type> constraints = new HashMap<>(conditionType.unify(new PrimitiveType(Type.Base.BOOL)));
+        HashMap<UnknownType, Type> constraints;
+        try {
+            constraints = new HashMap<>(conditionType.unify(new PrimitiveType(Type.Base.BOOL)));
+        } catch (Error e) {
+            throw new TyperError(e.getMessage(), ctx);
+        }
         ParseTree ifInstrNode = ctx.getChild(4);
         visit(ifInstrNode);
         if (ctx.getChildCount() == 7) {
+            // Si on a un "else"
             ParseTree elseInstrNode = ctx.getChild(6);
             visit(elseInstrNode);
         }
@@ -380,7 +416,12 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         System.out.println("visit while : WHILE '(' expr ')' instr");
         ParseTree testNode = ctx.getChild(2);
         Type testType = visit(testNode);
-        HashMap<UnknownType, Type> constraints = new HashMap<>(testType.unify(new PrimitiveType(Type.Base.BOOL)));
+        HashMap<UnknownType, Type> constraints;
+        try {
+            constraints = new HashMap<>(testType.unify(new PrimitiveType(Type.Base.BOOL)));
+        } catch (Error e) {
+            throw new TyperError(e.getMessage(), ctx);
+        }
         ParseTree instructionNode = ctx.getChild(4);
         visit(instructionNode);
         this.bigAssSubstitute(constraints);
@@ -388,17 +429,25 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
     }
 
     @Override
-    public Type visitFor(grammarTCLParser.ForContext ctx) throws TyperError { // nik ta mère
+    public Type visitFor(grammarTCLParser.ForContext ctx) throws TyperError {
         System.out.println("visit for : FOR '(' instr  expr ';' instr ')' instr");
-        ParseTree initializationNode = ctx.getChild(2);
+        // Ne pas oublier : avec la syntaxe actuelle, on écrit :
+        // for(int i = 0; i < 10; i = i + 1;){ ... }
+        // Le dernier point-virgule est nécessaire !
+        ParseTree initializationNode = ctx.getChild(2); // int i = 0;
         visit(initializationNode);
-        ParseTree expressionNode = ctx.getChild(3);
+        ParseTree expressionNode = ctx.getChild(3); // i < 10;
         Type expressionType = visit(expressionNode);
-        HashMap<UnknownType, Type> constraints = new HashMap<>(expressionType.unify(new PrimitiveType(Type.Base.BOOL)));
+        HashMap<UnknownType, Type> constraints;
+        try {
+            constraints = new HashMap<>(expressionType.unify(new PrimitiveType(Type.Base.BOOL)));
+        } catch (Error e) {
+            throw new TyperError(e.getMessage(), ctx);
+        }
         this.bigAssSubstitute(constraints);
-        ParseTree postLoopInstructionNode = ctx.getChild(5);
+        ParseTree postLoopInstructionNode = ctx.getChild(5); // i = i + 1
         visit(postLoopInstructionNode);
-        ParseTree contentNode = ctx.getChild(7);
+        ParseTree contentNode = ctx.getChild(7); // bloc d'instructions
         visit(contentNode);
         return null;
     }
@@ -455,7 +504,11 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
                 Type paramType = visit(paramTypeNode);
                 UnknownType paramName = new UnknownType(paramNameNode);
 
-                paramName.unify(paramType);
+                try {
+                    paramName.unify(paramType);
+                } catch (Error e) {
+                    throw new TyperError(e.getMessage(), ctx);
+                }
                 paramList.add(paramType);
             }
 
