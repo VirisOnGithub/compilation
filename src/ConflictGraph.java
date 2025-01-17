@@ -30,7 +30,8 @@ public class ConflictGraph extends UnorientedGraph<String> {
         boolean changed;
         do {
             changed = false;
-            for (Instruction instruction : controlGraph.getVertices(program)) {
+            // Traverse all instructions in the program, including those in subprograms
+            for (Instruction instruction : controlGraph.getAllVertices(program)) {
                 Set<String> oldIn = in.getOrDefault(instruction, new HashSet<>());
                 Set<String> oldOut = out.getOrDefault(instruction, new HashSet<>());
 
@@ -53,7 +54,8 @@ public class ConflictGraph extends UnorientedGraph<String> {
     }
 
     private void buildConflictGraph(ControlGraph controlGraph, Program program) {
-        for (Instruction instruction : controlGraph.getVertices(program)) {
+        // Iterate through all instructions
+        for (Instruction instruction : controlGraph.getAllVertices(program)) {
             Set<String> live = new HashSet<>(in.getOrDefault(instruction, new HashSet<>()));
             live.addAll(out.getOrDefault(instruction, new HashSet<>()));
 
@@ -90,6 +92,9 @@ public class ConflictGraph extends UnorientedGraph<String> {
                 case "JEQU":
                 case "JINF":
                 case "JSUP":
+                case "JNEQ":
+                case "JIEQ":
+                case "JSEQ":
                     if (parts.length > 1) {
                         use.add(parts[1]);
                     }
@@ -130,6 +135,9 @@ public class ConflictGraph extends UnorientedGraph<String> {
                 case "JEQU":
                 case "JINF":
                 case "JSUP":
+                case "JNEQ":
+                case "JIEQ":
+                case "JSEQ":
                 case "CALL":
                 case "RET":
                 case "JMP":
@@ -166,14 +174,14 @@ public class ConflictGraph extends UnorientedGraph<String> {
         Instruction instr2 = new Instruction("L2", "SUBi R1000 R1000 1") {};
         Instruction instr3 = new Instruction("L3", "PRINT R1001") {};
         Instruction instr4 = new CondJump("L4", CondJump.Op.JEQU, 1000, 1001, "LABEL2") {};
-        Instruction instr5 = new Instruction("L5", "JINF R1000 R1001 L6") {};
-        Instruction instr6 = new Instruction("L6", "JSUP R1000 R1001 L7") {};
+        Instruction instr5 = new CondJump("L5", CondJump.Op.JINF, 1000, 1001, "L6") {};
+        Instruction instr6 = new CondJump("L6", CondJump.Op.JSUP, 1000, 1001, "L7") {};
         Instruction instr7 = new JumpCall("L7", JumpCall.Op.CALL, "FUNC1") {};
         Instruction instr8 = new JumpCall("L8", JumpCall.Op.JMP, "END") {};
         Instruction instr9 = new Stop("L9") {};
         Instruction instr10 = new Instruction("LABEL1", "ADD R1002 R1000 R1001") {};
         Instruction instr11 = new Instruction("L11", "MUL R1003 R1002 R1000") {};
-        Instruction instr12 = new Instruction("L12", "JMP END") {};
+        Instruction instr12 = new JumpCall("L12", JumpCall.Op.JMP ,"END") {};
         Instruction instr13 = new Instruction("LABEL2", "DIV R1004 R1003 R1001") {};
         Instruction instr14 = new Instruction("L14", "PRINT R1004") {};
         Instruction instr15 = new Ret("END") {};
@@ -209,7 +217,7 @@ public class ConflictGraph extends UnorientedGraph<String> {
         int numColors = conflictGraph.color();
         System.out.println("Nombre de couleurs utilisées: " + numColors);
         for (String var : conflictGraph.vertices) {
-            System.out.println("Variable " + var + " est colorée avec la couleur " + conflictGraph.getColor(var));
+            System.out.println("Variable " + var + " est colorée avec la couleur " + conflictGraph.getColor(var) + " " + conflictGraph.vertices);
         }
     }
 }

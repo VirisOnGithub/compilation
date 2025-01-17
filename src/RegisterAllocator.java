@@ -6,20 +6,24 @@ import src.Asm.Stop;
 import src.Asm.Instruction;
 import src.Asm.CondJump;
 import src.Asm.JumpCall;
+import src.Asm.Mem;
+
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 
 public class RegisterAllocator {
     private ConflictGraph conflictGraph;
     private Map<String, String> registerMap;
-    private Map<String, Integer> dynamicArrayMap;
+    private List<Mem> dynamicInstructions;
     private int dynamicArrayIndex;
 
     public RegisterAllocator(ConflictGraph conflictGraph) {
         this.conflictGraph = conflictGraph;
         this.registerMap = new HashMap<>();
-        this.dynamicArrayMap = new HashMap<>();
+        this.dynamicInstructions = new ArrayList<>();
         this.dynamicArrayIndex = 0;
         allocateRegisters();
     }
@@ -31,7 +35,7 @@ public class RegisterAllocator {
                 registerMap.put(variable, "R" + registerIndex);
                 registerIndex++;
             } else {
-                dynamicArrayMap.put(variable, dynamicArrayIndex);
+                dynamicInstructions.add(new Mem("DYNAMIC" + dynamicArrayIndex, Mem.Op.LD, registerIndex, dynamicArrayIndex));
                 dynamicArrayIndex++;
             }
         }
@@ -40,9 +44,12 @@ public class RegisterAllocator {
     public String getRegister(String variable) {
         if (registerMap.containsKey(variable)) {
             return registerMap.get(variable);
-        } else if (dynamicArrayMap.containsKey(variable)) {
-            return "DYNAMIC[" + dynamicArrayMap.get(variable) + "]";
         } else {
+            for (Mem mem : dynamicInstructions) {
+                if (mem.getLabel().equals("DYNAMIC" + dynamicArrayIndex)) {
+                    return mem.toString();
+                }
+            }
             throw new IllegalArgumentException("Variable not found in register allocation: " + variable);
         }
     }
@@ -52,8 +59,8 @@ public class RegisterAllocator {
         for (Map.Entry<String, String> entry : registerMap.entrySet()) {
             System.out.println(entry.getKey() + " -> " + entry.getValue());
         }
-        for (Map.Entry<String, Integer> entry : dynamicArrayMap.entrySet()) {
-            System.out.println(entry.getKey() + " -> DYNAMIC[" + entry.getValue() + "]");
+        for (Mem mem : dynamicInstructions) {
+            System.out.println(mem.getLabel() + " -> " + mem.toString());
         }
     }
 
@@ -64,14 +71,14 @@ public class RegisterAllocator {
         Instruction instr2 = new Instruction("L2", "SUBi R1000 R1000 1") {};
         Instruction instr3 = new Instruction("L3", "PRINT R1001") {};
         Instruction instr4 = new CondJump("L4", CondJump.Op.JEQU, 1000, 1001, "LABEL2") {};
-        Instruction instr5 = new Instruction("L5", "JINF R1000 R1001 L6") {};
-        Instruction instr6 = new Instruction("L6", "JSUP R1000 R1001 L7") {};
+        Instruction instr5 = new CondJump("L5", CondJump.Op.JINF, 1000, 1001, "L6") {};
+        Instruction instr6 = new CondJump("L6", CondJump.Op.JSUP, 1000, 1001, "L7") {};
         Instruction instr7 = new JumpCall("L7", JumpCall.Op.CALL, "FUNC1") {};
         Instruction instr8 = new JumpCall("L8", JumpCall.Op.JMP, "END") {};
         Instruction instr9 = new Stop("L9") {};
         Instruction instr10 = new Instruction("LABEL1", "ADD R1002 R1000 R1001") {};
         Instruction instr11 = new Instruction("L11", "MUL R1003 R1002 R1000") {};
-        Instruction instr12 = new Instruction("L12", "JMP END") {};
+        Instruction instr12 = new JumpCall("L12", JumpCall.Op.JMP ,"END") {};
         Instruction instr13 = new Instruction("LABEL2", "DIV R1004 R1003 R1001") {};
         Instruction instr14 = new Instruction("L14", "PRINT R1004") {};
         Instruction instr15 = new Ret("END") {};

@@ -34,65 +34,73 @@ public class ControlGraph extends OrientedGraph<Instruction> {
      */
     private void buildControlGraph(Program program) {
         Instruction prevInstruction = null;
+    
+        // Construire la map des étiquettes
         for (Instruction instruction : program.getInstructions()) {
             this.addVertex(instruction);
             if (!instruction.getLabel().isEmpty()) {
-                if (instruction instanceof CondJump) {
-                    CondJump condJump = (CondJump) instruction;
-                    labelMap.put(condJump.getAddress(), condJump);
-                } else if (instruction instanceof JumpCall) {
-                    JumpCall jumpCall = (JumpCall) instruction;
-                    labelMap.put(jumpCall.getAddress(), jumpCall);
-                    if (jumpCall.getName().equals("CALL")) {
-                        callStack.push(jumpCall);
-                    }
-                } else if (instruction instanceof Ret) {
-                    if (!callStack.isEmpty()) {
-                        Instruction lastCall = callStack.pop();
-                        this.addEdge(lastCall, instruction);
-                    }
-                } else {
-                    labelMap.put(instruction.getLabel(), instruction);
-                }
+                labelMap.put(instruction.getLabel(), instruction);
             }
-            if (prevInstruction != null && !(prevInstruction instanceof Stop)) {
+        }
+    
+        // Construire les arêtes du graphe
+        for (Instruction instruction : program.getInstructions()) {
+            if (prevInstruction != null && !(prevInstruction instanceof Stop) && !(prevInstruction instanceof JumpCall)) {
                 this.addEdge(prevInstruction, instruction);
             }
+    
+            if (instruction instanceof CondJump) {
+                CondJump condJump = (CondJump) instruction;
+                String targetLabel = condJump.getAddress();
+                if (labelMap.containsKey(targetLabel)) {
+                    this.addEdge(instruction, labelMap.get(targetLabel));
+                }
+            } else if (instruction instanceof JumpCall) {
+                JumpCall jumpCall = (JumpCall) instruction;
+                if (jumpCall.getName().equals("CALL")) {
+                    String targetLabel = jumpCall.getAddress();
+                    if (labelMap.containsKey(targetLabel)) {
+                        this.addEdge(instruction, labelMap.get(targetLabel));
+                        callStack.push(instruction); // Empiler l'appel pour connecter au retour
+                    }
+                } else if (jumpCall.getName().equals("JMP")) {
+                    String targetLabel = jumpCall.getAddress();
+                    if (labelMap.containsKey(targetLabel)) {
+                        this.addEdge(instruction, labelMap.get(targetLabel));
+                    }
+                }
+            } else if (instruction instanceof Ret) {
+                if (!callStack.isEmpty()) {
+                    Instruction lastCall = callStack.pop();
+                    this.addEdge(lastCall, instruction); // Connecter le retour à l'appel correspondant
+                }
+            }
+    
             if (!(instruction instanceof Stop)) {
                 prevInstruction = instruction;
             } else {
                 prevInstruction = null;
             }
         }
-    
-        // Ajout des arêtes pour les sauts conditionnels et les appels de fonction après avoir construit le graphe
-        for (Instruction instruction : program.getInstructions()) {
-            String targetLabel = null;
-            if (instruction instanceof CondJump) {
-                CondJump condJump = (CondJump) instruction;
-                targetLabel = condJump.getAddress();
-            } else if (instruction instanceof JumpCall) {
-                JumpCall jumpCall = (JumpCall) instruction;
-                targetLabel = jumpCall.getAddress();
-            } else if (instruction instanceof Ret) {
-                if (!callStack.isEmpty()) {
-                    Instruction lastCall = callStack.pop();
-                    this.addEdge(lastCall, instruction);
-                }
-                continue;
-            } else if (instruction instanceof Stop) {
-                continue;
-            }
-            if (targetLabel != null && labelMap.containsKey(targetLabel)) {
-                this.addEdge(instruction, labelMap.get(targetLabel));
-            }
-        }
-    }
+    }    
 
     /**
      * Retourne l'ensemble des sommets du graphe 
      */
     public Set<Instruction> getVertices(Program program) {
+        Set<Instruction> vertices = new HashSet<>();
+        for (Instruction instruction : program.getInstructions()) {
+            vertices.add(instruction);
+        }
+        return vertices;
+    }
+
+    /**
+     * Retourne l'ensemble des sommets du graphe
+     * @param program
+     * @return
+     */
+    public Set<Instruction> getAllVertices(Program program) {
         Set<Instruction> vertices = new HashSet<>();
         for (Instruction instruction : program.getInstructions()) {
             vertices.add(instruction);
@@ -130,7 +138,7 @@ public class ControlGraph extends OrientedGraph<Instruction> {
         Instruction instr9 = new Stop("L9") {};
         Instruction instr10 = new Instruction("LABEL1", "ADD R1002 R1000 R1001") {};
         Instruction instr11 = new Instruction("L11", "MUL R1003 R1002 R1000") {};
-        Instruction instr12 = new Instruction("L12", "JMP END") {};
+        Instruction instr12 = new JumpCall("L12", JumpCall.Op.JMP ,"END") {};
         Instruction instr13 = new Instruction("LABEL2", "DIV R1004 R1003 R1001") {};
         Instruction instr14 = new Instruction("L14", "PRINT R1004") {};
         Instruction instr15 = new Ret("END") {};
