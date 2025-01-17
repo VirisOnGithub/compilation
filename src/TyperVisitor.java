@@ -10,8 +10,8 @@ import java.util.*;
 public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements grammarTCLVisitor<Type> {
 
     private final Map<UnknownType,Type> types = new HashMap<>();
-    private final VarStack<Type> stack = new VarStack<>();
-    private final CallStack callStack = new CallStack();
+    private final UnknownType lastFunction = null;
+    private final TypesStack typesStack = new TypesStack();
 
     public Map<UnknownType, Type> getTypes() {
         return types;
