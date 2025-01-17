@@ -1,11 +1,9 @@
-auto f(int a, bool b, int c){
-auto h;
-return h;}
-
 int main() {
-auto a;
-auto b;
-auto c;
-auto d = f(a, b, c);
-return 0;
+    auto[][] a = {{3, 1}, {2, 3}};
+    auto b = a[1][0];
+    auto d = true;
+    if (d){
+        auto c = a[0];
+    }
+    return 0;
 }

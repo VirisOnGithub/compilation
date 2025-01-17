@@ -6,6 +6,9 @@ import src.Type.*;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 public class Main {
 	public static void main(String[] args) {
@@ -141,7 +144,14 @@ public class Main {
 		} catch (TyperError e){
 			e.printError(input.toString());
 		}
-
-		System.out.println("Final Types "+ visitor.getTypes());
+		Map<UnknownType, Type> types = visitor.getTypes();
+		HashMap<UnknownType, Type> finalTypes = new HashMap<>(types);
+		types.forEach((key, value) -> {
+			if (key.getVarName().equals("#")) {
+				finalTypes.remove(key);
+			}
+		});
+		System.out.println("Types "+ types);
+		System.out.println("Final Types "+ finalTypes);
 	}
 }
