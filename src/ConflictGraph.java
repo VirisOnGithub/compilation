@@ -83,13 +83,17 @@ public class ConflictGraph extends UnorientedGraph<String> {
                 case "ADD":
                 case "MUL":
                 case "DIV":
+                    if (parts.length > 3) {
+                        use.add(parts[2]);
+                        use.add(parts[3]);
+                    }
+                    break;
                 case "ADDi":
                 case "SUBi":
                 case "MULi":
                 case "DIVi":
-                    if (parts.length > 3) {
+                    if (parts.length > 2) {
                         use.add(parts[2]);
-                        use.add(parts[3]);
                     }
                     break;
                 case "PRINT":

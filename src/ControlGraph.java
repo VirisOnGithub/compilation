@@ -107,6 +107,14 @@ public class ControlGraph extends OrientedGraph<Instruction> {
         return vertices;
     }
 
+    public Set<Instruction> getAllVertices(Program program) {
+        Set<Instruction> vertices = new HashSet<>();
+        for (Instruction instruction : program.getInstructions()) {
+            vertices.add(instruction);
+        }
+        return vertices;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -141,8 +149,6 @@ public class ControlGraph extends OrientedGraph<Instruction> {
         Instruction instr13 = new Instruction("LABEL2", "DIV R1004 R1003 R1001") {};
         Instruction instr14 = new Instruction("L14", "PRINT R1004") {};
         Instruction instr15 = new Ret("END") {};
-        Instruction instr16 = new Instruction("FUNC1", "ADD R1005 R1000 R1001") {};
-        Instruction instr17 = new Ret("L17") {};
 
 	// Instructions utilisant plus de registres
 	Instruction instr16 = new Instruction("L15", "ADD R1012 R1013 R1014") {};
