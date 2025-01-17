@@ -1,12 +1,11 @@
 package src;
 
-import java.util.*;
-
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
-
 import org.antlr.v4.runtime.tree.ParseTree;
 import src.Type.*;
+
+import java.util.*;
 
 public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements grammarTCLVisitor<Type> {
 
@@ -191,17 +190,22 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
     @Override
     public Type visitAnd(grammarTCLParser.AndContext ctx) throws TyperError {
         System.out.println("visit and");
-        ParseTree p1 = ctx.getChild(0);
-        Type t1 = visit(p1);
-        ParseTree p3 = ctx.getChild(2);
-        Type t3 = visit(p3);
+        ParseTree leftArgNode = ctx.getChild(0);
+        Type leftArgType = visit(leftArgNode);
+        ParseTree rightArgNode = ctx.getChild(2);
+        Type rightArgType = visit(rightArgNode);
         HashMap<UnknownType, Type> constraints;
         try {
-            constraints = new HashMap<>(t1.unify(new PrimitiveType(Type.Base.BOOL)));
-            constraints.putAll(t3.unify(new PrimitiveType(Type.Base.BOOL)));
+            constraints = new HashMap<>(leftArgType.unify(new PrimitiveType(Type.Base.BOOL)));
         } catch (Error e) {
-            throw new TyperError(e.getMessage(), ctx);
+            throw new TyperError(leftArgNode.getText() + "is not a boolean", ctx);
         }
+        try {
+            constraints.putAll(rightArgType.unify(new PrimitiveType(Type.Base.BOOL)));
+        } catch (Error e) {
+            throw new TyperError(rightArgNode.getText() + "is not a boolean", (ParserRuleContext) ctx.getChild(2));
+        }
+
         this.substituteTypes(constraints);
         return new PrimitiveType(Type.Base.BOOL);
     }
@@ -209,25 +213,14 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
     @Override
     public Type visitVariable(grammarTCLParser.VariableContext ctx) throws TyperError {
         System.out.println("visit variable");
-        Type type;
 
         System.out.println(this.types);
 
-        ParseTree p0 = ctx.getChild(0);
-        UnknownType ut = new UnknownType(p0);
-        System.out.println("ut : "+ut);
-
-        Type result;
-        boolean temp = this.types.containsKey(ut);
-        if (temp) {
-            System.out.println("1");
-            result = this.types.get(ut);
-        }
-        else {
-            System.out.println("2");
-            result = ut;
-            type = new UnknownType();
-            this.types.put(ut, type);
+        ParseTree varNode = ctx.getChild(0);
+        UnknownType ut = new UnknownType(varNode);
+        Type result = this.types.getOrDefault(ut, ut);
+        if (!this.types.containsKey(ut)) {
+            this.types.put(ut, new UnknownType());
         }
         return result;
     }
@@ -236,12 +229,21 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
     public Type visitMultiplication(grammarTCLParser.MultiplicationContext ctx) throws TyperError {
         System.out.println("Visit Multiplication");
 
-        ParseTree p1 = ctx.getChild(0);
-        Type t1 = visit(p1);
-        ParseTree p3 = ctx.getChild(2);
-        Type t3 = visit(p3);
-        HashMap<UnknownType, Type> constraints = new HashMap<>(t1.unify(new PrimitiveType(Type.Base.INT)));
-        constraints.putAll(t3.unify(new PrimitiveType(Type.Base.INT)));
+        ParseTree leftArgNode = ctx.getChild(0);
+        Type leftArgType = visit(leftArgNode);
+        ParseTree rightArgNode = ctx.getChild(2);
+        Type rightArgType = visit(rightArgNode);
+        HashMap<UnknownType, Type> constraints;
+        try {
+            constraints = new HashMap<>(leftArgType.unify(new PrimitiveType(Type.Base.INT)));
+        } catch (Error e) {
+            throw new TyperError(leftArgNode.getText() + " is not an int", ctx);
+        }
+        try {
+            constraints.putAll(rightArgType.unify(new PrimitiveType(Type.Base.INT)));
+        } catch (Error e) {
+            throw new TyperError(rightArgNode.getText() + " is not an int", (ParserRuleContext) ctx.getChild(2));
+        }
         this.substituteTypes(constraints);
         return new PrimitiveType(Type.Base.INT);
     }
@@ -253,7 +255,12 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         Type leftExpressionType = visit(leftExpressionNode);
         ParseTree rightExpressionNode = ctx.getChild(2);
         Type rightExpressionType = visit(rightExpressionNode);
-        HashMap<UnknownType, Type> constraints = new HashMap<>(leftExpressionType.unify(rightExpressionType));
+        HashMap<UnknownType, Type> constraints;
+        try {
+            constraints = new HashMap<>(leftExpressionType.unify(rightExpressionType));
+        } catch(Error e){
+            throw new TyperError(leftExpressionNode.getText() + " and " + rightExpressionNode.getText() + " have not the same type", (ParserRuleContext) ctx.getChild(1));
+        }
         this.substituteTypes(constraints);
         return new PrimitiveType(Type.Base.BOOL);
     }
@@ -264,15 +271,20 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         HashMap<UnknownType, Type> constraints = new HashMap<>();
         Type type = new UnknownType();
 
+        // On teste si il y a un contenu dans les accolades
         if (ctx.getChildCount() > 2) {
             for (int i = 1; i < ctx.getChildCount() - 3; i += 2) {
-                ParseTree p = ctx.getChild(i);
-                Type t = visit(p);
-                ParseTree p2 = ctx.getChild(i + 2);
-                Type t2 = visit(p2);
-                constraints.putAll(t.unify(t2));
-                if (!(t instanceof UnknownType)){
-                    type = t;
+                ParseTree exprAtPositionI = ctx.getChild(i);
+                Type exprType = visit(exprAtPositionI);
+                ParseTree exprAtNextPosition = ctx.getChild(i + 2);
+                Type nextExprType = visit(exprAtNextPosition);
+                try {
+                    constraints.putAll(exprType.unify(nextExprType));
+                } catch (Error e) {
+                    throw new TyperError(exprAtPositionI.getText() + "is not the same type as " + exprAtNextPosition.getText() + "\n" + exprAtPositionI.getText() + " : " + exprType + "\n" + exprAtNextPosition.getText() + " : " + nextExprType, (ParserRuleContext) ctx.getChild(i));
+                }
+                if (!(exprType instanceof UnknownType)){
+                    type = exprType;
                 }
 
             }
@@ -284,12 +296,21 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
     @Override
     public Type visitAddition(grammarTCLParser.AdditionContext ctx) throws TyperError {
         System.out.println("visit addition");
-        ParseTree p1 = ctx.getChild(0);
-        Type t1 = visit(p1);
-        ParseTree p3 = ctx.getChild(2);
-        Type t3 = visit(p3);
-        HashMap<UnknownType, Type> constraints = new HashMap<>(t1.unify(new PrimitiveType(Type.Base.INT)));
-        constraints.putAll(t3.unify(new PrimitiveType(Type.Base.INT)));
+        ParseTree leftOperandNode = ctx.getChild(0);
+        Type leftOperandType = visit(leftOperandNode);
+        ParseTree rightOperandNode = ctx.getChild(2);
+        Type rightOperandType = visit(rightOperandNode);
+        HashMap<UnknownType, Type> constraints;
+        try {
+            constraints = new HashMap<>(leftOperandType.unify(new PrimitiveType(Type.Base.INT)));
+        } catch (Error e) {
+            throw new TyperError(leftOperandNode.getText() + " is not an int", (ParserRuleContext) leftOperandNode);
+        }
+        try {
+            constraints.putAll(rightOperandType.unify(new PrimitiveType(Type.Base.INT)));
+        } catch (Error e) {
+            throw new TyperError(rightOperandNode.getText() + " is not an int", (ParserRuleContext) rightOperandNode);
+        }
         this.substituteTypes(constraints);
         return new PrimitiveType(Type.Base.INT);
     }
@@ -297,24 +318,34 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
     @Override
     public Type visitBase_type(grammarTCLParser.Base_typeContext ctx) throws TyperError {
         System.out.println("Visit base type : BASE_TYPE");
-        ParseTree p0 = ctx.getChild(0);
-        if (!Objects.equals(p0.getText(), "int") && !Objects.equals(p0.getText(), "bool") && !Objects.equals(p0.getText(), "auto")) {
-            throw new TyperError("The supplied type is not a base type\nType provided : " + p0.getText(), ctx);
+
+        ParseTree baseTypeNode = ctx.getChild(0);
+        String baseType = baseTypeNode.getText();
+
+        if (!isValidBaseType(baseType)) {
+            throw new TyperError(
+                    "The supplied type is not a base type\nType provided : " + baseType, ctx
+            );
         }
-        return switch (p0.getText()) {
+
+        return switch (baseType) {
             case "int"  -> new PrimitiveType(Type.Base.INT);
             case "bool" -> new PrimitiveType(Type.Base.BOOL);
             case "auto" -> new UnknownType();
-            default -> null;
+            default     -> null;
         };
+    }
+    private static final String[] VALID_BASE_TYPES = {"int", "bool", "auto"};
+    private boolean isValidBaseType(String text) {
+        return Arrays.asList(VALID_BASE_TYPES).contains(text);
     }
 
     @Override
     public Type visitTab_type(grammarTCLParser.Tab_typeContext ctx) throws TyperError {
         System.out.println("Visit tab type");
-        ParseTree p0 = ctx.getChild(0);
-        Type t = visit(p0);
-        ArrayType array = new ArrayType(t);
+        ParseTree baseTypeNode = ctx.getChild(0);
+        Type baseType = visit(baseTypeNode);
+        ArrayType array = new ArrayType(baseType);
         this.types.put(new UnknownType(), array);
         return array;
     }
