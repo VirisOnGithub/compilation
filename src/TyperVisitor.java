@@ -203,7 +203,8 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
                 List<Type> types = constraint.getValue();
                 List<Type> newTypes = new ArrayList<>();
 
-                for (var it = types.iterator(); it.hasNext();) {
+                boolean removed = false;
+                for (var it = types.iterator(); it.hasNext() && !removed;) {
                     Type type = it.next();
                     Type newType = varType;
                     while (type instanceof ArrayType at) {
@@ -214,6 +215,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
                     if (type.equals(var)) {
                         it.remove();
                         newTypes.add(newType);
+                        break;
                     }
                 }
 
@@ -257,9 +259,22 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         boolean stop = false;
         List<UnknownType> substituted = new ArrayList<>();
         UnknownType substituteVar = null;
+        Map<UnknownType, List<Type>> newConstraints = new HashMap<>();
         while (!stop) {
             stop = true;
 
+            // add new constraints
+            if (!getConstraints().empty() && !newConstraints.isEmpty()) {
+                for (var entry : newConstraints.entrySet()) {
+                    if (!getConstraints().getLast().containsKey(entry.getKey())) {
+                        getConstraints().getLast().put(entry.getKey(), new ArrayList<>());
+                    }
+                    getConstraints().getLast().get(entry.getKey()).addAll(entry.getValue());
+                }
+                newConstraints.clear();
+            }
+
+            // try substitute
             if (substituteVar != null) {
                 // [substitution]
                 littleAssSubstitute(substituteVar, getTypes().get(substituteVar));
@@ -271,6 +286,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
             // pour chaque type, si type primitif on substitue
             // et on le rajoute à la liste des substitués
             // et on revient au début
+            // on rajoute aussi les contraintes dans l'autre sens
             for (var consInDepth : getConstraints()) {
                 for (var constraint : consInDepth.entrySet()) {
                     UnknownType var = constraint.getKey();
@@ -279,6 +295,18 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
                     if (this.getTypes().containsKey(var) && !substituted.contains(var)) {
                         substituteVar = var;
                         substituted.add(var);
+                        Type varType = getTypes().get(var);
+                        for (Type type : types) {
+                            var newConstraint = type.unify(varType);
+                            for (var entry : newConstraint.entrySet()) {
+
+                                if (!newConstraints.containsKey(entry.getKey())) {
+                                    newConstraints.put(entry.getKey(), new ArrayList<>());
+                                }
+
+                                newConstraints.get(entry.getKey()).add(entry.getValue());
+                            }
+                        }
                         stop = false;
                         break;
                     }
@@ -304,6 +332,25 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
                     for (var it = types.iterator(); it.hasNext();) {
                         Type type = it.next();
+                        // unifying arrays
+                        if (type instanceof ArrayType at1) {
+                            if (getTypes().containsKey(var)) {
+                                Type varType = getTypes().get(var);
+                                if (varType instanceof ArrayType at2) {
+                                    // both are arrays
+                                    var newConstraint = at1.unify(at2);
+                                    for (var entry : newConstraint.entrySet()) {
+
+                                        if (!newConstraints.containsKey(entry.getKey())) {
+                                            newConstraints.put(entry.getKey(), new ArrayList<>());
+                                        }
+
+                                        newConstraints.get(entry.getKey()).add(entry.getValue());
+                                    }
+                                }
+                            }
+                        }
+                        // unifying primitives
                         if (canBeSubstituted(type)) {
                             if (this.getTypes().containsKey(var)) {
                                 // la variable a déjà un type assigné
@@ -326,22 +373,6 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
                 }
                 if (!stop)
                     break;
-            }
-
-            // ensuite pour chaque type
-            // unifier toutes les contraintes d'un type
-            // si contraint à un type primitif, on lui donne le type
-            // et on lui enlève la contrainte de ce type
-            // et on revient au début
-            for (var consInDepth : getConstraints()) {
-                // for (var constraint : consInDepth.entrySet()) {
-                // UnknownType var = constraint.getKey();
-                // List<Type> types = constraint.getValue();
-
-                // for () {
-
-                // }
-                // }
             }
         }
     }

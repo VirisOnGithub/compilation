@@ -1,13 +1,27 @@
+auto f(auto a, bool b, int c){
+    return {a};
+}
+
 int main() {
-    auto a = 5;
-    auto b = 0;
-    if (a<b) {
-        auto c = 0;
-    } else {
-        auto d = (a==b);
-    }
-    {
-        auto b = true;
-    }
+    int e;
+    int[] ff;
+    auto ba;
+    auto baba;
+    auto c;
+    auto d = f(ff, ba, c);
+    print(d);
+
+    auto gg = f(e, baba, c);
+    print(gg);
+    print(ba);
+    print(baba);
+    
+    auto caca;
+    auto pipi;
+    auto popo;
+    int[][][][] boi = f(caca, pipi, popo);
+    print(caca);
+    print(pipi);
+    print(popo);
     return 0;
 }
