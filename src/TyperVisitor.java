@@ -2,6 +2,7 @@ package src;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -19,6 +20,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
     private final Map<UnknownType, Type> types = new HashMap<>();
     private final VarStack<UnknownType> varStack = new VarStack<>();
     private final Map<String, UnknownType> functionList = new HashMap<>();
+    private final List<UnknownType> functionArgs = new ArrayList<>();
 
     private String lastFunctionCalled = null;
 
@@ -42,13 +44,19 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     private void enterFunction(ParseTree funcNameNode, String funcName) {
         this.varStack.enterFunction();
-        this.constraints.add(new HashMap<>());
+        // this.constraints.add(new HashMap<>());
         this.lastFunctionCalled = funcName;
         this.functionList.put(funcName, new UnknownType(funcNameNode));
     }
 
     private void enterFunction(ParseTree funcNameNode) {
         enterFunction(funcNameNode, funcNameNode.getText());
+    }
+
+    private void leaveFunction() {
+        this.debugConstraints();
+        this.varStack.leaveFunction();
+        // this.constraints.pop();
     }
 
     private void addUnifyConstraint(Type t1, Type t2) {
@@ -61,15 +69,9 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
     private void addUnifyConstraint(ParseTree var, Type... types) {
         for (Type type : types) {
             addUnifyConstraint(new UnknownType(var), type);
+            if (type instanceof UnknownType)
+                addUnifyConstraint(type, new UnknownType(var));
         }
-    }
-
-    private void addUnifyConstraint(ParseTree var1, ParseTree var2) {
-        addUnifyConstraint(var1, new UnknownType(var2));
-    }
-
-    private void addUnifyConstraint(ParseTree var1, ParseTree var2, Type t1) {
-        addUnifyConstraint(var1, new UnknownType(var2), t1);
     }
 
     private void debugConstraints() {
@@ -107,11 +109,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         System.out.println("\n\n\n");
     }
 
-    private void leaveFunction() {
-        this.debugConstraints();
-        this.varStack.leaveFunction();
-        this.constraints.pop();
-    }
+    
 
     private Type getVarType(String varName) {
         return this.types.get(this.varStack.getVar(varName));
@@ -136,104 +134,137 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         }
     }
 
-    private void substituteVar(UnknownType bigVar, Type bigType) {
-        assert (!(bigType instanceof UnknownType));
+    private boolean canBeSubstituted(Type type) {
+        while (type instanceof ArrayType at) {
+            type = at.getTabType();
+        }
+        if (type instanceof PrimitiveType)
+            return true;
+        return false;
+    }
 
-        for (var cons : this.constraints) {
-            // for (var it = cons.entrySet().iterator(); it.hasNext();) {
-            // var entry = it.next();
-            // var var1 = entry.getKey();
-            // var var2 = entry.getValue();
-            // if (var2 == bigVar) {
-            // var var1Type = this.types.get(var1);
-            // var1Type.unify(bigType);
-            // this.types.replace(var1, bigType);
-            // cons.replace(var1, bigType);
-            // } else {
-            // // if (var1 == bigVar) {
-            // // cons.put(new UnknownType(), new UnknownType());
-            // // System.out.println("YOOOOOOOOOOOO");
-            // // }
-            // }
-            // }
+    private void littleAssSubstitute(UnknownType var, Type varType) {
+        for (var consInDepth : constraints) {
+            for (var constraint : consInDepth.entrySet()) {
+                // UnknownType weakVar = constraint.getKey();
+                List<Type> types = constraint.getValue();
+                List<Type> newTypes = new ArrayList<>();
+
+                for (var it = types.iterator(); it.hasNext();) {
+                    Type type = it.next();
+                    Type newType = varType;
+                    while (type instanceof ArrayType at) {
+                        type = at.getTabType();
+                        newType = new ArrayType(newType);
+                    }
+                    if (type.equals(var)) {
+                        it.remove();
+                        newTypes.add(newType);
+                    }
+                }
+
+                for (Type type : newTypes) {
+                    types.add(type);
+                }
+            }
         }
     }
 
+    // private boolean tryAddConstraints() {
+        
+    // }
+
     private void bigAssSubstitute() {
-        // List<UnknownType> substitutes = new ArrayList<>();
+        boolean stop = false;
+        List<UnknownType> substituted = new ArrayList<>();
+        UnknownType substituteVar = null;
+        while (!stop) {
+            stop = true;
 
-        // boolean hasSubstitued = true;
+            if (substituteVar != null) {
+                // [substitution]
+                littleAssSubstitute(substituteVar, this.types.get(substituteVar));
+                substituteVar = null;
+                stop = false;
+                continue;
+            }
 
-        // while (hasSubstitued) {
-        // hasSubstitued = false;
+            // pour chaque type, si type primitif on substitue
+            // et on le rajoute à la liste des substitués
+            // et on revient au début
+            for (var consInDepth : constraints) {
+                for (var constraint : consInDepth.entrySet()) {
+                    UnknownType var = constraint.getKey();
+                    List<Type> types = constraint.getValue();
 
-        // Map<Map<UnknownType, Type>, Map<UnknownType, Type>> newConstraints = new
-        // HashMap<>();
+                    if (this.types.containsKey(var) && !substituted.contains(var)) {
+                        substituteVar = var;
+                        substituted.add(var);
+                        stop = false;
+                        break;
+                    }
+                }
+                if (!stop)
+                    break;
+            }
 
-        // for (var cons : this.constraints) {
-        // for (var it = cons.entrySet().iterator(); it.hasNext();) {
-        // var entry = it.next();
+            if (!stop)
+                continue;
 
-        // UnknownType leftVar = entry.getKey();
-        // Type rightVar = entry.getValue();
+            // ensuite pour chaque type
+            // unifier toutes les contraintes d'un type
+            // si contraint à un type primitif, et qu'il n'a pas de type, on lui affecte le
+            // type
+            // si déjà un type, on unifie les deux et on supprime la contrainte
+            // et on lui enlève la contrainte de ce type
+            // et on revient au début
+            for (var consInDepth : constraints) {
+                for (var constraint : consInDepth.entrySet()) {
+                    UnknownType var = constraint.getKey();
+                    List<Type> types = constraint.getValue();
 
-        // assert(!this.types.containsKey(leftVar));
+                    for (var it = types.iterator(); it.hasNext();) {
+                        Type type = it.next();
+                        if (canBeSubstituted(type)) {
+                            if (this.types.containsKey(var)) {
+                                // la variable a déjà un type assigné
+                                Type varType = this.types.get(var);
+                                varType.unify(type);
+                                it.remove();
+                                stop = false;
+                                break;
+                            } else {
+                                // la variable n'avait pas de type assigné
+                                this.types.put(var, type);
+                                it.remove();
+                                stop = false;
+                                break;
+                            }
+                        }
+                    }
+                    if (!stop)
+                        break;
+                }
+                if (!stop)
+                    break;
+            }
 
-        // // if (rightVar instanceof UnknownType) {
-        // // Type leftVarType = this.types.get(leftVar);
-        // // Type rightVarType = this.types.get(rightVar);
-        // // if (rightVarType != null && !(rightVarType instanceof UnknownType)) {
-        // // var newConstraint = leftVarType.unify(rightVarType);
-        // // if (newConstraints.containsKey(cons)) {
-        // // newConstraints.get(cons).putAll(newConstraint);
-        // // } else {
-        // // newConstraints.put(cons, newConstraint);
-        // // }
-        // // }
-        // // }
+            // ensuite pour chaque type
+            // unifier toutes les contraintes d'un type
+            // si contraint à un type primitif, on lui donne le type
+            // et on lui enlève la contrainte de ce type
+            // et on revient au début
+            for (var consInDepth : constraints) {
+                // for (var constraint : consInDepth.entrySet()) {
+                // UnknownType var = constraint.getKey();
+                // List<Type> types = constraint.getValue();
 
-        // // la variable de gauche est typée
-        // if (!(rightVar instanceof UnknownType)) {
-        // if (!substitutes.contains(leftVar)) {
-        // // substituteVar(leftVar, rightVar);
-        // // if (this.types.get(leftVar) instanceof UnknownType ut)
-        // // substituteVar(ut, rightVar);
-        // // this.types.put(leftVar, rightVar);
-        // substitutes.add(leftVar);
-        // hasSubstitued = true;
-        // break;
-        // }
-        // }
+                // for () {
 
-        // // variable à droite est "typée"
-        // if (!(this.types.get(leftVar) instanceof UnknownType) && (rightVar instanceof
-        // UnknownType rightVarUT)) {
-        // if (this.types.containsKey(rightVarUT) && !substitutes.contains(rightVarUT))
-        // {
-        // // Type leftVarType = this.types.get(leftVar);
-        // // this.types.put(rightVarUT, leftVarType);
-        // // this.substituteVar(rightVarUT, leftVarType);
-        // substitutes.add(rightVarUT);
-        // hasSubstitued = true;
-        // break;
-        // }
-
-        // }
-        // }
-        // if (hasSubstitued)
-        // break;
-        // }
-
-        // for (var cons : newConstraints.entrySet()) {
-        // var currentDepthConstraints = cons.getKey();
-        // var newConstraintsToAdd = cons.getValue();
-
-        // if (this.constraints.contains(currentDepthConstraints)) {
-        // this.constraints.get(this.constraints.indexOf(currentDepthConstraints)).putAll(newConstraintsToAdd);
-        // }
-        // }
-
-        // }
+                // }
+                // }
+            }
+        }
     }
 
     private void throwCustomError(String message) {
@@ -683,6 +714,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
                 UnknownType paramName = new UnknownType(paramNameNode);
 
                 this.varStack.assignVar(paramNameNode.getText(), paramName);
+                this.functionArgs.add(paramName);
 
                 addUnifyConstraint(paramNameNode, paramType);
 
@@ -710,6 +742,8 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
         int childCount = ctx.getChildCount();
 
+        enterBlock();
+
         // visit functions
         for (int i = 0; i < childCount - 3; i++) {
             ParseTree decl_fctNode = ctx.getChild(i);
@@ -728,6 +762,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         visit(core_fctNode);
 
         leaveFunction();
+        leaveBlock();
 
         return null;
     }
