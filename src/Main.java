@@ -34,12 +34,8 @@ public class Main {
 		TyperVisitor visitor = new TyperVisitor();
 		visitor.visit(tree); // unification des types
 
-		System.out.println("Final types: "+ visitor.getTypes());
-
 		CodeGenerator codeGenerator = new CodeGenerator(visitor.getTypes());
 		Program program = codeGenerator.visit(tree); // génération du code linéaire
-
-		System.out.println(program);
 
 		try {
 			FileWriter fileWriter = new FileWriter("prog.asm"); // écrit le programme dans prog.asm

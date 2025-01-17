@@ -1,24 +1,7 @@
 int main() {
-    auto b = {42, 666, 99};
-    auto a = {{18}, {69}};
-        print(b);
-        print(a);
-    auto d = b;
-        print(d);
-    auto c = a[1];
-        print(c);
-    auto e = b[30];
-        print(e);
-        print(b);
-    a[1] = {8, 58, 75, 89};
-        print(a);
-    a[1][2] = 69;
-        print(a);
-    c = a[0];
-        print(c);
-    c[5] = 4848;
-        print(a);
-    int g = a[0][5];
-        print(g);
+    auto a = { { {4, 5},{6, 9} },{ {3} } };
+    print(a);
+    a[0][0][2] = 10;
+    print(a);
     return 0;
 }
