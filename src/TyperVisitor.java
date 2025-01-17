@@ -20,7 +20,6 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
     private final Map<UnknownType, Type> types = new HashMap<>();
     private final VarStack<UnknownType> varStack = new VarStack<>();
     private final Map<String, UnknownType> functionList = new HashMap<>();
-    private final List<UnknownType> functionArgs = new ArrayList<>();
 
     private String lastFunctionCalled = null;
 
@@ -714,7 +713,6 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
                 UnknownType paramName = new UnknownType(paramNameNode);
 
                 this.varStack.assignVar(paramNameNode.getText(), paramName);
-                this.functionArgs.add(paramName);
 
                 addUnifyConstraint(paramNameNode, paramType);
 
