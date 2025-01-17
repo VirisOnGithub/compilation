@@ -2,7 +2,6 @@ package src;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -17,34 +16,85 @@ import src.Type.*;
 
 public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements grammarTCLVisitor<Type> {
 
-    private final Map<UnknownType, Type> types = new HashMap<>();
+    private static class State {
+        private final Map<UnknownType, Type> types;
+        private final Stack<Map<UnknownType, List<Type>>> constraints;
+        
+        public State() {
+            this.types = new HashMap<>();
+            this.constraints = new Stack<>();
+        }
+        public State(State other) {
+            this.types = new HashMap<>();
+            this.types.putAll(other.getTypes());
+            this.constraints = new Stack<>();
+            // boring copying stuff
+            for (var stack : other.getConstraints()) {
+                Map<UnknownType, List<Type>> map = new HashMap<>();
+                for (var entry : stack.entrySet()) {
+                    List<Type> types = new ArrayList<>();
+                    for (var type : entry.getValue()) {
+                        types.add(type);
+                    }
+                    map.put(entry.getKey(), types);
+                }
+                this.constraints.add(map);
+            }
+        }
+        public Map<UnknownType, Type> getTypes() {
+            return types;
+        }
+        public Stack<Map<UnknownType, List<Type>>> getConstraints() {
+            return constraints;
+        }
+    }
+
     private final VarStack<UnknownType> varStack = new VarStack<>();
     private final Map<String, UnknownType> functionList = new HashMap<>();
 
+    private String lastFunctionEntered = null;
     private String lastFunctionCalled = null;
 
-    private final Stack<Map<UnknownType, List<Type>>> constraints = new Stack<>();
+    private final State normalState = new State();
+    private State tempState;
+
+    private State currentState = normalState;
 
     public Map<UnknownType, Type> getTypes() {
-        return types;
+        return this.currentState.getTypes();
+    }
+
+    public Stack<Map<UnknownType, List<Type>>> getConstraints() {
+        return this.currentState.getConstraints();
+    }
+
+    private void beginTempChangesMode() {
+        this.bigAssSubstitute();
+        this.tempState = new State(this.normalState);
+        this.currentState = tempState;
+    }
+
+    private void endTempChangesMode() {
+        this.tempState = null;
+        this.currentState = normalState;
     }
 
     private void enterBlock() {
         this.bigAssSubstitute();
-        this.constraints.add(new HashMap<>());
+        getConstraints().add(new HashMap<>());
         this.varStack.enterBlock();
     }
 
     private void leaveBlock() {
         this.bigAssSubstitute();
-        this.constraints.pop();
+        getConstraints().pop();
         this.varStack.leaveBlock();
     }
 
     private void enterFunction(ParseTree funcNameNode, String funcName) {
         this.varStack.enterFunction();
         // this.constraints.add(new HashMap<>());
-        this.lastFunctionCalled = funcName;
+        this.lastFunctionEntered = funcName;
         this.functionList.put(funcName, new UnknownType(funcNameNode));
     }
 
@@ -53,7 +103,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
     }
 
     private void leaveFunction() {
-        this.debugConstraints();
+        this.bigAssSubstitute();
         this.varStack.leaveFunction();
         // this.constraints.pop();
     }
@@ -73,20 +123,25 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         }
     }
 
+    @SuppressWarnings("unlikely-arg-type")
+    private void printConstraints() {
+        for (var cons : getConstraints()) {
+            for (var constraint : cons.entrySet()) {
+                System.out.println(constraint.getKey() + "{ " + this.getTypes().get(constraint.getKey()) + " }  ~ "
+                        + constraint.getValue() + "{ " + this.getTypes().get(constraint.getValue()) + " }");
+            }
+        }
+    }
+
     private void debugConstraints() {
 
         System.out.println("Types");
 
-        System.out.println(this.types);
+        System.out.println(this.getTypes());
 
         System.out.println("\nContraintes :");
 
-        for (var cons : this.constraints) {
-            for (var constraint : cons.entrySet()) {
-                System.out.println(constraint.getKey() + "{ " + this.types.get(constraint.getKey()) + " }  ~ "
-                        + constraint.getValue() + "{ " + this.types.get(constraint.getValue()) + " }");
-            }
-        }
+        printConstraints();
 
         System.out.println("\n\n\n");
 
@@ -94,16 +149,11 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
         System.out.println("Contraintes (Nouveau) :");
 
-        for (var cons : this.constraints) {
-            for (var constraint : cons.entrySet()) {
-                System.out.println(constraint.getKey() + "{ " + this.types.get(constraint.getKey()) + " }  ~ "
-                        + constraint.getValue() + "{ " + this.types.get(constraint.getValue()) + " }");
-            }
-        }
+        printConstraints();
 
         System.out.println("\n\n");
 
-        System.out.println(this.types);
+        System.out.println(this.getTypes());
 
         System.out.println("\n\n\n");
     }
@@ -111,7 +161,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
     
 
     private Type getVarType(String varName) {
-        return this.types.get(this.varStack.getVar(varName));
+        return this.getTypes().get(this.varStack.getVar(varName));
     }
 
     // we can only print primitive and arrays with known type
@@ -125,11 +175,11 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     private void addConstraint(Map<UnknownType, Type> constraint) {
         for (var entry : constraint.entrySet()) {
-            if (!constraints.getLast().containsKey(entry.getKey())) {
-                constraints.getLast().put(entry.getKey(), new ArrayList<>());
+            if (!getConstraints().getLast().containsKey(entry.getKey())) {
+                getConstraints().getLast().put(entry.getKey(), new ArrayList<>());
             }
 
-            constraints.getLast().get(entry.getKey()).add(entry.getValue());
+            getConstraints().getLast().get(entry.getKey()).add(entry.getValue());
         }
     }
 
@@ -143,7 +193,8 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
     }
 
     private void littleAssSubstitute(UnknownType var, Type varType) {
-        for (var consInDepth : constraints) {
+        // substitute on constraints
+        for (var consInDepth : getConstraints()) {
             for (var constraint : consInDepth.entrySet()) {
                 // UnknownType weakVar = constraint.getKey();
                 List<Type> types = constraint.getValue();
@@ -156,6 +207,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
                         type = at.getTabType();
                         newType = new ArrayType(newType);
                     }
+                    
                     if (type.equals(var)) {
                         it.remove();
                         newTypes.add(newType);
@@ -167,6 +219,31 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
                 }
             }
         }
+
+        //substitute on types
+        for (var entry : getTypes().entrySet()) {
+            UnknownType varEntry = entry.getKey();
+            Type type = entry.getValue();
+            if (type instanceof FunctionType ft) {
+                ArrayList<Type> params = new ArrayList<>();
+                // substitute params
+                for (int i = 0; i < ft.getNbArgs(); i++) {
+                    Type argType = ft.getArgsType(i);
+                    if (argType.equals(var)) {
+                        params.add(varType);
+                    } else {
+                        params.add(argType);
+                    }
+                }
+                // substiture return type
+                Type returnType = ft.getReturnType();
+                if (returnType.equals(var)) {
+                    returnType = varType;
+                }
+                entry.setValue(new FunctionType(returnType, params));
+            }
+        }
+        
     }
 
     // private boolean tryAddConstraints() {
@@ -182,7 +259,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
             if (substituteVar != null) {
                 // [substitution]
-                littleAssSubstitute(substituteVar, this.types.get(substituteVar));
+                littleAssSubstitute(substituteVar, getTypes().get(substituteVar));
                 substituteVar = null;
                 stop = false;
                 continue;
@@ -191,12 +268,12 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
             // pour chaque type, si type primitif on substitue
             // et on le rajoute à la liste des substitués
             // et on revient au début
-            for (var consInDepth : constraints) {
+            for (var consInDepth : getConstraints()) {
                 for (var constraint : consInDepth.entrySet()) {
                     UnknownType var = constraint.getKey();
                     List<Type> types = constraint.getValue();
 
-                    if (this.types.containsKey(var) && !substituted.contains(var)) {
+                    if (this.getTypes().containsKey(var) && !substituted.contains(var)) {
                         substituteVar = var;
                         substituted.add(var);
                         stop = false;
@@ -217,7 +294,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
             // si déjà un type, on unifie les deux et on supprime la contrainte
             // et on lui enlève la contrainte de ce type
             // et on revient au début
-            for (var consInDepth : constraints) {
+            for (var consInDepth : getConstraints()) {
                 for (var constraint : consInDepth.entrySet()) {
                     UnknownType var = constraint.getKey();
                     List<Type> types = constraint.getValue();
@@ -225,16 +302,16 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
                     for (var it = types.iterator(); it.hasNext();) {
                         Type type = it.next();
                         if (canBeSubstituted(type)) {
-                            if (this.types.containsKey(var)) {
+                            if (this.getTypes().containsKey(var)) {
                                 // la variable a déjà un type assigné
-                                Type varType = this.types.get(var);
+                                Type varType = this.getTypes().get(var);
                                 varType.unify(type);
                                 it.remove();
                                 stop = false;
                                 break;
                             } else {
                                 // la variable n'avait pas de type assigné
-                                this.types.put(var, type);
+                                this.getTypes().put(var, type);
                                 it.remove();
                                 stop = false;
                                 break;
@@ -253,7 +330,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
             // si contraint à un type primitif, on lui donne le type
             // et on lui enlève la contrainte de ce type
             // et on revient au début
-            for (var consInDepth : constraints) {
+            for (var consInDepth : getConstraints()) {
                 // for (var constraint : consInDepth.entrySet()) {
                 // UnknownType var = constraint.getKey();
                 // List<Type> types = constraint.getValue();
@@ -359,7 +436,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         if (!functionList.containsKey(funcName)) {
             throwCustomError("Call does not exist at line " + getLine(ctx));
         }
-        FunctionType funcDeclType = (FunctionType) types.get(functionList.get(funcName));
+        FunctionType funcDeclType = (FunctionType) getTypes().get(functionList.get(funcName));
 
         int NbChildren = ctx.getChildCount();
         if (NbChildren != 3) {
@@ -375,6 +452,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
                 addUnifyConstraint(p2, visit(p2), funcDeclType.getArgsType(i));
             }
         }
+        lastFunctionCalled = funcName;
         return funcDeclType.getReturnType();
     }
 
@@ -402,6 +480,10 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         if (!this.varStack.varExists(ctx.VAR().getText())) {
             throwCustomError("Type error: variable " + ctx.VAR().getText() + " isn't defined at line " + getLine(ctx));
         }
+
+        // if (!this.getTypes().containsKey(this.varStack.getVar(ctx.VAR().getText()))) {
+        //     throwCustomError("Type error: variable " + ctx.VAR().getText() + " has not been assigned yet at line " + getLine(ctx));
+        // }
 
         UnknownType declVarNode = this.varStack.getVar(ctx.VAR().getText());
         UnknownType variable = new UnknownType(ctx.VAR());
@@ -526,8 +608,38 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         // cas : "auto a = b;"
         if (ctx.getChildCount() == 5) {
             ParseTree exprNode = ctx.getChild(3);
+
+            lastFunctionCalled = null;
+
+            beginTempChangesMode();
+            
             Type exprType = visit(exprNode);
+            // UnknownType exprUT = new UnknownType(exprNode);
+            // addUnifyConstraint(exprUT, exprType);
+            
             addUnifyConstraint(varNode, type, exprType);
+
+            this.bigAssSubstitute();
+
+            exprType = getTypes().get(new UnknownType(varNode));
+
+            // sauvegarde des états
+            FunctionType functionSave = null;
+
+            // store the function
+            if (lastFunctionCalled != null) {
+                FunctionType fType = (FunctionType) this.getTypes().get(this.functionList.get(lastFunctionCalled));
+                functionSave = fType;
+            }
+
+
+            endTempChangesMode();
+
+            addUnifyConstraint(varNode, exprType);
+
+            // if (functionSave != null)
+            //     addUnifyConstraint(varNode, functionSave.getReturnType());
+            
         } else {
             addUnifyConstraint(varNode, type);
         }
@@ -541,13 +653,19 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         String varName = ctx.VAR().getText();
 
         if (!this.varStack.varExists(varName)) {
-            throwCustomError("Type error: variable " + parameter + " isn't defined at line " + getLine(ctx));
+            throwCustomError("Type error: variable " + varName + " isn't defined at line " + getLine(ctx));
         }
 
         // we must know the type at this point
-        this.debugConstraints();
+        this.bigAssSubstitute();
+
+        if (!getTypes().containsKey(this.varStack.getVar(varName))) {
+            throwCustomError("Type error: variable " + varName + " has an ambigious type at line " + getLine(ctx));
+        }
 
         Type varType = getVarType(varName);
+
+        System.out.println("Type of " + varName + " : " + varType);
 
         if (!isPrintable(varType)) {
             throwCustomError("Type error: function type cannot be printed at line " + getLine(ctx));
@@ -678,7 +796,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         ParseTree p = ctx.getChild(returnExprIndex);
         Type returnType = visit(p);
 
-        FunctionType declFunction = (FunctionType) this.types.get(this.functionList.get(this.lastFunctionCalled));
+        FunctionType declFunction = (FunctionType) this.getTypes().get(this.functionList.get(this.lastFunctionEntered));
         Type declReturnType = declFunction.getReturnType();
         addUnifyConstraint(p, returnType, declReturnType);
         return null;
@@ -700,7 +818,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         enterFunction(functionNameNode);
 
         if (noParameters) {
-            this.types.put(functionName, new FunctionType(functionReturnType, new ArrayList<>()));
+            this.getTypes().put(functionName, new FunctionType(functionReturnType, new ArrayList<>()));
         } else {
             ArrayList<Type> paramList = new ArrayList<>();
 
@@ -720,7 +838,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
             }
 
             FunctionType functionType = new FunctionType(functionReturnType, paramList);
-            this.types.put(functionName, functionType);
+            this.getTypes().put(functionName, functionType);
         }
 
         int core_fctIndex = childCount - 1; // it's always the last one
@@ -754,7 +872,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         ParseTree funcMain = ctx.getChild(childCount - 3);
         UnknownType funcNameUT = new UnknownType(funcMain);
 
-        this.types.put(funcNameUT, mainType);
+        this.getTypes().put(funcNameUT, mainType);
         enterFunction(funcMain);
 
         visit(core_fctNode);
