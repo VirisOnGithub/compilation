@@ -24,36 +24,36 @@ public class ConflictGraph extends UnorientedGraph<String> {
         this.out = new HashMap<>();
         computeLiveness(controlGraph, program);
         buildConflictGraph(controlGraph, program);
-    }
+        }
 
-    private void computeLiveness(ControlGraph controlGraph, Program program) {
+        private void computeLiveness(ControlGraph controlGraph, Program program) {
         boolean changed;
         do {
             changed = false;
             // Traverse all instructions in the program, including those in subprograms
             for (Instruction instruction : controlGraph.getAllVertices(program)) {
-                Set<String> oldIn = in.getOrDefault(instruction, new HashSet<>());
-                Set<String> oldOut = out.getOrDefault(instruction, new HashSet<>());
+            Set<String> oldIn = in.getOrDefault(instruction, new HashSet<>());
+            Set<String> oldOut = out.getOrDefault(instruction, new HashSet<>());
 
-                Set<String> newIn = new HashSet<>(oldOut);
-                newIn.removeAll(getDef(instruction));
-                newIn.addAll(getUse(instruction));
+            Set<String> newIn = new HashSet<>(oldOut);
+            newIn.addAll(getDef(instruction)); // Keep defined variables
+            newIn.addAll(getUse(instruction));
 
-                Set<String> newOut = new HashSet<>();
-                for (Instruction succ : controlGraph.getOutNeighbors(instruction)) {
-                    newOut.addAll(in.getOrDefault(succ, new HashSet<>()));
-                }
+            Set<String> newOut = new HashSet<>();
+            for (Instruction succ : controlGraph.getOutNeighbors(instruction)) {
+                newOut.addAll(in.getOrDefault(succ, new HashSet<>()));
+            }
 
-                if (!newIn.equals(oldIn) || !newOut.equals(oldOut)) {
-                    in.put(instruction, newIn);
-                    out.put(instruction, newOut);
-                    changed = true;
-                }
+            if (!newIn.equals(oldIn) || !newOut.equals(oldOut)) {
+                in.put(instruction, newIn);
+                out.put(instruction, newOut);
+                changed = true;
+            }
             }
         } while (changed);
-    }
+        }
 
-    private void buildConflictGraph(ControlGraph controlGraph, Program program) {
+        private void buildConflictGraph(ControlGraph controlGraph, Program program) {
         // Iterate through all instructions
         for (Instruction instruction : controlGraph.getAllVertices(program)) {
             Set<String> live = new HashSet<>(in.getOrDefault(instruction, new HashSet<>()));
@@ -217,7 +217,7 @@ public class ConflictGraph extends UnorientedGraph<String> {
         int numColors = conflictGraph.color();
         System.out.println("Nombre de couleurs utilisées: " + numColors);
         for (String var : conflictGraph.vertices) {
-            System.out.println("Variable " + var + " est colorée avec la couleur " + conflictGraph.getColor(var) + " " + conflictGraph.vertices);
+            System.out.println("Variable " + var + " est colorée avec la couleur " + conflictGraph.getColor(var));
         }
     }
 }
