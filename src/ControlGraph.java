@@ -34,36 +34,16 @@ public class ControlGraph extends OrientedGraph<Instruction> {
      * @param program le programme à partir duquel construire le graphe de contrôle
      */
     private void buildControlGraph(Program program) {
+        // Première passe : construction du graphe et de la map des labels
         Instruction prevInstruction = null;
-        Iterator<Instruction> iterator = program.getInstructions().iterator();
-
         for (Instruction instruction : program.getInstructions()) {
             this.addVertex(instruction);
             if (!instruction.getLabel().isEmpty()) {
-                if (instruction instanceof CondJump) {
-                    CondJump condJump = (CondJump) instruction;
-                 labelMap.put(condJump.getAddress(), condJump);
-                } else if (instruction instanceof JumpCall) {
-                    JumpCall jumpCall = (JumpCall) instruction;
-                    labelMap.put(jumpCall.getAddress(), jumpCall);
-                    while (iterator.hasNext()) {
-                     if (jumpCall.getName().equals("CALL")) {
-                         if (iterator.hasNext()) {
-                           Instruction nextInstruction = iterator.next();
-                             callStack.push(nextInstruction);
-                   }
-         }
-        }
-                } else if (instruction instanceof Ret) {
-                    if (!callStack.isEmpty()) {
-                        Instruction lastCall = callStack.pop();
-                       this.addEdge(lastCall, instruction);
-                    }
-                } else {
-                    labelMap.put(instruction.getLabel(), instruction);
-                }
+                labelMap.put(instruction.getLabel(), instruction);
             }
-            if (prevInstruction != null && !(prevInstruction instanceof Stop) && !(prevInstruction instanceof JumpCall) && !(prevInstruction instanceof Ret)) {
+            if (prevInstruction != null && !(prevInstruction instanceof Stop)
+                    && !(prevInstruction instanceof JumpCall && prevInstruction.getName().equals("CALL")) // Changement ici
+                    && !(prevInstruction instanceof Ret)) {
                 this.addEdge(prevInstruction, instruction);
             }
             if (!(instruction instanceof Stop)) {
@@ -72,27 +52,40 @@ public class ControlGraph extends OrientedGraph<Instruction> {
                 prevInstruction = null;
             }
         }
-    
-        // Ajout des arêtes pour les sauts conditionnels et les appels de fonction après avoir construit le graphe
+
+        // Deuxième passe : gestion des sauts (JMP, CALL et RET)
+        Stack<Instruction> callStack = new Stack<>();
         for (Instruction instruction : program.getInstructions()) {
-            String targetLabel = null;
             if (instruction instanceof CondJump) {
                 CondJump condJump = (CondJump) instruction;
-                targetLabel = condJump.getAddress();
+                connectJump(instruction, condJump.getAddress());
             } else if (instruction instanceof JumpCall) {
                 JumpCall jumpCall = (JumpCall) instruction;
-                targetLabel = jumpCall.getAddress();
+                connectJump(instruction, jumpCall.getAddress());
+                if (jumpCall.getName().equals("CALL")) { // Changement ici
+                    int index = program.getInstructions().indexOf(instruction);
+                    Instruction nextInstruction = null;
+                    if (index < program.getInstructions().size() - 1) {
+                        nextInstruction = program.getInstructions().get(index + 1);
+                    }
+                    callStack.push(nextInstruction);
+                }
             } else if (instruction instanceof Ret) {
                 if (!callStack.isEmpty()) {
-                    Instruction lastCall = callStack.pop();
-                    targetLabel = lastCall.getLabel();
+                    Instruction returnTo = callStack.pop();
+                    if (returnTo != null) {
+                        this.addEdge(instruction, returnTo);
+                    }
                 }
-            } else if (instruction instanceof Stop) {
-                continue;
             }
-            if (targetLabel != null && labelMap.containsKey(targetLabel)) {
-                this.addEdge(instruction, labelMap.get(targetLabel));
-            }
+        }
+    }
+
+    private void connectJump(Instruction from, String targetLabel) {
+        if (labelMap.containsKey(targetLabel)) {
+            this.addEdge(from, labelMap.get(targetLabel));
+        } else {
+            System.err.println("Label non trouvé : " + targetLabel + " depuis " + from.getLabel());
         }
     }
 
@@ -144,7 +137,7 @@ public class ControlGraph extends OrientedGraph<Instruction> {
         Instruction instr8 = new JumpCall("L8", JumpCall.Op.JMP, "END") {};
         Instruction instr9 = new Stop("L9") {};
         Instruction instr10 = new Instruction("LABEL1", "ADD R1002 R1000 R1001") {};
-        Instruction instr11 = new Instruction("L11", "MUL R1003 R1002 R1000") {};
+        Instruction instr11 = new Instruction("FUNC1", "MUL R1003 R1002 R1000") {};
         Instruction instr12 = new Instruction("L12", "JMP END") {};
         Instruction instr13 = new Instruction("LABEL2", "DIV R1004 R1003 R1001") {};
         Instruction instr14 = new Instruction("L14", "PRINT R1004") {};
