@@ -212,7 +212,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
 
         program.addInstructions(visit(ctx.expr())); // number will be stocked in R(nextRegister -1)
         program.addInstruction(new UALi(UALi.Op.XOR, this.nextRegister, this.nextRegister - 1, 0xFFFFFFFF)); // black magic
-        program.addInstruction(new UALi(UALi.Op.SUB, this.nextRegister, this.nextRegister, 1));
+        program.addInstruction(new UALi(UALi.Op.ADD, this.nextRegister, this.nextRegister, 1));
         this.nextRegister++;
 
         return program;
