@@ -154,7 +154,6 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         int leftValue = this.nextRegister - 1; // R1 := visit(expr1)
         program.addInstructions(visit(ctx.getChild(2)));
         int rightValue = this.nextRegister - 1; // R2 := visit(expr2)
-        System.out.println(ctx.op.getText());
         switch (ctx.op.getText()) { // we add the correct test
             case ">" -> program.addInstruction(new CondJump(CondJump.Op.JSUP, leftValue, rightValue, true_label));
             case "<" -> program.addInstruction(new CondJump(CondJump.Op.JINF, leftValue, rightValue, true_label));
@@ -213,7 +212,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
 
         program.addInstructions(visit(ctx.expr())); // number will be stocked in R(nextRegister -1)
         program.addInstruction(new UALi(UALi.Op.XOR, this.nextRegister, this.nextRegister - 1, 0xFFFFFFFF)); // black magic
-        program.addInstruction(new UALi(UALi.Op.SUB, this.nextRegister, this.nextRegister, 1));
+        program.addInstruction(new UALi(UALi.Op.ADD, this.nextRegister, this.nextRegister, 1));
         this.nextRegister++;
 
         return program;
@@ -297,11 +296,11 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         int nbArguments = (childCount == 3) ? 0 : (childCount - 2)/2;
 
         for (int i = 0; i < nbArguments; i++) { // expr*
-            program.addInstructions(visit(ctx.getChild((2*i)+3))); // value of expression will be stocked in R(nextRegister-1)
+            program.addInstructions(visit(ctx.getChild((2 * i) + 2))); // value of expression will be stocked in R(nextRegister-1)
             program.addInstructions(this.stackRegister(this.nextRegister-1)); // stack argument
             this.nextRegister++;
         }
-        program.addInstruction(new JumpCall(JumpCall.Op.JMP, ctx.getChild(0).getText())); // call the function
+        program.addInstruction(new JumpCall(JumpCall.Op.CALL, ctx.getChild(0).getText())); // call the function
 
         return program;
     }
@@ -856,7 +855,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         for (int i = 0; i < nbArguments; i++) { // the arguments are stacked before the call so we un-stack them
             program.addInstructions(this.unstackRegister(this.nextRegister));
             this.nextRegister++;
-            this.varRegisters.assignVar(ctx.getChild((3 * i) + 5).getText(), this.nextRegister-1); // arguments counts as new definitions of variables
+            this.varRegisters.assignVar(ctx.getChild((3 * i) + 4).getText(), this.nextRegister-1); // arguments counts as new definitions of variables
         }
         program.addInstructions(visit(ctx.core_fct())); // core_fct
         program.getInstructions().getFirst().setLabel(ctx.getChild(1).toString()); // function label
