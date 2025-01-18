@@ -45,7 +45,6 @@ public class RegisterAllocator {
                     dynamicArrayIndex++;
                 }
             } else {
-                // Ignorer les constantes
                 System.out.println("Ignoring constant: " + variable);
             }
         }
