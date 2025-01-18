@@ -3,6 +3,7 @@ package src;
 import src.Asm.CondJump;
 import src.Asm.Instruction;
 import src.Asm.JumpCall;
+import src.Asm.Mem;
 import src.Asm.Program;
 import src.Asm.Stop;
 import src.Asm.Ret;
@@ -147,6 +148,7 @@ public class Main {
 
 	Program program = new Program();
 
+	Instruction instr0 = new Mem("L0", Mem.Op.ST, 0, 1) {};
 	Instruction instr1 = new Instruction("L1", "XOR R1000 R1000 R1000") {};
 	Instruction instr2 = new Instruction("L2", "SUBi R1000 R1000 1") {};
 	Instruction instr3 = new Instruction("L3", "PRINT R1001") {};
@@ -183,6 +185,7 @@ public class Main {
 	Instruction instr32 = new Instruction("L31", "DIV R1057 R1058 R1059") {};
 	Instruction instr33 = new Instruction("L32", "PRINT R1060") {};
 
+	program.addInstruction(instr0);
 	program.addInstruction(instr1);
 	program.addInstruction(instr2);
 	program.addInstruction(instr3);

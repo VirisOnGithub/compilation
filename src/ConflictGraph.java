@@ -86,12 +86,10 @@ public class ConflictGraph extends UnorientedGraph<String> {
     
         if (instruction instanceof Mem) {
             Mem memInstr = (Mem) instruction;
-            String op = memInstr.getName(); // Obtenez l'opération sous forme de chaîne
+            String op = memInstr.getName();
             if (op.equals("LD")) { 
-                // Instruction "load" utilise l'adresse comme registre source
                 use.add("R" + memInstr.getAddress());
             } else if (op.equals("ST")) { 
-                // Instruction "store" utilise le registre source et l'adresse
                 use.add("R" + memInstr.getDest());
                 use.add("R" + memInstr.getAddress());
             }
@@ -157,16 +155,12 @@ public class ConflictGraph extends UnorientedGraph<String> {
     
         if (instruction instanceof Mem) {
             Mem memInstr = (Mem) instruction;
-            String op = memInstr.getName(); // Obtenez l'opération sous forme de chaîne
+            String op = memInstr.getName();
             if (op.equals("LD")) { 
-                // Instruction "load" définit le registre destination
                 def.add("R" + memInstr.getDest());
             }
-            // "ST" ne définit rien
             return def;
         }
-    
-        // Gérer les autres types d'instructions comme avant
         String[] parts = instruction.getName().split(" ");
         if (parts.length > 1) {
             switch (parts[0]) {
