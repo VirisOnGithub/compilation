@@ -1,1 +1,0 @@
-packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"src"},{"l":"src.Asm"},{"l":"src.Graph"},{"l":"src.Type"}];updateSearchResults();
