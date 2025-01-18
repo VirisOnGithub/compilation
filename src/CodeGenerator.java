@@ -59,12 +59,12 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
     }
 
     /**
-     * Macro to assign a value to a register
+     * Macro to set a given value into a given register
      * @param register the register we want to stock the value in
      * @param value the value we want to stock in the register
-     * @return a program that assign the value to the register
+     * @return a program that set the value into the register
      */
-    private Program assignRegister(int register, int value) {
+    private Program setRegisterTo(int register, int value) {
         Program program = new Program();
         program.addInstruction(new UAL(UAL.Op.XOR, register, register, register));
         program.addInstruction(new UALi(UALi.Op.ADD, register, register, value));
@@ -209,7 +209,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         Program program = new Program();
         int value = Integer.parseInt(ctx.INT().getText());
 
-        program.addInstructions(this.assignRegister(nextRegister, value)); // we return the value of the boolean in R(nextRegister -1)
+        program.addInstructions(this.setRegisterTo(nextRegister, value)); // we return the value of the boolean in R(nextRegister -1)
         this.nextRegister++;
 
         return program;
@@ -234,7 +234,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
 
         program.addInstructions(this.stackRegister(tabRegister)); // stack the arguments
         program.addInstructions(this.stackRegister(indexRegister));
-        program.addInstructions(this.assignRegister(this.nextRegister, depth));
+        program.addInstructions(this.setRegisterTo(this.nextRegister, depth));
         program.addInstructions(this.stackRegister(this.nextRegister));
         this.nextRegister++;
         program.addInstruction(new JumpCall(JumpCall.Op.CALL, "*tab_access")); // call the assembler function
@@ -296,8 +296,8 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         Program program = new Program();
 
         switch (ctx.BOOL().getText()) { // we return the value of the boolean in R(nextRegister -1)
-            case "true" -> program.addInstructions(this.assignRegister(this.nextRegister, 1));
-            case "false" -> program.addInstructions(this.assignRegister(this.nextRegister, 0));
+            case "true" -> program.addInstructions(this.setRegisterTo(this.nextRegister, 1));
+            case "false" -> program.addInstructions(this.setRegisterTo(this.nextRegister, 0));
         }
         this.nextRegister++;
 
@@ -443,7 +443,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         int fixedPointerRegister = this.nextRegister; // register containing a pointer to the array (return value)
         this.nextRegister++;
 
-        program.addInstructions(this.assignRegister(lengthRegister, varCount)); // lengthRegister := varCount
+        program.addInstructions(this.setRegisterTo(lengthRegister, varCount)); // lengthRegister := varCount
         program.addInstruction(new UALi(UALi.Op.ADD, pointerRegister, this.TP, 0)); // pointerRegister := TP
         program.addInstruction(new UALi(UALi.Op.ADD, fixedPointerRegister, pointerRegister, 0)); // fixedPointerRegister := pointerRegister
 
@@ -561,13 +561,13 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
             int depthRegister = this.nextRegister;
             this.nextRegister++;
             program.addInstructions(this.stackRegister(varRegister)); // we stack the array
-            program.addInstructions(this.assignRegister(depthRegister, arrayDepth));
+            program.addInstructions(this.setRegisterTo(depthRegister, arrayDepth));
             program.addInstructions(this.stackRegister(depthRegister)); // we stack its depth
             program.addInstruction(new JumpCall(JumpCall.Op.CALL, "*print_tab")); // we call the print_tab function
         }
 
         final int NEW_LINE = 10;
-        program.addInstructions(this.assignRegister(this.nextRegister, NEW_LINE));
+        program.addInstructions(this.setRegisterTo(this.nextRegister, NEW_LINE));
         program.addInstruction(new IO(IO.Op.OUT, this.nextRegister)); // once finished printing, we jump to the next line
         this.nextRegister++;
 
@@ -605,7 +605,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
             arrayDepth--; // the content of the array has less depth
             program.addInstructions(this.stackRegister(leftRegister)); // we stack the arguments
             program.addInstructions(this.stackRegister(indexRegister));
-            program.addInstructions(this.assignRegister(depthRegister, arrayDepth));
+            program.addInstructions(this.setRegisterTo(depthRegister, arrayDepth));
             program.addInstructions(this.stackRegister(depthRegister));
             program.addInstruction(new JumpCall(JumpCall.Op.CALL, "*tab_access")); // we call the tab_access function
             program.addInstructions(this.unstackRegister(leftRegister)); // we get the result
@@ -851,8 +851,8 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         int childCount = ctx.getChildCount();
 
         this.varRegisters.enterBlock(); // a first enterBlock is needed for the whole program to work
-        program.addInstructions(this.assignRegister(SP, 0)); // initialize SP
-        program.addInstructions(this.assignRegister(TP, 4096)); // initialize TP, arbitrarily chose 4096 as stack height
+        program.addInstructions(this.setRegisterTo(SP, 0)); // initialize SP
+        program.addInstructions(this.setRegisterTo(TP, 4096)); // initialize TP, arbitrarily chose 4096 as stack height
         program.addInstruction(new JumpCall(JumpCall.Op.CALL, "*main")); // call main
         program.addInstruction(new Stop()); // STOP
         program.addInstructions(this.getPrintProgram()); // a callable assembler function for printing arrays (used in visitPrint)
@@ -1030,11 +1030,11 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         }
 
         // inserting code from compilation/src/CodeGen/dump_memory.asm
-        program.addInstructions(this.assignRegister(r[0], 4096));
+        program.addInstructions(this.setRegisterTo(r[0], 4096));
         program.getInstructions().getFirst().setLabel("*dump_memory");
-        program.addInstructions(this.assignRegister(r[1], SPACE));
-        program.addInstructions(this.assignRegister(r[2], NEW_LINE));
-        program.addInstructions(this.assignRegister(r[3], 4500));
+        program.addInstructions(this.setRegisterTo(r[1], SPACE));
+        program.addInstructions(this.setRegisterTo(r[2], NEW_LINE));
+        program.addInstructions(this.setRegisterTo(r[3], 4500));
 
         program.addInstruction(new CondJump("*debut_jump", CondJump.Op.JEQU, r[0], r[3], "*fin_dump"));
         program.addInstruction(new Mem(Mem.Op.LD, r[4], r[0]));
