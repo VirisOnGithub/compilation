@@ -34,6 +34,7 @@ public class AssemblerGenerator {
                 case "OR":
                 case "AND":
                 case "NOT":
+                case "NOR":
                 case "SUB":
                 case "ADD":
                 case "MUL":
@@ -79,23 +80,7 @@ public class AssemblerGenerator {
                     }
 
                     result.append(parts[0]).append(" R30, R30, ").append(immediateValue).append("\n");
-                    result.append("MOV ").append(destReg).append(", R30\n");
-                    break;
-
-                case "MOV":
-                    if (parts.length < 3) {
-                        throw new IllegalArgumentException("Invalid instruction format: " + instruction.getName());
-                    }
-                    reg1 = allocator.getRegister(parts[2]);
-                    destReg = allocator.getRegister(parts[1]);
-
-                    if (reg1.startsWith("DYNAMIC")) {
-                        result.append("LD R30, [SP + ").append(reg1.substring(8, reg1.length() - 1)).append("]\n");
-                    } else {
-                        result.append("LD R30, ").append(reg1).append("\n");
-                    }
-
-                    result.append("MOV ").append(destReg).append(", R30\n");
+                    result.append("ST ").append(destReg).append(", R30\n");
                     break;
 
                 case "PRINT":
