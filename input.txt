@@ -1,8 +1,36 @@
+auto factorial(auto n) {
+    if (n <= 1) {
+        return 1;
+    }
+    return n * factorial(n - 1);
+}
+
+auto isEven(auto n) {
+    return n % 2 == 0;
+}
+
+auto sumArray(auto arr, auto size) {
+    auto sum = 0;
+    for (auto i = 0; i < size; i = i + 1;) {
+        sum = sum + arr[i];
+    }
+    return sum;
+}
+
+auto checkArrayForEven(auto arr, int size) {
+    for (auto i = 0; i < size; i = i + 1;) {
+        if (isEven(arr[i])) {
+            return true;
+        }
+    }
+    return false;
+}
+
 auto f(auto a, bool b, int c){
     return {a};
 }
 
-int main() {
+int maine2() {
     int e;
     int[] ff;
     auto ba;
@@ -23,5 +51,28 @@ int main() {
     print(caca);
     print(pipi);
     print(popo);
+    return 0;
+}
+
+int main() {
+    auto nums = {1, 2, 3, 4, 5};
+    auto result;
+    auto hasEven;
+    auto zero = 0;
+
+    result = sumArray(nums, 5);
+    hasEven = checkArrayForEven(nums, 5);
+
+    if (hasEven) {
+        print(result); 
+    } else {
+        print(zero); 
+    }
+
+    auto factOfFive = factorial(5);
+    print(factOfFive);
+
+    auto yes = maine2();
+
     return 0;
 }
