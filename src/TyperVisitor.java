@@ -351,8 +351,6 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
             // try substitute
             if (substituteVar != null) {
-                // on unifie avec toutes les contraintes de ce type avant de le substituer
-                // selfUnifyVar(substituteVar);
                 littleAssSubstitute(substituteVar, getVarType(substituteVar));
                 substituteVar = null;
                 continue;
