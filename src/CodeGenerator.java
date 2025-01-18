@@ -586,7 +586,6 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
     @Override
     public Program visitAssignment(grammarTCLParser.AssignmentContext ctx) {
         // VAR ('[' expr ']')* ASSIGN expr SEMICOL
-        // TODO COMMENTAIRES
 
         Program program = new Program();
         int varRegister = this.varRegisters.getVar(ctx.VAR().getText());
@@ -599,27 +598,32 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
 
         program.addInstructions(visit(ctx.getChild(ctx.getChildCount() - 2)));
         int rightRegister = this.nextRegister - 1;
+
+        // leftRegister := varRegister
         program.addInstruction(new UALi(UALi.Op.ADD, leftRegister, varRegister, 0));
+        
         for (int i = 0; i < bracketsCount; i++) {
             int child = 2 + (i * 3);
-            if(i > 0)
+            if(i > 0) // if we were accessing an array, get the pointed value
                 program.addInstruction(new Mem(Mem.Op.LD, leftRegister, leftRegister));
             // element pointer in this.nextRegister - 1
             program.addInstructions(visit(ctx.getChild(child)));
             int indexRegister = this.nextRegister - 1;
             // the content of the array has less depth
             arrayDepth--;
-            program.addInstructions(this.stackRegister(leftRegister));
+            program.addInstructions(this.stackRegister(leftRegister)); // stack the arguments
             program.addInstructions(this.stackRegister(indexRegister));
             program.addInstructions(this.assignRegister(depthRegister, arrayDepth));
             program.addInstructions(this.stackRegister(depthRegister));
             program.addInstruction(new JumpCall(JumpCall.Op.CALL, "*tab_access"));
-            program.addInstructions(this.unstackRegister(leftRegister));
+            program.addInstructions(this.unstackRegister(leftRegister)); // get the result
         }
 
         if (bracketsCount == 0) {
+            // if it's not a pointer, we store the value in the register
             program.addInstruction(new UALi(UALi.Op.ADD, varRegister, rightRegister, 0));
         } else {
+            // if it's a pointer, we store the value in memory
             program.addInstruction(new Mem(Mem.Op.ST, rightRegister, leftRegister));
         }
 
