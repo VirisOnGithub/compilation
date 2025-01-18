@@ -9,19 +9,36 @@ import src.Type.Type;
 import src.Type.UnknownType;
 
 /**
- * A class that generates linear code from a valid TCL program tree, called like this: program = codeGenerator.visit(tree).
- * The type analysis must have already been done.
+ * A class that generates linear code from a valid TCL program tree after the type analysis has been done, used like this: program = codeGenerator.visit(tree)
  */
 public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements grammarTCLVisitor<Program> {
-    private final Map<UnknownType,Type> types; // links each variable with its type
+    /**
+     * A map that links each variable with its type
+     */
+    private final Map<UnknownType,Type> types;
+    /**
+     * A stack of maps that links each variable with the number of the register that stocks this variable, at its corresponding depth
+     */
+    private final VarStack<Integer> varRegisters;
 
-    private final int SP = 0; // stackPointer should always be 1 over the last stacked variable, and shouldn't go over 4095
-    private final int TP = 1; // stackPointer for arrays (tabPointer), contains the address of the next free space in memory for arrays
+    /**
+     * Stack pointer, contains the address of the next free space in the stack, and shouldn't go over 4095
+     */
+    private final int SP = 0;
+    /**
+     * Stack pointer for arrays (Tab Pointer), contains the address of the next free space in memory for arrays (starting at 4096)
+     */
+    private final int TP = 1;
 
-    private Integer nextRegister; // nextRegister should always be a non utilised register number
-    private Integer nextLabel; // nextLabel should always be a non utilised label number
+    /**
+     * Contains the number of the next non utilised register number, should always be incremented immediately after each use
+     */
+    private Integer nextRegister;
+    /**
+     * Contains the number of the next non utilised label number, should always be incremented immediately after each use
+     */
+    private Integer nextLabel;
 
-    private final VarStack<Integer> varRegisters; // links each variable with its register number, for each depth
 
     /**
      * Constructor
@@ -29,9 +46,9 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
      */
     public CodeGenerator(Map<UnknownType, Type> types) {
         this.types = types;
+        this.varRegisters = new VarStack<>();
         this.nextRegister = 2;
         this.nextLabel = 0;
-        this.varRegisters = new VarStack<>();
     }
 
     /**
@@ -83,7 +100,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
     /**
      * Returns the depth (or dimension) of a given variable
      * @param type the type we want to know the depth of
-     * @return 0 if it is not an array, else the depth/dimension of the array
+     * @return 0 if it is not an array, else the depth (or dimension) of the array
      */
     private static int getArrayDepth(Type type) {
         if (type instanceof ArrayType array)
@@ -162,6 +179,11 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         return program;
     }
 
+    /**
+     * Visit a node that contains an OR operation and create the corresponding linear code
+     * @param ctx the context within the parse tree
+     * @return a program containing the linear code
+     */
     @Override
     public Program visitOr(grammarTCLParser.OrContext ctx) {
         // expr OR expr
@@ -494,24 +516,24 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
     }
 
     /**
-     * Visit a node that contains the type of a variable, which shouldn't be called in the context of linear code creation
+     * Visit a node that contains a variable type, which shouldn't be called in the context of linear code creation
      * @param ctx the context within the parse tree
      * @return a RuntimeException
      */
     @Override
-    public Program visitBase_type(grammarTCLParser.Base_typeContext ctx) {
+    public Program visitBase_type(grammarTCLParser.Base_typeContext ctx) throws RuntimeException {
         // BASE_TYPE
 
         throw new RuntimeException("Method 'visitBase_type' should not be called");
     }
 
     /**
-     * Visit a node that contains the type of an array, which shouldn't be called in the context of linear code creation
+     * Visit a node that contains an array type, which shouldn't be called in the context of linear code creation
      * @param ctx the context within the parse tree
      * @return a RuntimeException
      */
     @Override
-    public Program visitTab_type(grammarTCLParser.Tab_typeContext ctx) {
+    public Program visitTab_type(grammarTCLParser.Tab_typeContext ctx) throws RuntimeException {
         // type '[' ']'
 
         throw new RuntimeException("Method 'visitTab_type' should not be called");
@@ -649,10 +671,10 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
     @Override
     public Program visitIf(grammarTCLParser.IfContext ctx) {
         // IF '(' expr ')' instr (ELSE instr)?
-        /* pseudo-assembler: if (cond) then instr1 else instr2
-         *   cond
+        /* pseudo-assembler: if (cond) { instr1 } else { instr2 }
+         *   R0 := visit(cond)
          *   XOR R1 R1 R1
-         *   JEQU nextRegister-2 nextRegister-1 if //-2 = cond return, -1 = XOR'd register
+         *   JEQU R0 R1 if
          *   instr2 // only if there is an else
          *   JMP end
          * if: instr1
@@ -696,10 +718,10 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
     @Override
     public Program visitWhile(grammarTCLParser.WhileContext ctx) {
         // WHILE '(' expr ')' instr
-        /* pseudo-assembler: while(i<10) instr
-         * loop: visit(cond)
-         *   XOR R1 R1 R1
-         *   JEQU nextRegister-2 nextRegister-1 end_loop //-2 = cond return, -1 = XOR'd register
+        /* pseudo-assembler: while(i<10) { instr }
+         * loop: R1 := visit(cond)
+         *   XOR R2 R2 R2
+         *   JEQU R1 R2 end_loop
          *   instr
          *   JMP loop
          * end_loop: following code...
@@ -710,11 +732,13 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         String labelEndLoop = this.getLabel();
 
         Program condLoopProgram = visit(ctx.getChild(2)); // loop condition
+        int condReturnRegister = this.nextRegister - 1; // return value of the condition
         condLoopProgram.getInstructions().getFirst().setLabel(labelStartLoop); // set looping label
         program.addInstructions(condLoopProgram);
+
         program.addInstruction(new UAL(UAL.Op.XOR, this.nextRegister, this.nextRegister, this.nextRegister)); // set new register to 0 for later test
         this.nextRegister++;
-        program.addInstruction(new CondJump(CondJump.Op.JEQU, this.nextRegister-2, this.nextRegister-1, labelEndLoop)); // test if condition is false => stop looping
+        program.addInstruction(new CondJump(CondJump.Op.JEQU, condReturnRegister, this.nextRegister-1, labelEndLoop)); // test if condition is false => stop looping
         this.varRegisters.enterBlock(); // start of the loop {
         program.addInstructions(visit(ctx.getChild(4))); // instructions inside the loop
         this.varRegisters.leaveBlock(); // } end of the loop
@@ -736,11 +760,11 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
     @Override
     public Program visitFor(grammarTCLParser.ForContext ctx) {
         // FOR '(' instr  expr ';' instr ')' instr
-        /* pseudo-assembler: for(int i = 0; i < 10; i++;) instr
+        /* pseudo-assembler: for(int i = 0; i < 10; i++;) { instr }
          *   ST R0 1
-         * loop: visit(cond)
-         *   XOR R1 R1 R1
-         *   JEQU nextRegister-2 nextRegister-1 end_loop //-2 = cond return, -1 = XOR'd register
+         * loop: R1 := visit(cond)
+         *   XOR R2 R2 R2
+         *   JEQU R1 R2 end_loop
          *   instr
          *   ADDi R0 R0 1
          *   JMP loop
@@ -751,14 +775,17 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         String labelStartLoop = this.getLabel();
         String labelEndLoop = this.getLabel();
 
-        this.varRegisters.enterBlock(); // needed because the for can declare variables locally (for (int i = 0;...)
+        this.varRegisters.enterBlock(); // needed because a FOR structure can declare variables locally (for (int i = 0;...)
         program.addInstructions(visit(ctx.getChild(2))); // initialization
+
         Program condLoopProgram = visit(ctx.getChild(3)); // loop condition
+        int condReturnRegister = this.nextRegister - 1; // return value of the condition
         condLoopProgram.getInstructions().getFirst().setLabel(labelStartLoop); // set looping label
         program.addInstructions(condLoopProgram);
+
         program.addInstruction(new UAL(UAL.Op.XOR, this.nextRegister, this.nextRegister, this.nextRegister)); // set new register to 0 for later test
         this.nextRegister++;
-        program.addInstruction(new CondJump(CondJump.Op.JEQU, this.nextRegister-2, this.nextRegister-1, labelEndLoop)); // test if condition is false => stop looping
+        program.addInstruction(new CondJump(CondJump.Op.JEQU, condReturnRegister, this.nextRegister-1, labelEndLoop)); // test if condition is false => stop looping
         this.varRegisters.enterBlock(); // start of the loop {
         program.addInstructions(visit(ctx.getChild(7))); // instructions inside the loop
         this.varRegisters.leaveBlock(); // } end of the loop
@@ -826,7 +853,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         int nbArguments = (childCount == 5) ? 0 : (childCount - 4) / 3;
 
         this.varRegisters.enterFunction();
-        for (int i = 0; i < nbArguments; i++) { // the arguments are stacked before the call so we unstack them
+        for (int i = 0; i < nbArguments; i++) { // the arguments are stacked before the call so we un-stack them
             program.addInstructions(this.unstackRegister(this.nextRegister));
             this.nextRegister++;
             this.varRegisters.assignVar(ctx.getChild((3 * i) + 5).getText(), this.nextRegister-1); // arguments counts as new definitions of variables
@@ -857,7 +884,6 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         program.addInstruction(new Stop()); // STOP
         program.addInstructions(this.getPrintProgram()); // a callable assembler function for printing arrays (used in visitPrint)
         program.addInstructions(this.getTabAccessProgram());
-        // program.addInstructions(this.getDumpMemory()); // in case of debugging
 
         for (int i = 0; i < childCount - 3; i++) { // decl_fct*
             program.addInstructions(visit(ctx.getChild(i)));
@@ -879,6 +905,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
      */
     private Program getPrintProgram() {
         Program program = new Program();
+
         final int SQUARE_BRACKET_OPEN = 91;
         final int SQUARE_BRACKET_CLOSE = 93;
         final int SPACE = 32;
@@ -958,7 +985,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
      * @return the corresponding linear code
      */
     private Program getTabAccessProgram() {
-        Program program= new Program();
+        Program program = new Program();
 
         int[] r = new int[9];
         for (int i = 0; i < 9; i++) {
@@ -1014,11 +1041,11 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
     }
 
     /**
-     * Creates the linear code of an assembler function that dumps the memory (excluding the stack)
+     * Creates the linear code of an assembler function that dumps the memory (excluding the stack), for debugging purposes
      * @return the corresponding linear code
      */
     private Program getDumpMemory() {
-        Program program= new Program();
+        Program program = new Program();
 
         final int SPACE = 32;
         final int NEW_LINE = 10;

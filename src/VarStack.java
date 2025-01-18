@@ -5,11 +5,17 @@ import java.util.Map;
 import java.util.Stack;
 
 /**
- * A Class that associate a value with variables and remember the depth at which the variable was declared
- * @param <T> The type of value wa associate the variables with
+ * A class that associates values with variables and remember the depth at which variables were declared
+ * @param <T> The type of value wa associate each variable with
  */
 public class VarStack<T> {
+	/**
+	 * A stack of maps that associates each variable with a value, at its corresponding depth
+	 */
 	private final Stack<Map<String, T>> stack;
+	/**
+	 * A stack whose top is the furthest variables are still in reach within the execution context, mainly used for function calls
+	 */
 	private final Stack<Integer> lastAccessibleDepth;
 
 	/**
@@ -53,10 +59,10 @@ public class VarStack<T> {
 	/**
 	 * Get the value associated with a given variable
 	 * @param varName the name of the variable we try to find the value for
-	 * @return the value associated with varName is it if, RuntimeException else
+	 * @return the value associated with varName if it is, RuntimeException else
 	 */
-	public T getVar(String varName) {
-		for (int depth = stack.size() - 1; depth >= lastAccessibleDepth.getLast(); depth--) { // we unstack all the accessible maps
+	public T getVar(String varName) throws RuntimeException {
+		for (int depth = stack.size() - 1; depth >= lastAccessibleDepth.getLast(); depth--) { // we un-stack all the accessible maps
 			var varMap = stack.get(depth);
 			if (varMap.containsKey(varName)) { // we stop at the first corresponding variable name
 				return varMap.get(varName);
