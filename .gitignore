@@ -92,4 +92,6 @@ nb-configuration.xml
 
 prog.asm
 sorties.txt
+
 javadoc/*
+!javadoc/.gitkeep

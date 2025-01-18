@@ -3,9 +3,22 @@ int num(int num) {
     return sum;
 }
 
+bool hanoi_swap(int start, int middle, int end, int rings) {
+    print(rings);
+    if ((rings == 0)) return true;
+    auto pass1 = hanoi_swap(start, end, middle, rings - 1);
+    print(rings);
+    auto pass2 = hanoi_swap(middle, start, end, rings - 1);
+    return pass1 && pass2;
+}
+
+bool hanoi(int number) {
+    auto pass = hanoi_swap(0, 1, 2, number);
+    return pass;
+}
+
 int main() {
-    int num = 4;
-    num = num(num);
-    print(num);
+    auto number = 1;
+    auto pass = hanoi(number);
     return 0;
 }

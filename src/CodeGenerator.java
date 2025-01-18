@@ -20,6 +20,9 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
      * A stack of maps that links each variable with the number of the register that stocks this variable, at its corresponding depth
      */
     private final VarStack<Integer> varRegisters;
+    /**
+     * A stack of maps that links each function with the number of the register that stocks its return value
+     */
     private final VarStack<Integer> returnRegisters;
 
     /**
@@ -156,7 +159,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         int leftValue = this.nextRegister - 1; // R1 := visit(expr1)
         program.addInstructions(visit(ctx.getChild(2)));
         int rightValue = this.nextRegister - 1; // R2 := visit(expr2)
-        switch (ctx.op.getText()) { // we add the correct test
+        switch (ctx.op.getText()) { // we do the correct test
             case ">" -> program.addInstruction(new CondJump(CondJump.Op.JSUP, leftValue, rightValue, true_label));
             case "<" -> program.addInstruction(new CondJump(CondJump.Op.JINF, leftValue, rightValue, true_label));
             case ">=" -> program.addInstruction(new CondJump(CondJump.Op.JSEQ, leftValue, rightValue, true_label));
@@ -232,7 +235,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         Program program = new Program();
         int value = Integer.parseInt(ctx.INT().getText());
 
-        program.addInstructions(this.setRegisterTo(nextRegister, value)); // we return the value of the boolean in R(nextRegister -1)
+        program.addInstructions(this.setRegisterTo(nextRegister, value)); // we return the value of the boolean in R(nextRegister-1)
         this.nextRegister++;
 
         return program;
@@ -296,14 +299,14 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         Program program = new Program();
         int childCount = ctx.getChildCount();
         int nbArguments = (childCount == 3) ? 0 : (childCount - 2)/2;
+        int returnRegister = this.returnRegisters.getVar(ctx.VAR().getText());
 
         for (int i = 0; i < nbArguments; i++) { // expr*
             program.addInstructions(visit(ctx.getChild((2 * i) + 2))); // value of expression will be stocked in R(nextRegister-1)
-            program.addInstructions(this.stackRegister(this.nextRegister-1)); // stack argument
-            this.nextRegister++;
+            program.addInstructions(this.stackRegister(this.nextRegister-1)); // we stack the arguments
         }
-        program.addInstruction(new JumpCall(JumpCall.Op.CALL, ctx.getChild(0).getText())); // call the function
-        program.addInstruction(new UALi(UALi.Op.ADD, this.nextRegister, this.returnRegisters.getVar(ctx.VAR().getText()), 0));
+        program.addInstruction(new JumpCall(JumpCall.Op.CALL, ctx.getChild(0).getText())); // we call the function
+        program.addInstruction(new UALi(UALi.Op.ADD, this.nextRegister, returnRegister, 0)); // we stock the return value in R(nextRegister - 1)
         nextRegister++;
 
         return program;
@@ -320,7 +323,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
 
         Program program = new Program();
 
-        switch (ctx.BOOL().getText()) { // we return the value of the boolean in R(nextRegister -1)
+        switch (ctx.BOOL().getText()) { // we return the value of the boolean in R(nextRegister-1)
             case "true" -> program.addInstructions(this.setRegisterTo(this.nextRegister, 1));
             case "false" -> program.addInstructions(this.setRegisterTo(this.nextRegister, 0));
         }
@@ -421,7 +424,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         int leftValue = this.nextRegister - 1; // R1 := visit(expr1)
         program.addInstructions(visit(ctx.getChild(2)));
         int rightValue = this.nextRegister - 1; // R2 := visit(expr2)
-        switch (ctx.op.getText()) { // we add the correct test
+        switch (ctx.op.getText()) { // we do the correct test
             case "==" -> program.addInstruction(new CondJump(CondJump.Op.JEQU, leftValue, rightValue, true_label));
             case "!=" -> program.addInstruction(new CondJump(CondJump.Op.JNEQ, leftValue, rightValue, true_label));
         }
@@ -814,10 +817,11 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         // RETURN expr SEMICOL
 
         Program program = new Program();
+        String functionName = this.returnRegisters.getLastAdded();
+        int returnRegister = this.returnRegisters.getVar(functionName);
 
         program.addInstructions(visit(ctx.expr())); // expr, return value will be in R(nextRegister-1)
-        String functionName = this.returnRegisters.getLastAdded();
-        program.addInstruction(new UALi(UALi.Op.ADD, this.returnRegisters.getVar(functionName), this.nextRegister-1, 0));
+        program.addInstruction(new UALi(UALi.Op.ADD, returnRegister, this.nextRegister-1, 0)); // we return the value in the correct register
         program.addInstruction(new Ret()); // return;
 
         return program;
@@ -834,13 +838,14 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
 
         Program program = new Program();
         int nbInstructions = ctx.getChildCount() - 5;
+        String functionName = this.returnRegisters.getLastAdded();
+        int returnRegister = this.returnRegisters.getVar(functionName);
 
         for (int i = 0; i < nbInstructions; i++) { // instr*
             program.addInstructions(visit(ctx.getChild(i + 1)));
         }
         program.addInstructions(visit(ctx.expr())); // expr, return value will be in R(nextRegister-1)
-        String functionName = this.returnRegisters.getLastAdded();
-        program.addInstruction(new UALi(UALi.Op.ADD, this.returnRegisters.getVar(functionName), this.nextRegister-1, 0));
+        program.addInstruction(new UALi(UALi.Op.ADD, returnRegister, this.nextRegister-1, 0)); // we return the value in the correct register
         program.addInstruction(new Ret()); // return;
 
         return program;
@@ -858,12 +863,12 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         Program program = new Program();
         int childCount = ctx.getChildCount();
         int nbArguments = (childCount == 5) ? 0 : (childCount - 4) / 3;
-
-        this.returnRegisters.assignVar(ctx.getChild(1).getText(), this.nextRegister);
-        nextRegister++;
+        String functionName = ctx.getChild(1).getText();
 
         this.varRegisters.enterFunction();
-        for (int i = 0; i < nbArguments; i++) { // the arguments are stacked before the call so we un-stack them
+        this.returnRegisters.assignVar(functionName, this.nextRegister); // set the register were the return value will be stocked
+        nextRegister++;
+        for (int i = nbArguments - 1; i >= 0; i--) { // the arguments are stacked before the call so we un-stack them, in reverse order
             program.addInstructions(this.unstackRegister(this.nextRegister));
             this.nextRegister++;
             this.varRegisters.assignVar(ctx.getChild((3 * i) + 4).getText(), this.nextRegister-1); // arguments counts as new definitions of variables
@@ -887,9 +892,6 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         Program program = new Program();
         int childCount = ctx.getChildCount();
 
-        this.returnRegisters.enterBlock();
-        this.returnRegisters.enterFunction();
-        this.varRegisters.enterBlock(); // a first enterBlock is needed for the whole program to work
         program.addInstructions(this.setRegisterTo(SP, 0)); // initialize SP
         program.addInstructions(this.setRegisterTo(TP, 4096)); // initialize TP, arbitrarily chose 4096 as stack height
         program.addInstruction(new JumpCall(JumpCall.Op.CALL, "*main")); // call main
@@ -906,9 +908,6 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         mainCoreProgram.getInstructions().getFirst().setLabel("*main"); // main label
         program.addInstructions(mainCoreProgram);
         this.varRegisters.leaveFunction();
-        this.varRegisters.leaveBlock();
-        this.returnRegisters.leaveBlock();
-        this.returnRegisters.leaveFunction();
 
         return program;
     }
