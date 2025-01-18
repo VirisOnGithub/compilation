@@ -428,7 +428,17 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         // '{' (expr (',' expr)*)? '}'
 
         Program program = new Program();
-        int varCount = (ctx.getChildCount() - 2) / 2 + 1;
+
+        // 2 -> 0
+        // 3 -> 1
+        // 5 -> 2
+        // 7 -> 3
+        // 9 -> 4
+
+        int childCount = ctx.getChildCount();
+        int varCount = (childCount - 2) / 2 + 1;
+        if (childCount == 2)
+            varCount = 0;
         int lengthRegister = this.nextRegister; // register containing the length of the array
         this.nextRegister++;
         int pointerRegister = this.nextRegister; // register containing a pointer to the array (mutable)
@@ -450,7 +460,10 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
                 program.addInstruction(new UALi(UALi.Op.ADD, pointerRegister, this.TP, 0)); // we move the pointer to the start of the next array part
                 program.addInstruction(new UALi(UALi.Op.ADD, this.TP, this.TP, 11)); // we update the next free space in memory for arrays
             }
-            program.addInstructions(visit(ctx.getChild((2 * i) + 1))); // we get the value in R(nextRegister - 1)
+            Program bracketsContent = visit(ctx.getChild((2 * i) + 1));
+            // the content of the brackets can be empty
+            if (bracketsContent != null)
+                program.addInstructions(bracketsContent); // we get the value in R(nextRegister - 1)
             program.addInstruction(new Mem(Mem.Op.ST, this.nextRegister - 1, pointerRegister)); // we append it in the array
             program.addInstruction(new UALi(UALi.Op.ADD, pointerRegister, pointerRegister, 1)); // we move the pointer to the next cell
         }
@@ -589,12 +602,16 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         program.addInstruction(new UALi(UALi.Op.ADD, leftRegister, varRegister, 0));
         for (int i = 0; i < bracketsCount; i++) {
             int child = 2 + (i * 3);
-            program.addInstructions(visit(ctx.getChild(child)));
-            if (i > 0)
+            if(i > 0)
                 program.addInstruction(new Mem(Mem.Op.LD, leftRegister, leftRegister));
+            // element pointer in this.nextRegister - 1
+            program.addInstructions(visit(ctx.getChild(child)));
+            int indexRegister = this.nextRegister - 1;
+            // the content of the array has less depth
+            arrayDepth--;
             program.addInstructions(this.stackRegister(leftRegister));
-            program.addInstructions(this.stackRegister(this.nextRegister - 1));
-            program.addInstructions(this.assignRegister(depthRegister, arrayDepth - 1 - i));
+            program.addInstructions(this.stackRegister(indexRegister));
+            program.addInstructions(this.assignRegister(depthRegister, arrayDepth));
             program.addInstructions(this.stackRegister(depthRegister));
             program.addInstruction(new JumpCall(JumpCall.Op.CALL, "*tab_access"));
             program.addInstructions(this.unstackRegister(leftRegister));
@@ -962,7 +979,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         program.addInstructions(this.unstackRegister(r[2]));
         program.addInstruction(new Mem(Mem.Op.LD, r[3], r[2]));
         program.addInstruction(new UALi(UALi.Op.ADD, r[4], r[3], 0));
-        program.addInstruction(new CondJump(CondJump.Op.JIEQ, r[1], r[3], "*skip_resize"));
+        program.addInstruction(new CondJump(CondJump.Op.JINF, r[1], r[3], "*skip_resize"));
         program.addInstruction(new UALi(UALi.Op.ADD, r[4], r[1], 1));
 
         program.addInstruction(new Mem("*skip_resize", Mem.Op.ST, r[4], r[2]));
