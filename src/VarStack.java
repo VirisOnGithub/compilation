@@ -5,17 +5,11 @@ import java.util.Map;
 import java.util.Stack;
 
 /**
- * A class that associates values with variables and remember the depth at which variables were declared
- * @param <T> The type of value wa associate each variable with
+ * A Class that associate a value with variables and remember the depth at which the variable was declared
+ * @param <T> The type of value wa associate the variables with
  */
 public class VarStack<T> {
-	/**
-	 * A stack of maps that associates each variable with a value, at its corresponding depth
-	 */
 	private final Stack<Map<String, T>> stack;
-	/**
-	 * A stack whose top is the furthest variables are still in reach within the execution context, mainly used for function calls
-	 */
 	private final Stack<Integer> lastAccessibleDepth;
 
 	/**
@@ -27,21 +21,21 @@ public class VarStack<T> {
 	}
 
 	/**
-	 * Needs to be called just before entering a {} block
+	 * @apiNote Needs to be called just before entering a {} block
 	 */
 	public void enterBlock() {
 		stack.add(new HashMap<>());
 	}
 
 	/**
-	 * Needs to be called just after leaving a {} block
+	 * @apiNote Needs to be called just after leaving a {} block
 	 */
 	public void leaveBlock() {
 		stack.pop();
 	}
 
 	/**
-	 * Needs to be called just before entering a function
+	 * @apiNote Needs to be called just before entering a function
 	 */
 	public void enterFunction() {
 		lastAccessibleDepth.add(stack.size());
@@ -49,7 +43,7 @@ public class VarStack<T> {
 	}
 
 	/**
-	 * Needs to be called just after leaving a function
+	 * @apiNote Needs to be called just after leaving a function
 	 */
 	public void leaveFunction() {
 		this.leaveBlock();
@@ -59,24 +53,36 @@ public class VarStack<T> {
 	/**
 	 * Get the value associated with a given variable
 	 * @param varName the name of the variable we try to find the value for
-	 * @return the value associated with varName if it is, RuntimeException else
+	 * @return the value associated with varName is it if, RuntimeException else
 	 */
-	public T getVar(String varName) throws RuntimeException {
-		for (int depth = stack.size() - 1; depth >= lastAccessibleDepth.getLast(); depth--) { // we un-stack all the accessible maps
+	public T getVar(String varName) {
+		for (int depth = stack.size() - 1; depth >= lastAccessibleDepth.getLast(); depth--) { // we unstack all the accessible maps
 			var varMap = stack.get(depth);
 			if (varMap.containsKey(varName)) { // we stop at the first corresponding variable name
 				return varMap.get(varName);
 			}
 		}
-		throw new RuntimeException("The variable " + varName + " has not been assigned"); // if none was found
+		throw new RuntimeException("The variable " + varName + " has not been found"); // if none was found
 	}
 
 	/**
 	 * Set the value of a given variable
+	 * @apiNote Should be called when a variable is declared
 	 * @param varName the name of the variable
 	 * @param value the value we want to map the variable to
+	 * @return true if the var did not exist
 	 */
-	public void assignVar(String varName, T value) {
-		this.stack.getLast().put(varName, value);
+	public boolean assignVar(String varName, T value) {
+		return this.stack.getLast().put(varName, value) == null;
+	}
+
+	public boolean varExists(String varName) {
+		for (int depth = stack.size() - 1; depth >= lastAccessibleDepth.getLast(); depth--) { // we unstack all the accessible maps
+			var varMap = stack.get(depth);
+			if (varMap.containsKey(varName)) { // we stop at the first corresponding variable name
+				return true;
+			}
+		}
+		return false;
 	}
 }

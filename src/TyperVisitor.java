@@ -1,608 +1,947 @@
 package src;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.Stack;
+
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
-import org.antlr.v4.runtime.tree.ParseTree;
-import src.Type.*;
 
-import java.util.*;
+import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.TerminalNode;
+import src.Type.*;
 
 public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements grammarTCLVisitor<Type> {
 
-    private final Map<UnknownType,Type> types = new HashMap<>();
-    private final VarStack<Type> stack = new VarStack<>();
-    private final CallStack callStack = new CallStack();
+    private static class State {
+        private final Map<UnknownType, Type> types;
+        private final Stack<Map<UnknownType, List<Type>>> constraints;
+
+        public State() {
+            this.types = new HashMap<>();
+            this.constraints = new Stack<>();
+        }
+
+        public State(State other) {
+            this.types = new HashMap<>();
+            this.types.putAll(other.getTypes());
+            this.constraints = new Stack<>();
+            // boring copying stuff
+            for (var stack : other.getConstraints()) {
+                Map<UnknownType, List<Type>> map = new HashMap<>();
+                for (var entry : stack.entrySet()) {
+                    List<Type> types = new ArrayList<>();
+                    for (var type : entry.getValue()) {
+                        types.add(type);
+                    }
+                    map.put(entry.getKey(), types);
+                }
+                this.constraints.add(map);
+            }
+        }
+
+        public Map<UnknownType, Type> getTypes() {
+            return types;
+        }
+
+        public Stack<Map<UnknownType, List<Type>>> getConstraints() {
+            return constraints;
+        }
+    }
+
+    // map name to visible variables
+    private final VarStack<UnknownType> varStack = new VarStack<>();
+    // variables that MUST have a valid type
+    private final Stack<List<UnknownType>> printStack = new Stack<>();
+    // map function names to functions
+    private final Map<String, UnknownType> functionList = new HashMap<>();
+    // these are the variables we will backup up after a call
+    private final Set<UnknownType> tempVarTypes = new HashSet<>();
+
+    // we need that for the return
+    private String lastFunctionEntered = null;
+
+    private final State normalState = new State();
+    private State tempState;
+
+    private State currentState = normalState;
 
     public Map<UnknownType, Type> getTypes() {
-        return types;
+        return this.currentState.getTypes();
     }
 
-    private void substituteTypes(HashMap<UnknownType, Type> constraints) {
-        constraints.forEach((key, value) -> {
-            if (!this.types.containsKey(key)) {
-                this.types.put(key, value);
+    private void cleanTypes() {
+        for (var it = getTypes().entrySet().iterator(); it.hasNext();) {
+            var entry = it.next();
+            if (entry.getKey().getVarName().equals("#"))
+                it.remove();
+        }
+    }
+
+    public Stack<Map<UnknownType, List<Type>>> getConstraints() {
+        return this.currentState.getConstraints();
+    }
+
+    private void beginTempChangesMode() {
+        this.bigAssSubstitute();
+        this.tempState = new State(this.normalState);
+        this.currentState = tempState;
+    }
+
+    private void endTempChangesMode() {
+        this.tempState = null;
+        this.currentState = normalState;
+    }
+
+    private void enterBlock() {
+        getConstraints().add(new HashMap<>());
+        this.varStack.enterBlock();
+        this.printStack.add(new ArrayList<>());
+    }
+
+    private void leaveBlock() {
+        this.bigAssSubstitute();
+        getConstraints().pop();
+        this.varStack.leaveBlock();
+        forcePrintTypes();
+        this.printStack.pop();
+    }
+
+    private void enterFunction(ParseTree funcNameNode, String funcName) {
+        this.varStack.enterFunction();
+        this.printStack.add(new ArrayList<>());
+        this.lastFunctionEntered = funcName;
+        this.functionList.put(funcName, new UnknownType(funcNameNode));
+    }
+
+    private void enterFunction(ParseTree funcNameNode) {
+        enterFunction(funcNameNode, funcNameNode.getText());
+    }
+
+    private void leaveFunction() {
+        this.bigAssSubstitute();
+        this.varStack.leaveFunction();
+        this.forcePrintTypes();
+        this.printStack.pop();
+        this.lastFunctionEntered = null;
+    }
+
+    private void addUnifyConstraint(Type t1, Type t2) {
+        addConstraint(t1.unify(t2));
+    }
+
+    private void addUnifyConstraint(ParseTree var, Type... types) {
+        for (Type type : types) {
+            addUnifyConstraint(new UnknownType(var), type);
+        }
+    }
+
+    // check the validity of print variables
+    private void forcePrintTypes() {
+        for (UnknownType type : this.printStack.getLast()) {
+            Type varType = getVarType(type);
+            System.out.println(type + " " + getVarType(type));
+            if (varType == null) {
+                throwCustomError("the type of the variable " + type.getVarName() + "is ambigious !");
+            } else if (!isPrintable(varType)) {
+                throwCustomError("Type error: var " + type.getVarName() + " cannot be printed");
             }
-        });
-        this.types.forEach((variable, type) -> {
-            this.types.put(variable, type.substituteAll(constraints));
-        });
-        System.out.println(this.types);
+        }
+    }
+
+    @SuppressWarnings("unlikely-arg-type")
+    private void printConstraints() {
+        for (var cons : getConstraints()) {
+            for (var constraint : cons.entrySet()) {
+                System.out.println(constraint.getKey() + "{ " + this.getTypes().get(constraint.getKey()) + " }  ~ "
+                        + constraint.getValue() + "{ " + this.getTypes().get(constraint.getValue()) + " }");
+            }
+        }
+    }
+
+    private void debugConstraints() {
+
+        System.out.println("Types");
+
+        System.out.println(this.getTypes());
+
+        System.out.println("\nContraintes :");
+
+        printConstraints();
+
+        System.out.println("\n\n\n");
+
+        this.bigAssSubstitute();
+
+        System.out.println("Contraintes (Nouveau) :");
+
+        printConstraints();
+
+        System.out.println("\n\n");
+
+        System.out.println(this.getTypes());
+
+        System.out.println("\n\n\n");
+    }
+
+    // can return null
+    private Type getVarType(Type var) {
+        return getTypes().get(var);
+    }
+
+    // we can only print primitive and arrays with known type
+    private boolean isPrintable(Type type) {
+        if (type instanceof PrimitiveType)
+            return true;
+        if (type instanceof ArrayType at)
+            return isPrintable(at.getTabType());
+        return false;
+    }
+
+    private void addConstraintsTo(Map<UnknownType, List<Type>> dest, Map<UnknownType, Type> constraints) {
+        for (var entry : constraints.entrySet()) {
+            if (!dest.containsKey(entry.getKey())) {
+                dest.put(entry.getKey(), new ArrayList<>());
+            }
+
+            dest.get(entry.getKey()).add(entry.getValue());
+        }
+    }
+
+    private void addAllConstraintsTo(Map<UnknownType, List<Type>> dest, Map<UnknownType, List<Type>> constraints) {
+        for (var entry : constraints.entrySet()) {
+            if (!dest.containsKey(entry.getKey())) {
+                dest.put(entry.getKey(), new ArrayList<>());
+            }
+
+            dest.get(entry.getKey()).addAll(entry.getValue());
+        }
+    }
+
+    private void addConstraint(Map<UnknownType, Type> constraint) {
+        // si on rajoute une contrainte avec un type qu'on connaît déjà
+        // on rajoute plutôt la contrainte avec le type réel
+        for (var entry : constraint.entrySet()) {
+            var var = entry.getValue();
+            Type varType = getVarType(var);
+            if (varType != null) {
+                entry.setValue(varType);
+            }
+        }
+        addConstraintsTo(getConstraints().getLast(), constraint);
+    }
+
+    private boolean canBeSubstituted(Type type) {
+        while (type instanceof ArrayType at) {
+            type = at.getTabType();
+        }
+        if (type instanceof PrimitiveType)
+            return true;
+        return false;
+    }
+
+    private void substituteContraints(UnknownType var, Type varType) {
+        for (var consInDepth : getConstraints()) {
+            for (var constraint : consInDepth.entrySet()) {
+                // UnknownType weakVar = constraint.getKey();
+                List<Type> types = constraint.getValue();
+                List<Type> newTypes = new ArrayList<>();
+
+                boolean removed = false;
+                for (var it = types.iterator(); it.hasNext() && !removed;) {
+                    Type type = it.next();
+                    Type newType = varType;
+                    while (type instanceof ArrayType at) {
+                        type = at.getTabType();
+                        newType = new ArrayType(newType);
+                    }
+
+                    if (type.equals(var)) {
+                        it.remove();
+                        newTypes.add(newType);
+                        break;
+                    }
+                }
+
+                for (Type type : newTypes) {
+                    types.add(type);
+                }
+            }
+        }
+    }
+
+    private void substituteTypes(UnknownType var, Type varType) {
+        for (var entry : getTypes().entrySet()) {
+            // UnknownType varEntry = entry.getKey();
+            Type type = entry.getValue();
+            if (type instanceof FunctionType ft) {
+                ArrayList<Type> params = new ArrayList<>();
+                // substitute params
+                for (int i = 0; i < ft.getNbArgs(); i++) {
+                    Type argType = ft.getArgsType(i);
+                    if (argType.equals(var)) {
+                        params.add(varType);
+                    } else {
+                        params.add(argType);
+                    }
+                }
+                // substiture return type
+                Type returnType = ft.getReturnType();
+                if (returnType.equals(var)) {
+                    returnType = varType;
+                }
+                entry.setValue(new FunctionType(returnType, params));
+            }
+        }
+    }
+
+    private void littleAssSubstitute(UnknownType var, Type varType) {
+        // substitute on constraints
+        substituteContraints(var, varType);
+
+        // substitute on types (only used for functions)
+        substituteTypes(var, varType);
+    }
+
+    // returns the var to substitute
+    private UnknownType findVarToSubstitute(Map<UnknownType, List<Type>> newConstraints) {
+        for (var consInDepth : getConstraints()) {
+            for (var constraint : consInDepth.entrySet()) {
+                UnknownType var = constraint.getKey();
+                List<Type> types = constraint.getValue();
+
+                boolean sus = false;
+
+                Type varType = getVarType(var);
+                if (varType != null) {
+                    for (var it = types.iterator(); it.hasNext();) {
+                        Type type = it.next();
+                        if (type.equals(varType)) {
+                            // si X := INT ~ INT
+                            // => X := INT et on substitue
+                            it.remove();
+                            sus = true;
+                        } else {
+                            var newConstraint = type.unify(varType);
+                            addConstraintsTo(newConstraints, newConstraint);
+                        }
+                    }
+                }
+
+                if (sus) {
+                    return var;
+                }
+            }
+        }
+        return null;
+    }
+
+    // returns true if something happened
+    private boolean tryReplaceWithRealType() {
+        for (var consInDepth : getConstraints()) {
+            for (var constraint : consInDepth.entrySet()) {
+                UnknownType var = constraint.getKey();
+                List<Type> types = constraint.getValue();
+
+                for (var it = types.iterator(); it.hasNext();) {
+                    Type type = it.next();
+                    // unifying primitives
+                    if (canBeSubstituted(type)) {
+                        Type varType = getVarType(var);
+                        if (varType != null) {
+                            // la variable a déjà un type assigné
+                            varType.unify(type);
+                            return true;
+                        } else {
+                            // la variable n'avait pas de type assigné
+                            this.getTypes().put(var, type);
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private void bigAssSubstitute() {
+        UnknownType substituteVar = null;
+        Map<UnknownType, List<Type>> newConstraints = new HashMap<>();
+        while (true) {
+            // add new constraints
+            if (!getConstraints().empty() && !newConstraints.isEmpty()) {
+                addAllConstraintsTo(getConstraints().getLast(), newConstraints);
+                newConstraints.clear();
+            }
+
+            // try substitute
+            if (substituteVar != null) {
+                littleAssSubstitute(substituteVar, getVarType(substituteVar));
+                substituteVar = null;
+                continue;
+            }
+
+            // pour chaque type, si type primitif on substitue
+            // et on le rajoute à la liste des substitués
+            // et on revient au début
+            // on rajoute aussi les contraintes dans l'autre sens
+            substituteVar = findVarToSubstitute(newConstraints);
+            if (substituteVar != null) {
+                continue;
+            }
+
+            // ensuite pour chaque type
+            // unifier toutes les contraintes d'un type
+            // si contraint à un type primitif, et qu'il n'a pas de type, on lui affecte le
+            // type
+            // si déjà un type, on unifie les deux et on supprime la contrainte
+            // et on lui enlève la contrainte de ce type
+            // et on revient au début
+            if (!tryReplaceWithRealType())
+                break;
+        }
+    }
+
+    private void throwCustomError(String message) {
+        System.err.println(message);
+        System.exit(1);
+    }
+
+    private int getLine(ParserRuleContext ctx) {
+        if (ctx instanceof TerminalNode) {
+            return ((TerminalNode) ctx).getSymbol().getLine();
+        } else {
+            if (ctx != null) {
+                return ctx.getStart().getLine();
+            } else {
+                throw new Error("Illegal UnknownType construction");
+            }
+        }
     }
 
     @Override
-    public Type visitNegation(grammarTCLParser.NegationContext ctx) throws TyperError {
-        System.out.println("visit negation : NOT expr");
-        ParseTree negExpr = ctx.getChild(1);
-        Type t = visit(negExpr);
-        HashMap<UnknownType, Type> constraints;
-        try {
-            constraints = new HashMap<>(t.unify(new PrimitiveType(Type.Base.BOOL)));
-        } catch (Error e) {
-            throw new TyperError(negExpr.getText() + " is not a boolean", ctx);
-        }
-        this.substituteTypes(constraints);
+    public Type visitNegation(grammarTCLParser.NegationContext ctx) {
+        // System.out.println("visit negation : NOT expr");
+        ParseTree p1 = ctx.getChild(1);
+        addUnifyConstraint(p1, visit(p1), new PrimitiveType(Type.Base.BOOL));
         return new PrimitiveType(Type.Base.BOOL);
     }
 
     @Override
-    public Type visitComparison(grammarTCLParser.ComparisonContext ctx) throws TyperError {
-        System.out.println("visit comparison : expr op expr");
-        ParseTree leftArgNode = ctx.getChild(0);
-        Type leftArgType = visit(leftArgNode);
-        ParseTree rightArgNode = ctx.getChild(2);
-        Type rightArgType = visit(rightArgNode);
-        HashMap<UnknownType, Type> constraints;
-        try{
-            constraints = new HashMap<>(leftArgType.unify(new PrimitiveType(Type.Base.INT)));
-        } catch (Error e) {
-            throw new TyperError(leftArgNode.getText() + " is not an int", ctx);
-        }
-        try {
-            constraints.putAll(rightArgType.unify(new PrimitiveType(Type.Base.INT)));
-        } catch (Error e) {
-            throw new TyperError(rightArgNode.getText() + " is not an int", (ParserRuleContext) ctx.getChild(2));
-        }
-        this.substituteTypes(constraints);
+    public Type visitComparison(grammarTCLParser.ComparisonContext ctx) {
+        // System.out.println("visit comparison : expr op expr");
+        ParseTree p1 = ctx.getChild(0);
+        ParseTree p3 = ctx.getChild(2);
+
+        addUnifyConstraint(p1, visit(p1), new PrimitiveType(Type.Base.INT));
+        addUnifyConstraint(p3, visit(p3), new PrimitiveType(Type.Base.INT));
+
         return new PrimitiveType(Type.Base.BOOL);
     }
 
     @Override
-    public Type visitOr(grammarTCLParser.OrContext ctx) throws TyperError {
-        System.out.println("visit or");
-        ParseTree leftArgNode = ctx.getChild(0);
-        Type leftArgType = visit(leftArgNode);
-        ParseTree rightArgNode = ctx.getChild(2);
-        Type rightArgType = visit(rightArgNode);
-        HashMap<UnknownType, Type> constraints;
-        try {
-            constraints = new HashMap<>(leftArgType.unify(new PrimitiveType(Type.Base.BOOL)));
-        } catch (Error e) {
-            throw new TyperError(leftArgNode.getText() + "is not a boolean", ctx);
-        }
-        try {
-            constraints.putAll(rightArgType.unify(new PrimitiveType(Type.Base.BOOL)));
-        } catch (Error e) {
-            throw new TyperError(rightArgNode.getText() + "is not a boolean", (ParserRuleContext) ctx.getChild(2));
-        }
-        this.substituteTypes(constraints);
+    public Type visitOr(grammarTCLParser.OrContext ctx) {
+        // System.out.println("visit or");
+        ParseTree p1 = ctx.getChild(0);
+        ParseTree p3 = ctx.getChild(2);
+
+        addUnifyConstraint(p1, visit(p1), new PrimitiveType(Type.Base.BOOL));
+        addUnifyConstraint(p3, visit(p3), new PrimitiveType(Type.Base.BOOL));
+
         return new PrimitiveType(Type.Base.BOOL);
     }
 
     @Override
-    public Type visitOpposite(grammarTCLParser.OppositeContext ctx) throws TyperError {
-        System.out.println("visit opposite");
-        ParseTree argNode = ctx.getChild(1);
-        Type argType = visit(argNode);
-        HashMap<UnknownType, Type> constraints;
-        try {
-            constraints = new HashMap<>(argType.unify(new PrimitiveType(Type.Base.INT)));
-        } catch (Error e) {
-            throw new TyperError(argNode.getText() + " is not an int", (ParserRuleContext) ctx.getChild(1));
-        }
-        this.substituteTypes(constraints);
+    public Type visitOpposite(grammarTCLParser.OppositeContext ctx) {
+        // System.out.println("visit opposite");
+        ParseTree p1 = ctx.getChild(1);
+
+        addUnifyConstraint(p1, visit(p1), new PrimitiveType(Type.Base.INT));
+
         return new PrimitiveType(Type.Base.INT);
     }
 
     @Override
-    public Type visitInteger(grammarTCLParser.IntegerContext ctx) throws TyperError {
-        System.out.println("visit int");
+    public Type visitInteger(grammarTCLParser.IntegerContext ctx) {
+        // System.out.println("visit int");
         return new PrimitiveType(Type.Base.INT);
     }
 
     @Override
-    public Type visitTab_access(grammarTCLParser.Tab_accessContext ctx) throws TyperError {
-        System.out.println("visit tabAccess : expr '[' index(:expr) ']'");
-        ParseTree exprNode = ctx.getChild(0);
-        Type exprType = visit(exprNode);
-        ParseTree indexNode = ctx.getChild(2);
-        Type indexType = visit(indexNode);
+    public Type visitTab_access(grammarTCLParser.Tab_accessContext ctx) {
+        // System.out.println("visit tabAccess");
+        ParseTree p0 = ctx.getChild(0);
+        ParseTree p2 = ctx.getChild(2);
 
-        HashMap<UnknownType, Type> constraints = new HashMap<>();
-        try {
-            constraints.putAll(exprType.unify(new ArrayType(new UnknownType())));
-            this.substituteTypes(constraints);
+        Type arrayType = visit(p0);
 
-            constraints.putAll(indexType.unify(new PrimitiveType(Type.Base.INT)));
-        } catch (Error e) {
-            throw new TyperError(e.getMessage(), ctx);
-        }
-        this.substituteTypes(constraints);
+        UnknownType temp = new UnknownType();
+        addUnifyConstraint(p0, arrayType, new ArrayType(temp));
+        addUnifyConstraint(p2, visit(p2), new PrimitiveType(Type.Base.INT));
 
-        return ((ArrayType) exprType).getTabType();
+        return temp;
     }
 
     @Override
-    public Type visitBrackets(grammarTCLParser.BracketsContext ctx) throws TyperError {
-        System.out.println("visit brackets");
+    public Type visitBrackets(grammarTCLParser.BracketsContext ctx) {
+        // System.out.println("visit brackets");
         ParseTree contentNode = ctx.getChild(1);
         return visit(contentNode);
     }
 
     @Override
-    public Type visitCall(grammarTCLParser.CallContext ctx) throws TyperError {
-        System.out.println("visit call");
-        ParseTree calledFunctionNode = ctx.getChild(0);
-        UnknownType key = new UnknownType(calledFunctionNode);
-        if (!types.containsKey(key)){
-            throw new TyperError("Call does not exist", ctx);
+    public Type visitCall(grammarTCLParser.CallContext ctx) {
+        // System.out.println("visit call");
+        String funcName = ctx.VAR().getText();
+        if (!functionList.containsKey(funcName)) {
+            throwCustomError("Call does not exist at line " + getLine(ctx));
         }
-        Type functionType = types.get(key);
-        ArrayList<Type> arguments = new ArrayList<>();
+        FunctionType funcDeclType = (FunctionType) getVarType(functionList.get(funcName));
+
         int NbChildren = ctx.getChildCount();
-        if(NbChildren != 3){
-            for(int i = 0; i <= (NbChildren - 3 - 1)/2; i++){
-                ParseTree attributeNode = ctx.getChild(2 + 2 * i);
-                Type attributeType = visit(attributeNode);
-                arguments.add(attributeType);
+        if (NbChildren != 3) {
+            int argCount = (NbChildren - 2) / 2;
+
+            if (argCount != funcDeclType.getNbArgs()) {
+                throwCustomError("pas le bon nombre d'arguments lors de l'appel de la fonction " + funcName);
+            }
+
+            for (int i = 0; i < argCount; i++) {
+                ParseTree p2 = ctx.getChild(2 + i * 2);
+
+                addUnifyConstraint(p2, visit(p2), funcDeclType.getArgsType(i));
             }
         }
-        FunctionType f = new FunctionType(new UnknownType(), arguments);
-        HashMap<UnknownType, Type> constraints;
-        try {
-            constraints = new HashMap<>(functionType.unify(f));
-        } catch (Error e) {
-            throw new TyperError(e.getMessage(), ctx);
-        }
-
-        this.substituteTypes(constraints);
-        System.out.println("TEST : SubstituteTypes du call ok");
-        return null;
+        return funcDeclType.getReturnType();
     }
 
     @Override
-    public Type visitBoolean(grammarTCLParser.BooleanContext ctx) throws TyperError {
-        System.out.println("visit bool");
+    public Type visitBoolean(grammarTCLParser.BooleanContext ctx) {
+        // System.out.println("visit bool");
         return new PrimitiveType(Type.Base.BOOL);
     }
 
     @Override
-    public Type visitAnd(grammarTCLParser.AndContext ctx) throws TyperError {
-        System.out.println("visit and");
-        ParseTree leftArgNode = ctx.getChild(0);
-        Type leftArgType = visit(leftArgNode);
-        ParseTree rightArgNode = ctx.getChild(2);
-        Type rightArgType = visit(rightArgNode);
-        HashMap<UnknownType, Type> constraints;
-        try {
-            constraints = new HashMap<>(leftArgType.unify(new PrimitiveType(Type.Base.BOOL)));
-        } catch (Error e) {
-            throw new TyperError(leftArgNode.getText() + "is not a boolean", ctx);
-        }
-        try {
-            constraints.putAll(rightArgType.unify(new PrimitiveType(Type.Base.BOOL)));
-        } catch (Error e) {
-            throw new TyperError(rightArgNode.getText() + "is not a boolean", (ParserRuleContext) ctx.getChild(2));
-        }
+    public Type visitAnd(grammarTCLParser.AndContext ctx) {
+        // System.out.println("visit and");
+        ParseTree p1 = ctx.getChild(0);
+        ParseTree p3 = ctx.getChild(2);
 
-        this.substituteTypes(constraints);
+        addUnifyConstraint(p1, visit(p1), new PrimitiveType(Type.Base.BOOL));
+        addUnifyConstraint(p3, visit(p3), new PrimitiveType(Type.Base.BOOL));
+
         return new PrimitiveType(Type.Base.BOOL);
     }
 
     @Override
-    public Type visitVariable(grammarTCLParser.VariableContext ctx) throws TyperError {
-        System.out.println("visit variable");
+    public Type visitVariable(grammarTCLParser.VariableContext ctx) {
+        // System.out.println("visit variable");
+        // if (!this.varStack.varExists(ctx.VAR().getText())) {
+        // throwCustomError("Type error: variable " + ctx.VAR().getText() + " isn't
+        // defined at line " + getLine(ctx));
+        // }
 
-        System.out.println(this.types);
+        // if (!this.getTypes().containsKey(this.varStack.getVar(ctx.VAR().getText())))
+        // {
+        // throwCustomError("Type error: variable " + ctx.VAR().getText() + " has not
+        // been assigned yet at line " + getLine(ctx));
+        // }
 
-        ParseTree varNode = ctx.getChild(0);
-        UnknownType ut = new UnknownType(varNode);
-        Type result = this.types.getOrDefault(ut, ut);
-        if (!this.types.containsKey(ut)) {
-            HashMap<UnknownType, Type> constraints = new HashMap<>(ut.unify(new UnknownType()));
-            substituteTypes(constraints);
+        UnknownType declVarNode = this.varStack.getVar(ctx.VAR().getText());
+        UnknownType variable = new UnknownType(ctx.VAR());
+        addUnifyConstraint(variable, declVarNode);
+        if (this.currentState == tempState) {
+            tempVarTypes.add(declVarNode);
         }
-        return result;
+        return variable;
     }
 
     @Override
-    public Type visitMultiplication(grammarTCLParser.MultiplicationContext ctx) throws TyperError {
-        System.out.println("Visit Multiplication");
+    public Type visitMultiplication(grammarTCLParser.MultiplicationContext ctx) {
+        // System.out.println("visit Multiplication");
 
-        ParseTree leftArgNode = ctx.getChild(0);
-        Type leftArgType = visit(leftArgNode);
-        ParseTree rightArgNode = ctx.getChild(2);
-        Type rightArgType = visit(rightArgNode);
-        HashMap<UnknownType, Type> constraints;
-        try {
-            constraints = new HashMap<>(leftArgType.unify(new PrimitiveType(Type.Base.INT)));
-        } catch (Error e) {
-            throw new TyperError(leftArgNode.getText() + " is not an int", ctx);
-        }
-        try {
-            constraints.putAll(rightArgType.unify(new PrimitiveType(Type.Base.INT)));
-        } catch (Error e) {
-            throw new TyperError(rightArgNode.getText() + " is not an int", (ParserRuleContext) ctx.getChild(2));
-        }
-        this.substituteTypes(constraints);
+        ParseTree p1 = ctx.getChild(0);
+        ParseTree p3 = ctx.getChild(2);
+
+        addUnifyConstraint(p1, visit(p1), new PrimitiveType(Type.Base.INT));
+        addUnifyConstraint(p3, visit(p3), new PrimitiveType(Type.Base.INT));
+
         return new PrimitiveType(Type.Base.INT);
     }
 
     @Override
-    public Type visitEquality(grammarTCLParser.EqualityContext ctx) throws TyperError {
-        System.out.println("visit equality");
-        ParseTree leftExpressionNode = ctx.getChild(0);
-        Type leftExpressionType = visit(leftExpressionNode);
-        ParseTree rightExpressionNode = ctx.getChild(2);
-        Type rightExpressionType = visit(rightExpressionNode);
-        HashMap<UnknownType, Type> constraints;
-        try {
-            constraints = new HashMap<>(leftExpressionType.unify(rightExpressionType));
-        } catch(Error e){
-            throw new TyperError(leftExpressionNode.getText() + " and " + rightExpressionNode.getText() + " have not the same type", (ParserRuleContext) ctx.getChild(1));
-        }
-        this.substituteTypes(constraints);
+    public Type visitEquality(grammarTCLParser.EqualityContext ctx) {
+        // System.out.println("visit equality");
+        ParseTree p1 = ctx.getChild(0);
+        Type t1 = visit(p1);
+        ParseTree p3 = ctx.getChild(2);
+        Type t3 = visit(p3);
+
+        addUnifyConstraint(p1, t1, t3);
+        addUnifyConstraint(p3, t1, t3);
+
         return new PrimitiveType(Type.Base.BOOL);
     }
 
     @Override
-    public Type visitTab_initialization(grammarTCLParser.Tab_initializationContext ctx) throws TyperError {
-        System.out.println("visit tab initialization : '{' (expr (',' expr)*)? '}'");
-        HashMap<UnknownType, Type> constraints = new HashMap<>();
-        Type type = new UnknownType();
-        int nbChild = ctx.getChildCount();
+    public Type visitTab_initialization(grammarTCLParser.Tab_initializationContext ctx) {
+        // System.out.println("visit tab initialization");
 
-        if (nbChild > 2) {
-            Type previousExprType = new UnknownType();
-            for (int i = 1; i <= nbChild - 2; i += 2) {
-                ParseTree exprAtPositionI = ctx.getChild(i);
-                Type exprType = visit(exprAtPositionI);
-                if (exprType instanceof FunctionType) {
-                    throw new TyperError("expr : '"+ exprAtPositionI.getText() +"' in tab initialization : '"+ ctx.getText()
-                                +"' cannot be a Function",
-                            (ParserRuleContext) ctx.getChild(i));
-                }
-                try {
-                    if (i > 1) {
-                        constraints.putAll(exprType.unify(previousExprType));
-                    }
+        int elementsCount = (ctx.getChildCount() - 1) / 2;
 
-                } catch (Error e) {
-                    throw new TyperError(exprAtPositionI.getText() +" is not the same type as "+ previousExprType +"\n"
-                                + exprAtPositionI.getText() +" : "+ exprType +"\n"
-                                + previousExprType +" : "+ previousExprType,
-                            (ParserRuleContext) ctx.getChild(i));
-                }
+        if (elementsCount == 0)
+            return new ArrayType(new UnknownType());
 
-                type = exprType;
-                previousExprType = exprType;
-            }
+        ParseTree firstElement = ctx.getChild(1);
+        Type elementType = visit(firstElement);
+
+        if (elementsCount == 1)
+            return new ArrayType(elementType);
+
+        for (int i = 0; i < elementsCount - 1; i++) {
+            int childIndex = 1 + 2 * i;
+            int nextChildIndex = 1 + 2 * (i + 1);
+
+            var element = ctx.getChild(childIndex);
+            var nextElement = ctx.getChild(nextChildIndex);
+
+            Type t1 = visit(element);
+            Type t2 = visit(nextElement);
+
+            addUnifyConstraint(element, new UnknownType(nextElement), t1, t2);
         }
-        this.substituteTypes(constraints);
-        return new ArrayType(type);
+
+        return new ArrayType(elementType);
     }
 
     @Override
-    public Type visitAddition(grammarTCLParser.AdditionContext ctx) throws TyperError {
-        System.out.println("visit addition");
-        ParseTree leftOperandNode = ctx.getChild(0);
-        Type leftOperandType = visit(leftOperandNode);
-        ParseTree rightOperandNode = ctx.getChild(2);
-        Type rightOperandType = visit(rightOperandNode);
-        HashMap<UnknownType, Type> constraints;
-        try {
-            constraints = new HashMap<>(leftOperandType.unify(new PrimitiveType(Type.Base.INT)));
-        } catch (Error e) {
-            throw new TyperError(leftOperandNode.getText() + " is not an int", (ParserRuleContext) leftOperandNode);
-        }
-        try {
-            constraints.putAll(rightOperandType.unify(new PrimitiveType(Type.Base.INT)));
-        } catch (Error e) {
-            throw new TyperError(rightOperandNode.getText() + " is not an int", (ParserRuleContext) rightOperandNode);
-        }
-        this.substituteTypes(constraints);
+    public Type visitAddition(grammarTCLParser.AdditionContext ctx) {
+        // System.out.println("visit addition");
+        ParseTree p1 = ctx.getChild(0);
+        ParseTree p3 = ctx.getChild(2);
+
+        addUnifyConstraint(p1, visit(p1), new PrimitiveType(Type.Base.INT));
+        addUnifyConstraint(p3, visit(p3), new PrimitiveType(Type.Base.INT));
+
         return new PrimitiveType(Type.Base.INT);
     }
 
     @Override
-    public Type visitBase_type(grammarTCLParser.Base_typeContext ctx) throws TyperError {
-        System.out.println("Visit base type : BASE_TYPE");
-
-        ParseTree baseTypeNode = ctx.getChild(0);
-        String baseType = baseTypeNode.getText();
-
-        if (!isValidBaseType(baseType)) {
-            throw new TyperError(
-                    "The supplied type is not a base type\nType provided : " + baseType, ctx
-            );
+    public Type visitBase_type(grammarTCLParser.Base_typeContext ctx) {
+        // System.out.println("visit base type : BASE_TYPE");
+        ParseTree p0 = ctx.getChild(0);
+        if (!Objects.equals(p0.getText(), "int") && !Objects.equals(p0.getText(), "bool")
+                && !Objects.equals(p0.getText(), "auto")) {
+            throwCustomError("The supplied type is not a base type\nType provided : " + p0.getText() + "\nat line "
+                    + getLine(ctx));
         }
-
-        return switch (baseType) {
-            case "int"  -> new PrimitiveType(Type.Base.INT);
+        return switch (p0.getText()) {
+            case "int" -> new PrimitiveType(Type.Base.INT);
             case "bool" -> new PrimitiveType(Type.Base.BOOL);
             case "auto" -> new UnknownType();
-            default     -> null;
+            default -> null;
         };
-    }
-    private static final String[] VALID_BASE_TYPES = {"int", "bool", "auto"};
-    private boolean isValidBaseType(String text) {
-        return Arrays.asList(VALID_BASE_TYPES).contains(text);
     }
 
     @Override
-    public Type visitTab_type(grammarTCLParser.Tab_typeContext ctx) throws TyperError {
-        System.out.println("Visit tab type");
-        ParseTree baseTypeNode = ctx.getChild(0);
-        Type baseType = visit(baseTypeNode);
-        ArrayType array = new ArrayType(baseType);
-        HashMap<UnknownType, Type> constraints = new HashMap<>(array.unify(new UnknownType()));
-        substituteTypes(constraints);
+    public Type visitTab_type(grammarTCLParser.Tab_typeContext ctx) {
+        // System.out.println("visit tab type");
+        ParseTree p0 = ctx.getChild(0);
+        Type t = visit(p0);
+        ArrayType array = new ArrayType(t);
         return array;
     }
 
     @Override
-    public Type visitDeclaration(grammarTCLParser.DeclarationContext ctx) throws TyperError {
-        System.out.println("visit declaration : type VAR (ASSIGN expr)? SEMICOL");
+    public Type visitDeclaration(grammarTCLParser.DeclarationContext ctx) {
+        // System.out.println("visit declaration : type VAR (ASSIGN expr)? SEMICOL");
         ParseTree typeNode = ctx.getChild(0);
         Type type = visit(typeNode);
-        if (type instanceof FunctionType) {
-            throw new TyperError("Type error: function type cannot be declared", ctx);
+
+        ParseTree varNode = ctx.VAR();
+        UnknownType varUT = new UnknownType(ctx.VAR());
+
+        // link the var name to the declaration node to find it later
+        if (!this.varStack.assignVar(ctx.VAR().getText(), varUT)) {
+            throwCustomError("redefinition of " + ctx.VAR().getText());
         }
 
-        ParseTree variableNode = ctx.getChild(1);
-        UnknownType variable = new UnknownType(variableNode);
-        HashMap<UnknownType, Type> constraints = new HashMap<>(variable.unify(type));
-        this.substituteTypes(constraints);
+        if (type instanceof FunctionType) {
+            throwCustomError("Type error: function type cannot be declared at line " + getLine(ctx));
+        }
 
         // cas : "auto a = b;"
-        if (ctx.getChildCount() == 5){
+        if (ctx.getChildCount() == 5) {
             ParseTree exprNode = ctx.getChild(3);
+
+            beginTempChangesMode();
+
             Type exprType = visit(exprNode);
-            try {
-                constraints.putAll(type.unify(exprType));
-                constraints.putAll(variable.unify(exprType));
-            } catch (Error e) {
-                throw new TyperError(e.getMessage(), ctx);
+
+            addUnifyConstraint(varNode, type, exprType);
+
+            this.bigAssSubstitute();
+
+            // on récupère tout
+
+            exprType = getVarType(new UnknownType(varNode));
+
+            Map<UnknownType, Type> typesBackup = new HashMap<>();
+            for (UnknownType var : this.tempVarTypes) {
+                Type varType = getVarType(var);
+                if (!(varType instanceof FunctionType)) {
+                    typesBackup.put(var, varType);
+                }
             }
-        }
-        this.substituteTypes(constraints);
-        return null;
-    }
 
-    @Override
-    public Type visitPrint(grammarTCLParser.PrintContext ctx) throws TyperError {
-        System.out.println("visit print : PRINT '(' VAR ')' SEMICOL ");
-        UnknownType parameter = new UnknownType(ctx.getChild(2));
+            endTempChangesMode();
 
-        if (!(this.types.containsKey(parameter))) {
-            throw new TyperError("Type error: variable "+parameter.getVarName()+" isn't defined", ctx, 6);
-        }
-        if (this.types.get(parameter) instanceof FunctionType) {
-            throw new TyperError("Type error: function type cannot be printed", ctx);
-        }
-        return null;
-    }
+            // et on le remet
 
-    @Override
-    public Type visitAssignment(grammarTCLParser.AssignmentContext ctx) throws TyperError {
-        System.out.println("visit assignment : VAR ('[' expr ']')* ASSIGN expr SEMICOL");
-        ParseTree firstVariableNode = ctx.getChild(0);
-        ArrayList<String> reservedKeywords = new ArrayList<>(List.of("int", "bool", "auto", "void", "if", "else", "while", "for", "return", "main"));
-        if(reservedKeywords.contains(firstVariableNode.getText())){
-            throw new TyperError("Keyword is not allowed for variable name", ctx, 1);
-        }
-        UnknownType firstVariable = new UnknownType(firstVariableNode);
-        HashMap<UnknownType, Type> constraints = new HashMap<>();
-        int nbChildren = ctx.getChildCount();
-        if (nbChildren == 4) {
-            // Si on n'a pas de tableau
-            ParseTree expressionNode = ctx.getChild(2);
-            Type expression = visit(expressionNode);
-            try {
-                constraints.putAll(firstVariable.unify(expression));
-            } catch (Error e) {
-                throw new TyperError(e.getMessage(), ctx);
-            }
+            addConstraint(typesBackup);
+            addUnifyConstraint(varNode, exprType);
+
         } else {
-            int nbBrackets = (nbChildren-4)/3;
-            ParseTree expressionNode = ctx.getChild(nbChildren-2);
+            addUnifyConstraint(varNode, type);
+        }
+        return null;
+    }
+
+    @Override
+    public Type visitPrint(grammarTCLParser.PrintContext ctx) {
+        // System.out.println("visit print : PRINT '(' VAR ')' SEMICOL ");
+        String varName = ctx.VAR().getText();
+
+        if (!this.varStack.varExists(varName)) {
+            throwCustomError("Type error: variable " + varName + " isn't defined at line " + getLine(ctx));
+        }
+
+        this.printStack.getLast().add(this.varStack.getVar(ctx.VAR().getText()));
+
+        return null;
+    }
+
+    @Override
+    public Type visitAssignment(grammarTCLParser.AssignmentContext ctx) {
+        // System.out.println("visit assignment : VAR ('[' expr ']')* ASSIGN expr
+        // SEMICOL");
+        ParseTree variableNode = ctx.VAR();
+
+        if (!this.varStack.varExists(variableNode.getText())) {
+            throwCustomError(
+                    "Type error: variable " + variableNode.getText() + " isn't defined at line " + getLine(ctx));
+        }
+
+        UnknownType varRef = this.varStack.getVar(variableNode.getText());
+
+        int nbChildren = ctx.getChildCount();
+        // no tab access
+        if (nbChildren == 4) {
+            ParseTree expressionNode = ctx.getChild(2);
+            addUnifyConstraint(expressionNode, visit(expressionNode), varRef);
+        } else {
+            // tab access
+            int nbBrackets = (nbChildren - 4) / 3;
+            ParseTree expressionNode = ctx.getChild(nbChildren - 2);
             Type expression = visit(expressionNode);
             for (int i = 0; i < nbBrackets; i++) {
-                int currentBracketIndex = 2+(3*i);
+                int currentBracketIndex = 2 + (3 * i);
+
                 ParseTree tabIndexNode = ctx.getChild(currentBracketIndex);
                 Type tabIndexType = visit(tabIndexNode);
-                constraints.putAll(tabIndexType.unify(new PrimitiveType(Type.Base.INT)));
+                addUnifyConstraint(tabIndexNode, tabIndexType, new PrimitiveType(Type.Base.INT));
+
                 expression = new ArrayType(expression);
             }
-            try {
-                constraints.putAll(firstVariable.unify(expression));
-            } catch (Error e) {
-                throw new TyperError(e.getMessage(), ctx);
-            }
+            addUnifyConstraint(varRef, expression);
         }
 
-        this.substituteTypes(constraints);
         return null;
     }
 
     @Override
-    public Type visitBlock(grammarTCLParser.BlockContext ctx) throws TyperError {
-        System.out.println("visit block");
+    public Type visitBlock(grammarTCLParser.BlockContext ctx) {
+        // System.out.println("visit block");
+        this.enterBlock();
         for (int i = 1; i < ctx.getChildCount() - 1; i++) {
             ParseTree instruction = ctx.getChild(i);
             visit(instruction);
         }
+        this.leaveBlock();
         return null;
     }
 
     @Override
-    public Type visitIf(grammarTCLParser.IfContext ctx) throws TyperError {
-        System.out.println("visit if : IF '(' expr ')' instr (ELSE instr)?");
+    public Type visitIf(grammarTCLParser.IfContext ctx) {
+        // System.out.println("visit if : IF '(' expr ')' instr (ELSE instr)?");
 
         ParseTree conditionNode = ctx.getChild(2);
-        Type conditionType = visit(conditionNode);
-        HashMap<UnknownType, Type> constraints;
-        try {
-            constraints = new HashMap<>(conditionType.unify(new PrimitiveType(Type.Base.BOOL)));
-        } catch (Error e) {
-            throw new TyperError(e.getMessage(), ctx);
-        }
+        addUnifyConstraint(conditionNode, visit(conditionNode), new PrimitiveType(Type.Base.BOOL));
+
         ParseTree ifInstrNode = ctx.getChild(4);
+        this.enterBlock();
         visit(ifInstrNode);
-        if (ctx.getChildCount() == 7) {
-            // Si on a un "else"
+        this.leaveBlock();
+        if (ctx.getChildCount() == 7) { // if expression contains an else
             ParseTree elseInstrNode = ctx.getChild(6);
+            this.enterBlock();
             visit(elseInstrNode);
+            this.leaveBlock();
         }
-        this.substituteTypes(constraints);
         return null;
     }
 
     @Override
-    public Type visitWhile(grammarTCLParser.WhileContext ctx) throws TyperError {
-        System.out.println("visit while : WHILE '(' expr ')' instr");
+    public Type visitWhile(grammarTCLParser.WhileContext ctx) {
+        // System.out.println("visit while : WHILE '(' expr ')' instr");
         ParseTree testNode = ctx.getChild(2);
-        Type testType = visit(testNode);
-        HashMap<UnknownType, Type> constraints;
-        try {
-            constraints = new HashMap<>(testType.unify(new PrimitiveType(Type.Base.BOOL)));
-        } catch (Error e) {
-            throw new TyperError(e.getMessage(), ctx);
-        }
+        addUnifyConstraint(testNode, visit(testNode), new PrimitiveType(Type.Base.BOOL));
+
         ParseTree instructionNode = ctx.getChild(4);
+        this.enterBlock();
         visit(instructionNode);
-        this.substituteTypes(constraints);
+        this.leaveBlock();
         return null;
     }
 
     @Override
-    public Type visitFor(grammarTCLParser.ForContext ctx) throws TyperError {
-        System.out.println("visit for : FOR '(' instr  expr ';' instr ')' instr");
-        // Ne pas oublier : avec la syntaxe actuelle, on écrit :
-        // for(int i = 0; i < 10; i = i + 1;){ ... }
-        // Le dernier point-virgule est nécessaire !
-        ParseTree initializationNode = ctx.getChild(2); // int i = 0;
+    public Type visitFor(grammarTCLParser.ForContext ctx) { // nik ta mère
+        // System.out.println("visit for : FOR '(' instr expr ';' instr ')' instr");
+        this.enterBlock();
+        ParseTree initializationNode = ctx.getChild(2);
         visit(initializationNode);
-        ParseTree expressionNode = ctx.getChild(3); // i < 10;
-        Type expressionType = visit(expressionNode);
-        HashMap<UnknownType, Type> constraints;
-        try {
-            constraints = new HashMap<>(expressionType.unify(new PrimitiveType(Type.Base.BOOL)));
-        } catch (Error e) {
-            throw new TyperError(e.getMessage(), ctx);
-        }
-        this.substituteTypes(constraints);
-        ParseTree postLoopInstructionNode = ctx.getChild(5); // i = i + 1
+
+        ParseTree expressionNode = ctx.getChild(3);
+        addUnifyConstraint(expressionNode, visit(expressionNode), new PrimitiveType(Type.Base.BOOL));
+
+        ParseTree postLoopInstructionNode = ctx.getChild(5); // exemple : i++
         visit(postLoopInstructionNode);
-        ParseTree contentNode = ctx.getChild(7); // bloc d'instructions
+
+        ParseTree contentNode = ctx.getChild(7);
+        this.enterBlock();
         visit(contentNode);
+        this.leaveBlock();
+        this.leaveBlock();
         return null;
     }
 
     @Override
-    public Type visitReturn(grammarTCLParser.ReturnContext ctx) throws TyperError {
-        System.out.println("visit return : RETURN expr SEMICOL ");
-        ParseTree expr = ctx.getChild(1);
-        Type exprType = visit(expr);
-        return exprType;
+    public Type visitReturn(grammarTCLParser.ReturnContext ctx) {
+        // RETURN expr SEMICOL
+        int returnExprIndex = 1;
+        ParseTree returnExpr = ctx.getChild(returnExprIndex);
+        Type returnType = visit(returnExpr);
+        FunctionType declFunction = (FunctionType) getVarType(this.functionList.get(this.lastFunctionEntered));
+        Type declReturnType = declFunction.getReturnType();
+        addUnifyConstraint(returnExpr, returnType, declReturnType);
+        return null;
     }
 
     @Override
-    public Type visitCore_fct(grammarTCLParser.Core_fctContext ctx) throws TyperError {
-        System.out.println("Visit core function");
+    public Type visitCore_fct(grammarTCLParser.Core_fctContext ctx) {
+        // System.out.println("visit core function");
         int nbChildrenWithoutInstr = 5; // '{' instr* RETURN expr SEMICOL '}';
         int nbChildren = ctx.getChildCount();
-        for (int i = 1; i <= nbChildren - nbChildrenWithoutInstr; i++){
+        for (int i = 1; i <= nbChildren - nbChildrenWithoutInstr; i++) {
             ParseTree p = ctx.getChild(i);
             visit(p);
         }
         int returnExprIndex = nbChildren - 3;
-        ParseTree returnExpr = ctx.getChild(returnExprIndex);
-        return visit(returnExpr);
+        ParseTree p = ctx.getChild(returnExprIndex);
+        Type returnType = visit(p);
+
+        FunctionType declFunction = (FunctionType) getVarType(this.functionList.get(this.lastFunctionEntered));
+        Type declReturnType = declFunction.getReturnType();
+        addUnifyConstraint(p, returnType, declReturnType);
+        return null;
     }
 
     @Override
-    public Type visitDecl_fct(grammarTCLParser.Decl_fctContext ctx) throws TyperError {
-        System.out.println("Visit declare function : type VAR '(' (type VAR (',' type VAR)*)? ')' core_fct;");
+    public Type visitDecl_fct(grammarTCLParser.Decl_fctContext ctx) {
+        // System.out.println("visit declare function : type VAR '(' (type VAR (',' type
+        // VAR)*)? ')' core_fct");
         ParseTree functionReturnTypeNode = ctx.getChild(0);
-        ParseTree functionNameNode       = ctx.getChild(1);
+        ParseTree functionNameNode = ctx.getChild(1);
 
         UnknownType functionName = new UnknownType(functionNameNode);
         Type functionReturnType = visit(functionReturnTypeNode);
 
-        HashMap<UnknownType, Type> constraints = new HashMap<>();
-
         int childCount = ctx.getChildCount();
         boolean noParameters = childCount == 5;
+
+        enterFunction(functionNameNode);
+
         if (noParameters) {
-            constraints.putAll(functionName.unify(new FunctionType(functionReturnType, new ArrayList<>())));
-            substituteTypes(constraints);
-
-            int core_fctIndex = 4;
-            ParseTree core_fctNode = ctx.getChild(core_fctIndex);
-            Type core_fctType = visit(core_fctNode);
-
-            try {
-                constraints = new HashMap<>(functionReturnType.unify(core_fctType));
-            } catch (Error e) {
-                throw new TyperError(e.getMessage(), ctx);
-            }
-            this.substituteTypes(constraints);
-
+            this.getTypes().put(functionName, new FunctionType(functionReturnType, new ArrayList<>()));
         } else {
             ArrayList<Type> paramList = new ArrayList<>();
 
-            int paramNumber = (childCount - 4)/3;
+            int paramNumber = (childCount - 4) / 3;
             for (int k = 0; k < paramNumber; k++) {
-                int currentTypeIndex = (3*k)+3;
+                int currentTypeIndex = (3 * k) + 3;
                 ParseTree paramTypeNode = ctx.getChild(currentTypeIndex);
-                ParseTree paramNameNode = ctx.getChild(currentTypeIndex+1);
+                ParseTree paramNameNode = ctx.getChild(currentTypeIndex + 1);
                 Type paramType = visit(paramTypeNode);
                 UnknownType paramName = new UnknownType(paramNameNode);
 
-                try {
-                    paramName.unify(paramType);
-                } catch (Error e) {
-                    throw new TyperError(e.getMessage(), ctx);
-                }
+                this.varStack.assignVar(paramNameNode.getText(), paramName);
+
+                addUnifyConstraint(paramNameNode, paramType);
+
                 paramList.add(paramType);
             }
 
             FunctionType functionType = new FunctionType(functionReturnType, paramList);
-            constraints.putAll(functionName.unify( functionType));
+            this.getTypes().put(functionName, functionType);
         }
+
+        int core_fctIndex = childCount - 1; // it's always the last one
+        ParseTree core_fctNode = ctx.getChild(core_fctIndex);
+
+        visit(core_fctNode);
+        leaveFunction();
+
         return null;
     }
 
     @Override
-    public Type visitMain(grammarTCLParser.MainContext ctx) throws TyperError {
-        System.out.println("visit main : decl_fct* 'int main()' core_fct EOF;");
+    public Type visitMain(grammarTCLParser.MainContext ctx) {
+        // System.out.println("visit main : decl_fct* 'int main()' core_fct EOF;");
 
-        UnknownType main = new UnknownType("main", 12);
-        Type mainType = new FunctionType(new PrimitiveType(Type.Base.INT), new ArrayList<>());
-
-        HashMap<UnknownType, Type> constraints = new HashMap<>(main.unify(mainType));
-        substituteTypes(constraints);
+        final Type mainType = new FunctionType(new PrimitiveType(Type.Base.INT), new ArrayList<>());
 
         int childCount = ctx.getChildCount();
-        boolean noDecl_fct = childCount == 3;
-        if (!noDecl_fct) {
-            for (int i = 0; i < childCount - 3; i++){
-                ParseTree decl_fctNode = ctx.getChild(i);
-                visit(decl_fctNode);
-            }
+
+        enterBlock();
+
+        // visit functions
+        for (int i = 0; i < childCount - 3; i++) {
+            ParseTree decl_fctNode = ctx.getChild(i);
+            visit(decl_fctNode);
         }
-        ParseTree core_fctNode = ctx.getChild(childCount-2);
+
+        // visit main function
+        ParseTree core_fctNode = ctx.getChild(childCount - 2);
+
+        ParseTree funcMain = ctx.getChild(childCount - 3);
+        UnknownType funcNameUT = new UnknownType(funcMain);
+
+        this.getTypes().put(funcNameUT, mainType);
+        enterFunction(funcMain);
+
         visit(core_fctNode);
+
+        leaveFunction();
+        leaveBlock();
+
+        cleanTypes();
+
         return null;
     }
+
 }
