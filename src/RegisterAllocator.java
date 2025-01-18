@@ -21,7 +21,11 @@ public class RegisterAllocator {
     private List<Mem> dynamicInstructions;
     private int dynamicArrayIndex;
 
-    public RegisterAllocator(ConflictGraph conflictGraph) {
+    /**
+	 * Constructeur
+	 * @param conflictGraph
+	 */
+	public RegisterAllocator(ConflictGraph conflictGraph) {
         this.conflictGraph = conflictGraph;
         this.registerMap = new HashMap<>();
         this.memoryAllocationMap = new HashMap<>();
@@ -30,14 +34,20 @@ public class RegisterAllocator {
         allocateRegisters();
     }
 
-    private void allocateRegisters() {
+   /**
+	* Alloue les registres
+    */
+	private void allocateRegisters() {
         int registerIndex = 1;
         for (String variable : conflictGraph.getVertices()) {
             if (variable.startsWith("R")) {
+				// Si la variable est un registre
                 if (registerIndex < 30) {
+					// Si le nombre de registres est inférieur à 30
                     registerMap.put(variable, "R" + registerIndex);
                     registerIndex++;
                 } else {
+					// Sinon, on alloue la variable en mémoire
                     String memLabel = "Mem[" + dynamicArrayIndex + "]";
                     int variableIndex = Integer.parseInt(variable.substring(1));
                     dynamicInstructions.add(new Mem(memLabel, Mem.Op.ST, variableIndex, dynamicArrayIndex));
@@ -45,12 +55,18 @@ public class RegisterAllocator {
                     dynamicArrayIndex++;
                 }
             } else {
+				// Si la variable est une constante
                 System.out.println("Ignoring constant: " + variable);
             }
         }
     }
 
-    public String getRegister(String variable) {
+    /**
+	 * Récupère le registre associé à une variable
+	 * @param variable
+	 * @return
+	 */
+	public String getRegister(String variable) {
         if (registerMap.containsKey(variable)) {
             return registerMap.get(variable);
         } else if (memoryAllocationMap.containsKey(variable)) {
@@ -60,7 +76,10 @@ public class RegisterAllocator {
         }
     }
 
-    public void printAllocation() {
+    /**
+	 * Affiche l'allocation des registres
+	 */
+	public void printAllocation() {
         System.out.println("Register Allocation:");
         for (Map.Entry<String, String> entry : registerMap.entrySet()) {
             System.out.println(entry.getKey() + " -> " + entry.getValue());
@@ -73,6 +92,8 @@ public class RegisterAllocator {
 
     public static void main(String[] args) {
         Program program = new Program();
+
+		Instruction instr0 = new Mem("L0", Mem.Op.ST, 0, 1) {};
 		Instruction instr1 = new Instruction("L1", "XOR R1000 R1000 R1000") {};
 		Instruction instr2 = new Instruction("L2", "SUBi R1000 R1000 1") {};
 		Instruction instr3 = new Instruction("L3", "PRINT R1001") {};
@@ -109,6 +130,7 @@ public class RegisterAllocator {
 		Instruction instr32 = new Instruction("L31", "DIV R1057 R1058 R1059") {};
 		Instruction instr33 = new Instruction("L32", "PRINT R1060") {};
 
+		program.addInstruction(instr0);
 		program.addInstruction(instr1);
 		program.addInstruction(instr2);
 		program.addInstruction(instr3);

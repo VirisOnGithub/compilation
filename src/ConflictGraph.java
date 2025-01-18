@@ -7,17 +7,21 @@ import src.Asm.Stop;
 import src.Asm.CondJump;
 import src.Asm.Instruction;
 import src.Asm.JumpCall;
-
+import src.Asm.Mem;
 import java.util.Set;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
 public class ConflictGraph extends UnorientedGraph<String> {
-
     private Map<Instruction, Set<String>> in;
     private Map<Instruction, Set<String>> out;
 
+    /**
+     * Constructeur
+     * @param controlGraph
+     * @param program
+     */
     public ConflictGraph(ControlGraph controlGraph, Program program) {
         super();
         this.in = new HashMap<>();
@@ -30,13 +34,12 @@ public class ConflictGraph extends UnorientedGraph<String> {
         boolean changed;
         do {
             changed = false;
-            // Traverse all instructions in the program, including those in subprograms
             for (Instruction instruction : controlGraph.getAllVertices(program)) {
             Set<String> oldIn = in.getOrDefault(instruction, new HashSet<>());
             Set<String> oldOut = out.getOrDefault(instruction, new HashSet<>());
 
             Set<String> newIn = new HashSet<>(oldOut);
-            newIn.addAll(getDef(instruction)); // Keep defined variables
+            newIn.addAll(getDef(instruction)); // Garde les variables définies par l'instruction
             newIn.addAll(getUse(instruction));
 
             Set<String> newOut = new HashSet<>();
@@ -53,8 +56,12 @@ public class ConflictGraph extends UnorientedGraph<String> {
         } while (changed);
         }
 
+        /**
+         * Construit le graphe de conflit à partir du graphe de contrôle et du programme
+         * @param controlGraph
+         * @param program
+         */
         private void buildConflictGraph(ControlGraph controlGraph, Program program) {
-        // Iterate through all instructions
         for (Instruction instruction : controlGraph.getAllVertices(program)) {
             Set<String> live = new HashSet<>(in.getOrDefault(instruction, new HashSet<>()));
             live.addAll(out.getOrDefault(instruction, new HashSet<>()));
@@ -69,8 +76,29 @@ public class ConflictGraph extends UnorientedGraph<String> {
         }
     }
 
+    /**
+     * Retourne les variables utilisées par une instruction
+     * @param instruction
+     * @return
+     */
     private Set<String> getUse(Instruction instruction) {
         Set<String> use = new HashSet<>();
+    
+        if (instruction instanceof Mem) {
+            Mem memInstr = (Mem) instruction;
+            String op = memInstr.getName(); // Obtenez l'opération sous forme de chaîne
+            if (op.equals("LD")) { 
+                // Instruction "load" utilise l'adresse comme registre source
+                use.add("R" + memInstr.getAddress());
+            } else if (op.equals("ST")) { 
+                // Instruction "store" utilise le registre source et l'adresse
+                use.add("R" + memInstr.getDest());
+                use.add("R" + memInstr.getAddress());
+            }
+            return use;
+        }
+    
+        // Gérer les autres types d'instructions comme avant
         String[] parts = instruction.getName().split(" ");
         if (parts.length > 1) {
             switch (parts[0]) {
@@ -78,7 +106,9 @@ public class ConflictGraph extends UnorientedGraph<String> {
                 case "OR":
                 case "AND":
                 case "NOT":
-                case "MOV":
+                case "NOR":
+                case "NXOR":
+                case "NAND":
                 case "SUB":
                 case "ADD":
                 case "MUL":
@@ -88,6 +118,7 @@ public class ConflictGraph extends UnorientedGraph<String> {
                         use.add(parts[3]);
                     }
                     break;
+    
                 case "ADDi":
                 case "SUBi":
                 case "MULi":
@@ -96,6 +127,7 @@ public class ConflictGraph extends UnorientedGraph<String> {
                         use.add(parts[2]);
                     }
                     break;
+    
                 case "PRINT":
                 case "JEQU":
                 case "JINF":
@@ -107,18 +139,34 @@ public class ConflictGraph extends UnorientedGraph<String> {
                         use.add(parts[1]);
                     }
                     break;
-                case "CALL":
-                    // No use variables for CALL
-                    break;
                 default:
                     break;
             }
         }
+    
         return use;
-    }
+    }    
 
+    /**
+     * Retourne les variables définies par une instruction
+     * @param instruction
+     * @return
+     */
     private Set<String> getDef(Instruction instruction) {
         Set<String> def = new HashSet<>();
+    
+        if (instruction instanceof Mem) {
+            Mem memInstr = (Mem) instruction;
+            String op = memInstr.getName(); // Obtenez l'opération sous forme de chaîne
+            if (op.equals("LD")) { 
+                // Instruction "load" définit le registre destination
+                def.add("R" + memInstr.getDest());
+            }
+            // "ST" ne définit rien
+            return def;
+        }
+    
+        // Gérer les autres types d'instructions comme avant
         String[] parts = instruction.getName().split(" ");
         if (parts.length > 1) {
             switch (parts[0]) {
@@ -138,25 +186,13 @@ public class ConflictGraph extends UnorientedGraph<String> {
                         def.add(parts[1]);
                     }
                     break;
-                case "PRINT":
-                case "JEQU":
-                case "JINF":
-                case "JSUP":
-                case "JNEQ":
-                case "JIEQ":
-                case "JSEQ":
-                case "CALL":
-                case "RET":
-                case "JMP":
-                case "STOP":
-                    // No def variables for these instructions
-                    break;
                 default:
                     break;
             }
         }
+    
         return def;
-    }
+    }    
 
     @Override
     public String toString() {
@@ -167,7 +203,7 @@ public class ConflictGraph extends UnorientedGraph<String> {
                 sb.append(v).append(", ");
             }
             if (this.adjList.get(u).size() > 0) {
-                sb.setLength(sb.length() - 2); // Remove the last comma and space
+                sb.setLength(sb.length() - 2); // Supprime la dernière virgule et espace
             }
             sb.append("\n");
         }
@@ -177,6 +213,7 @@ public class ConflictGraph extends UnorientedGraph<String> {
     public static void main(String[] args) {
         Program program = new Program();
 
+        Instruction instr0 = new Mem("L0", Mem.Op.ST, 0, 1) {};
         Instruction instr1 = new Instruction("L1", "XOR R1000 R1000 R1000") {};
         Instruction instr2 = new Instruction("L2", "SUBi R1000 R1000 1") {};
         Instruction instr3 = new Instruction("L3", "PRINT R1001") {};
@@ -213,6 +250,7 @@ public class ConflictGraph extends UnorientedGraph<String> {
         Instruction instr32 = new Instruction("L31", "DIV R1057 R1058 R1059") {};
         Instruction instr33 = new Instruction("L32", "PRINT R1060") {};
 
+        program.addInstruction(instr0);
         program.addInstruction(instr1);
         program.addInstruction(instr2);
         program.addInstruction(instr3);

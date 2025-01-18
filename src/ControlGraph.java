@@ -7,7 +7,7 @@ import src.Asm.Instruction;
 import src.Asm.JumpCall;
 import src.Asm.Ret;
 import src.Asm.Stop;
-
+import src.Asm.Mem;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.HashSet;
@@ -79,6 +79,11 @@ public class ControlGraph extends OrientedGraph<Instruction> {
         }
     }
 
+    /**
+     * Connecte un saut à une instruction
+     * @param from
+     * @param targetLabel
+     */
     private void connectJump(Instruction from, String targetLabel) {
         if (labelMap.containsKey(targetLabel)) {
             this.addEdge(from, labelMap.get(targetLabel));
@@ -98,6 +103,11 @@ public class ControlGraph extends OrientedGraph<Instruction> {
         return vertices;
     }
 
+    /**
+     * Retourne l'ensemble des sommets du graphe
+     * @param program
+     * @return
+     */
     public Set<Instruction> getAllVertices(Program program) {
         Set<Instruction> vertices = new HashSet<>();
         for (Instruction instruction : program.getInstructions()) {
@@ -125,6 +135,7 @@ public class ControlGraph extends OrientedGraph<Instruction> {
     public static void main(String[] args) {
         Program program = new Program();
 
+        Instruction instr0 = new Mem("L0", Mem.Op.ST, 0, 1) {};
         Instruction instr1 = new Instruction("L1", "XOR R1000 R1000 R1000") {};
         Instruction instr2 = new Instruction("L2", "SUBi R1000 R1000 1") {};
         Instruction instr3 = new Instruction("L3", "PRINT R1001") {};
@@ -161,7 +172,8 @@ public class ControlGraph extends OrientedGraph<Instruction> {
 	Instruction instr32 = new Instruction("L31", "DIV R1057 R1058 R1059") {};
 	Instruction instr33 = new Instruction("L32", "PRINT R1060") {};
 
-	program.addInstruction(instr1);
+	program.addInstruction(instr0);
+    program.addInstruction(instr1);
 	program.addInstruction(instr2);
 	program.addInstruction(instr3);
 	program.addInstruction(instr4);
@@ -195,7 +207,7 @@ public class ControlGraph extends OrientedGraph<Instruction> {
 	program.addInstruction(instr32);
 	program.addInstruction(instr33);
 
-        ControlGraph controlGraph = new ControlGraph(program);
-       System.out.println(controlGraph);
+    ControlGraph controlGraph = new ControlGraph(program);
+    System.out.println(controlGraph);
     }
 }
