@@ -1,7 +1,16 @@
 int main() {
-    auto a = { { {4, 5},{6, 9} },{ {3} } };
+    int[][][][] ff = {};
+    print(ff);
+    ff[0] = {};
+    print(ff);
+    int[][][] a = {  { {4, 5} }  ,   { {  } }    };
     print(a);
-    a[0][0][2] = 10;
+    int[][] b = a[0];
+    print(b);
+    a[0][5][2] = 10;
+    a[2][1] = { 666 , 333 };
     print(a);
+    int c = a[0][5][2];
+    print(c);
     return 0;
 }
