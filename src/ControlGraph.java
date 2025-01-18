@@ -178,7 +178,7 @@ public class ControlGraph extends OrientedGraph<Instruction> {
 	program.addInstruction(instr13);
 	program.addInstruction(instr14);
 	program.addInstruction(instr15);
-/* 	program.addInstruction(instr16);
+	program.addInstruction(instr16);
 	program.addInstruction(instr17);
 	program.addInstruction(instr18);
 	program.addInstruction(instr19);
@@ -195,7 +195,7 @@ public class ControlGraph extends OrientedGraph<Instruction> {
 	program.addInstruction(instr30);
 	program.addInstruction(instr31);
 	program.addInstruction(instr32);
-	program.addInstruction(instr33);*/
+	program.addInstruction(instr33);
 
         ControlGraph controlGraph = new ControlGraph(program);
        System.out.println(controlGraph);
