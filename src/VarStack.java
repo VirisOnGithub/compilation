@@ -11,6 +11,7 @@ import java.util.Stack;
 public class VarStack<T> {
 	private final Stack<Map<String, T>> stack;
 	private final Stack<Integer> lastAccessibleDepth;
+	private String lastAdded;
 
 	/**
 	 * Constructor
@@ -18,6 +19,7 @@ public class VarStack<T> {
 	public VarStack() {
 		this.stack = new Stack<>();
 		this.lastAccessibleDepth = new Stack<>();
+		this.lastAdded = null;
 	}
 
 	/**
@@ -59,6 +61,12 @@ public class VarStack<T> {
 		for (int depth = stack.size() - 1; depth >= lastAccessibleDepth.getLast(); depth--) { // we unstack all the accessible maps
 			var varMap = stack.get(depth);
 			if (varMap.containsKey(varName)) { // we stop at the first corresponding variable name
+				System.out.println("------");
+				System.out.println(varName + " " + depth);
+				for (var entry : varMap.entrySet()) {
+					System.out.println(entry.getKey() + " " + entry.getValue());
+				}
+				System.out.println(varMap.get(varName));
 				return varMap.get(varName);
 			}
 		}
@@ -73,6 +81,7 @@ public class VarStack<T> {
 	 * @return true if the var did not exist
 	 */
 	public boolean assignVar(String varName, T value) {
+		this.lastAdded = varName;
 		return this.stack.getLast().put(varName, value) == null;
 	}
 
@@ -84,5 +93,9 @@ public class VarStack<T> {
 			}
 		}
 		return false;
+	}
+
+	public String getLastAdded() {
+		return this.lastAdded;
 	}
 }

@@ -20,6 +20,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
      * A stack of maps that links each variable with the number of the register that stocks this variable, at its corresponding depth
      */
     private final VarStack<Integer> varRegisters;
+    private final VarStack<Integer> returnRegisters;
 
     /**
      * Stack pointer, contains the address of the next free space in the stack, and shouldn't go over 4095
@@ -47,6 +48,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
     public CodeGenerator(Map<UnknownType, Type> types) {
         this.types = types;
         this.varRegisters = new VarStack<>();
+        this.returnRegisters = new VarStack<>();
         this.nextRegister = 2;
         this.nextLabel = 0;
     }
@@ -301,6 +303,8 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
             this.nextRegister++;
         }
         program.addInstruction(new JumpCall(JumpCall.Op.CALL, ctx.getChild(0).getText())); // call the function
+        program.addInstruction(new UALi(UALi.Op.ADD, this.nextRegister, this.returnRegisters.getVar(ctx.VAR().getText()), 0));
+        nextRegister++;
 
         return program;
     }
@@ -812,6 +816,8 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         Program program = new Program();
 
         program.addInstructions(visit(ctx.expr())); // expr, return value will be in R(nextRegister-1)
+        String functionName = this.returnRegisters.getLastAdded();
+        program.addInstruction(new UALi(UALi.Op.ADD, this.returnRegisters.getVar(functionName), this.nextRegister-1, 0));
         program.addInstruction(new Ret()); // return;
 
         return program;
@@ -833,6 +839,8 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
             program.addInstructions(visit(ctx.getChild(i + 1)));
         }
         program.addInstructions(visit(ctx.expr())); // expr, return value will be in R(nextRegister-1)
+        String functionName = this.returnRegisters.getLastAdded();
+        program.addInstruction(new UALi(UALi.Op.ADD, this.returnRegisters.getVar(functionName), this.nextRegister-1, 0));
         program.addInstruction(new Ret()); // return;
 
         return program;
@@ -850,6 +858,9 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         Program program = new Program();
         int childCount = ctx.getChildCount();
         int nbArguments = (childCount == 5) ? 0 : (childCount - 4) / 3;
+
+        this.returnRegisters.assignVar(ctx.getChild(1).getText(), this.nextRegister);
+        nextRegister++;
 
         this.varRegisters.enterFunction();
         for (int i = 0; i < nbArguments; i++) { // the arguments are stacked before the call so we un-stack them
@@ -876,6 +887,8 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         Program program = new Program();
         int childCount = ctx.getChildCount();
 
+        this.returnRegisters.enterBlock();
+        this.returnRegisters.enterFunction();
         this.varRegisters.enterBlock(); // a first enterBlock is needed for the whole program to work
         program.addInstructions(this.setRegisterTo(SP, 0)); // initialize SP
         program.addInstructions(this.setRegisterTo(TP, 4096)); // initialize TP, arbitrarily chose 4096 as stack height
@@ -894,6 +907,8 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         program.addInstructions(mainCoreProgram);
         this.varRegisters.leaveFunction();
         this.varRegisters.leaveBlock();
+        this.returnRegisters.leaveBlock();
+        this.returnRegisters.leaveFunction();
 
         return program;
     }
