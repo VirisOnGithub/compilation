@@ -27,4 +27,12 @@ public class TypesStack {
 		return this.stack;
 	}
 
+	public int size() {
+		return stack.size();
+	}
+
+	public boolean isEmpty() {
+		return stack.isEmpty();
+	}
+
 }

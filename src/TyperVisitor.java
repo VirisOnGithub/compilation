@@ -12,21 +12,34 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
     private final Map<UnknownType,Type> types = new HashMap<>();
     private final UnknownType lastFunction = null;
     private final TypesStack typesStack = new TypesStack();
+    private boolean isInBlock = false;
 
     public Map<UnknownType, Type> getTypes() {
         return types;
     }
 
     private void substituteTypes(HashMap<UnknownType, Type> constraints) {
-        constraints.forEach((key, value) -> {
-            if (!this.types.containsKey(key)) {
-                this.types.put(key, value);
-            }
-        });
-        this.types.forEach((variable, type) -> {
-            this.types.put(variable, type.substituteAll(constraints));
-        });
-        System.out.println(this.types);
+        if (isInBlock) {
+            Map<UnknownType, Type> mapBlock = typesStack.getStack().peek();
+            constraints.forEach((key, value) -> {
+                if (!mapBlock.containsKey(key)) {
+                    mapBlock.put(key, value);
+                }
+            });
+            mapBlock.forEach((variable, type) -> {
+                mapBlock.put(variable, type.substituteAll(constraints));
+            });
+        } else {
+            constraints.forEach((key, value) -> {
+                if (!this.types.containsKey(key)) {
+                    this.types.put(key, value);
+                }
+            });
+            this.types.forEach((variable, type) -> {
+                this.types.put(variable, type.substituteAll(constraints));
+            });
+            System.out.println(this.types);
+        }
     }
 
     @Override
@@ -201,17 +214,59 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
     @Override
     public Type visitVariable(grammarTCLParser.VariableContext ctx) throws TyperError {
         System.out.println("visit variable");
+        if (isInBlock) {
+            Map<UnknownType, Type> mapBlock = this.typesStack.getStack().peek();
+            ParseTree varNode = ctx.getChild(0);
+            UnknownType ut = new UnknownType(varNode);
+            Type result = null;
 
-        System.out.println(this.types);
+            Stack<Map<UnknownType, Type>> stackCopy = new Stack<>();
+            stackCopy.addAll(this.typesStack.getStack());
 
-        ParseTree varNode = ctx.getChild(0);
-        UnknownType ut = new UnknownType(varNode);
-        Type result = this.types.getOrDefault(ut, ut);
-        if (!this.types.containsKey(ut)) {
-            HashMap<UnknownType, Type> constraints = new HashMap<>(ut.unify(new UnknownType()));
-            substituteTypes(constraints);
+            while (!stackCopy.isEmpty()) {
+                Map<UnknownType, Type> currentBlock = stackCopy.pop();
+                if (currentBlock.containsKey(ut)) {
+                    result = currentBlock.get(ut);
+                    break;
+                }
+            }
+
+
+            if (result == null) {
+                result = this.types.getOrDefault(ut, null);
+            }
+
+
+            if (result == null) {
+                throw new TyperError("Variable " + ut.getVarName() + " is not defined", ctx);
+            }
+
+
+            if (!mapBlock.containsKey(ut)) {
+                HashMap<UnknownType, Type> constraints = new HashMap<>(ut.unify(new UnknownType()));
+                mapBlock.putAll(constraints);
+            }
+
+            
+            mapBlock.put(ut, result.substituteAll(new HashMap<>()));
+
+            return result;
+        } else {
+            System.out.println(this.types);
+
+            ParseTree varNode = ctx.getChild(0);
+            UnknownType ut = new UnknownType(varNode);
+            Type result = this.types.getOrDefault(ut, ut);
+            if (!this.types.containsKey(ut)) {
+                HashMap<UnknownType, Type> constraints = new HashMap<>(ut.unify(new UnknownType()));
+                substituteTypes(constraints);
+            }
+
+            // Substituer le type dans la map
+            this.types.put(ut, result.substituteAll(new HashMap<>()));
+
+            return result;
         }
-        return result;
     }
 
     @Override
@@ -437,9 +492,18 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
     @Override
     public Type visitBlock(grammarTCLParser.BlockContext ctx) throws TyperError {
         System.out.println("visit block");
-        for (int i = 1; i < ctx.getChildCount() - 1; i++) {
-            ParseTree instruction = ctx.getChild(i);
-            visit(instruction);
+        try {
+            isInBlock = true;
+            typesStack.enterBlock();
+            int nbChildren = ctx.getChildCount();
+            for (int i = 1; i < nbChildren - 1; i++) {
+                ParseTree child = ctx.getChild(i);
+                visit(child);
+            }
+            System.out.println("Block " + typesStack.size() + " : " + typesStack.getStack().peek());
+        } finally {
+            isInBlock = false;
+            typesStack.leaveBlock();
         }
         return null;
     }
@@ -513,6 +577,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         System.out.println("visit return : RETURN expr SEMICOL ");
         ParseTree expr = ctx.getChild(1);
         Type exprType = visit(expr);
+
         return exprType;
     }
 
@@ -527,7 +592,8 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         }
         int returnExprIndex = nbChildren - 3;
         ParseTree returnExpr = ctx.getChild(returnExprIndex);
-        return visit(returnExpr);
+        Type returnType = visit(returnExpr);
+        return returnType;
     }
 
     @Override
@@ -535,7 +601,6 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         System.out.println("Visit declare function : type VAR '(' (type VAR (',' type VAR)*)? ')' core_fct;");
         ParseTree functionReturnTypeNode = ctx.getChild(0);
         ParseTree functionNameNode       = ctx.getChild(1);
-
         UnknownType functionName = new UnknownType(functionNameNode);
         Type functionReturnType = visit(functionReturnTypeNode);
 

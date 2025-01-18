@@ -1,9 +1,14 @@
 int main() {
-    auto[][] a = {{3, 1}, {2, 3}};
-    auto b = a[1][0];
-    auto d = true;
-    if (d){
-        auto c = a[0];
+    auto a = 5;
+    while (true){
+        auto a = true;
+        auto b = 3;
+        while (a){
+            auto a = false;
+            if (b == 3){
+                b = 4;
+            }
+        }
     }
     return 0;
 }
