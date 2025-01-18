@@ -13,10 +13,8 @@ import java.util.Map;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Stack;
-import java.util.Iterator;
 
 public class ControlGraph extends OrientedGraph<Instruction> {
-    private Stack<Instruction> callStack = new Stack<>();
     private Map<String, Instruction> labelMap;
 
     /**
@@ -42,7 +40,7 @@ public class ControlGraph extends OrientedGraph<Instruction> {
                 labelMap.put(instruction.getLabel(), instruction);
             }
             if (prevInstruction != null && !(prevInstruction instanceof Stop)
-                    && !(prevInstruction instanceof JumpCall && prevInstruction.getName().equals("CALL")) // Changement ici
+                    && !(prevInstruction instanceof JumpCall) // Changement ici
                     && !(prevInstruction instanceof Ret)) {
                 this.addEdge(prevInstruction, instruction);
             }
