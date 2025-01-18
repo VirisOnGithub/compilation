@@ -436,9 +436,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         // 9 -> 4
 
         int childCount = ctx.getChildCount();
-        int varCount = (childCount - 2) / 2 + 1;
-        if (childCount == 2)
-            varCount = 0;
+        int varCount = childCount == 2 ? 0 : (childCount - 1) / 2;
         int lengthRegister = this.nextRegister; // register containing the length of the array
         this.nextRegister++;
         int pointerRegister = this.nextRegister; // register containing a pointer to the array (mutable)
