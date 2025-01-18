@@ -1032,7 +1032,8 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         program.addInstruction(new UALi(UALi.Op.ADD, r[0], r[0], 1));
         program.addInstruction(new JumpCall(JumpCall.Op.JMP, "*debut_jump"));
 
-        program.addInstruction(new Ret("*fin_dump"));
+        program.addInstruction(new IO("*fin_dump", IO.Op.OUT, r[2]));
+        program.addInstruction(new Ret());
 
         return program;
     }
