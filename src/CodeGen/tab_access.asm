@@ -7,7 +7,7 @@ tab_access:
 	LD R2 SP				        # pointeur
 	LD R3 R2				        # longueur
 	ADDi R4 R3 0			        # nouvelle_longueur = longueur
-	JIEQ R1 R3 skip_resize	        # if (index > longueur)
+	JINF R1 R3 skip_resize	        # if (index >= longueur)
 	ADDi R4 R1 1			        # nouvelle_longueur = index + 1
 skip_resize:
 	ST R4 R2				        # *pointeur = nouvelle_longueur
