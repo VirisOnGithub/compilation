@@ -280,6 +280,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
                         it.remove();
                         sus = true;
                     } else {
+                        // X := INT ~ Y
                         var newConstraint = type.unify(varType);
                         addConstraintsTo(newConstraints, newConstraint);
                     }
@@ -297,22 +298,21 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
     private boolean tryReplaceWithRealType() {
         for (var constraint : getConstraints().entrySet()) {
             UnknownType var = constraint.getKey();
+            Type varType = getVarType(var);
             List<Type> types = constraint.getValue();
 
             for (var it = types.iterator(); it.hasNext();) {
                 Type type = it.next();
-                // unifying primitives
-                if (canBeSubstituted(type)) {
-                    Type varType = getVarType(var);
-                    if (varType != null) {
-                        // la variable a déjà un type assigné
-                        varType.unify(type);
-                        return true;
-                    } else {
-                        // la variable n'avait pas de type assigné
-                        this.getTypes().put(var, type);
-                        return true;
-                    }
+
+                if (varType != null)
+                    type.unify(getVarType(var));
+
+                Type newType = type.substitute(var, varType);
+
+                // the type is now known and can be substituted
+                if (canBeSubstituted(newType)) {
+                    this.getTypes().put(var, type);
+                    return true;
                 }
             }
         }
