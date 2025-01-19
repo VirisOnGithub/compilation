@@ -172,6 +172,7 @@ public class ConflictGraph extends UnorientedGraph<String> {
         Instruction instr14 = new IO(IO.Op.PRINT, 1004) {};
         Instruction instr15 = new Ret("END") {};
         Instruction instr16 = new Mem(Mem.Op.LD, 1002, 1) {};
+        Instruction instr17 = new Mem(Mem.Op.ST, 1, 2) {};
 
         program.addInstruction(instr0);
         program.addInstruction(instr1);
@@ -190,6 +191,7 @@ public class ConflictGraph extends UnorientedGraph<String> {
         program.addInstruction(instr14);
         program.addInstruction(instr15);
         program.addInstruction(instr16);
+        program.addInstruction(instr17);
 
         ControlGraph controlGraph = new ControlGraph(program);
         ConflictGraph conflictGraph = new ConflictGraph(controlGraph, program);
