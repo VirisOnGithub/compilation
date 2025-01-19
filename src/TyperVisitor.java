@@ -20,28 +20,23 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     private static class State {
         private final Map<UnknownType, Type> types;
-        private final Stack<Map<UnknownType, List<Type>>> constraints;
+        private final Map<UnknownType, List<Type>> constraints;
 
         public State() {
             this.types = new HashMap<>();
-            this.constraints = new Stack<>();
+            this.constraints = new HashMap<>();
         }
 
         public State(State other) {
             this.types = new HashMap<>();
             this.types.putAll(other.getTypes());
-            this.constraints = new Stack<>();
+            this.constraints = new HashMap<>();
             // boring copying stuff
-            for (var stack : other.getConstraints()) {
-                Map<UnknownType, List<Type>> map = new HashMap<>();
-                for (var entry : stack.entrySet()) {
-                    List<Type> types = new ArrayList<>();
-                    for (var type : entry.getValue()) {
-                        types.add(type);
-                    }
-                    map.put(entry.getKey(), types);
-                }
-                this.constraints.add(map);
+            Map<UnknownType, List<Type>> map = new HashMap<>();
+            for (var entry : other.getConstraints().entrySet()) {
+                List<Type> types = new ArrayList<>();
+                types.addAll(entry.getValue());
+                map.put(entry.getKey(), types);
             }
         }
 
@@ -49,7 +44,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
             return types;
         }
 
-        public Stack<Map<UnknownType, List<Type>>> getConstraints() {
+        public Map<UnknownType, List<Type>> getConstraints() {
             return constraints;
         }
     }
@@ -83,7 +78,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         }
     }
 
-    public Stack<Map<UnknownType, List<Type>>> getConstraints() {
+    public Map<UnknownType, List<Type>> getConstraints() {
         return this.currentState.getConstraints();
     }
 
@@ -99,14 +94,12 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
     }
 
     private void enterBlock() {
-        getConstraints().add(new HashMap<>());
         this.varStack.enterBlock();
         this.printStack.add(new ArrayList<>());
     }
 
     private void leaveBlock() {
-        this.bigAssSubstitute();
-        getConstraints().pop();
+        this.debugConstraints();
         this.varStack.leaveBlock();
         forcePrintTypes();
         this.printStack.pop();
@@ -156,11 +149,9 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     @SuppressWarnings("unlikely-arg-type")
     private void printConstraints() {
-        for (var cons : getConstraints()) {
-            for (var constraint : cons.entrySet()) {
-                System.out.println(constraint.getKey() + "{ " + this.getTypes().get(constraint.getKey()) + " }  ~ "
-                        + constraint.getValue() + "{ " + this.getTypes().get(constraint.getValue()) + " }");
-            }
+        for (var constraint : getConstraints().entrySet()) {
+            System.out.println(constraint.getKey() + "{ " + this.getTypes().get(constraint.getKey()) + " }  ~ "
+                    + constraint.getValue() + "{ " + this.getTypes().get(constraint.getValue()) + " }");
         }
     }
 
@@ -233,7 +224,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
                 entry.setValue(varType);
             }
         }
-        addConstraintsTo(getConstraints().getLast(), constraint);
+        addConstraintsTo(getConstraints(), constraint);
     }
 
     private boolean canBeSubstituted(Type type) {
@@ -246,31 +237,29 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
     }
 
     private void substituteContraints(UnknownType var, Type varType) {
-        for (var consInDepth : getConstraints()) {
-            for (var constraint : consInDepth.entrySet()) {
-                // UnknownType weakVar = constraint.getKey();
-                List<Type> types = constraint.getValue();
-                List<Type> newTypes = new ArrayList<>();
+        for (var constraint : getConstraints().entrySet()) {
+            // UnknownType weakVar = constraint.getKey();
+            List<Type> types = constraint.getValue();
+            List<Type> newTypes = new ArrayList<>();
 
-                boolean removed = false;
-                for (var it = types.iterator(); it.hasNext() && !removed;) {
-                    Type type = it.next();
-                    Type newType = varType;
-                    while (type instanceof ArrayType at) {
-                        type = at.getTabType();
-                        newType = new ArrayType(newType);
-                    }
-
-                    if (type.equals(var)) {
-                        it.remove();
-                        newTypes.add(newType);
-                        break;
-                    }
+            boolean removed = false;
+            for (var it = types.iterator(); it.hasNext() && !removed;) {
+                Type type = it.next();
+                Type newType = varType;
+                while (type instanceof ArrayType at) {
+                    type = at.getTabType();
+                    newType = new ArrayType(newType);
                 }
 
-                for (Type type : newTypes) {
-                    types.add(type);
+                if (type.equals(var)) {
+                    it.remove();
+                    newTypes.add(newType);
+                    break;
                 }
+            }
+
+            for (Type type : newTypes) {
+                types.add(type);
             }
         }
     }
@@ -310,32 +299,30 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     // returns the var to substitute
     private UnknownType findVarToSubstitute(Map<UnknownType, List<Type>> newConstraints) {
-        for (var consInDepth : getConstraints()) {
-            for (var constraint : consInDepth.entrySet()) {
-                UnknownType var = constraint.getKey();
-                List<Type> types = constraint.getValue();
+        for (var constraint : getConstraints().entrySet()) {
+            UnknownType var = constraint.getKey();
+            List<Type> types = constraint.getValue();
 
-                boolean sus = false;
+            boolean sus = false;
 
-                Type varType = getVarType(var);
-                if (varType != null) {
-                    for (var it = types.iterator(); it.hasNext();) {
-                        Type type = it.next();
-                        if (type.equals(varType)) {
-                            // si X := INT ~ INT
-                            // => X := INT et on substitue
-                            it.remove();
-                            sus = true;
-                        } else {
-                            var newConstraint = type.unify(varType);
-                            addConstraintsTo(newConstraints, newConstraint);
-                        }
+            Type varType = getVarType(var);
+            if (varType != null) {
+                for (var it = types.iterator(); it.hasNext();) {
+                    Type type = it.next();
+                    if (type.equals(varType)) {
+                        // si X := INT ~ INT
+                        // => X := INT et on substitue
+                        it.remove();
+                        sus = true;
+                    } else {
+                        var newConstraint = type.unify(varType);
+                        addConstraintsTo(newConstraints, newConstraint);
                     }
                 }
+            }
 
-                if (sus) {
-                    return var;
-                }
+            if (sus) {
+                return var;
             }
         }
         return null;
@@ -343,25 +330,23 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     // returns true if something happened
     private boolean tryReplaceWithRealType() {
-        for (var consInDepth : getConstraints()) {
-            for (var constraint : consInDepth.entrySet()) {
-                UnknownType var = constraint.getKey();
-                List<Type> types = constraint.getValue();
+        for (var constraint : getConstraints().entrySet()) {
+            UnknownType var = constraint.getKey();
+            List<Type> types = constraint.getValue();
 
-                for (var it = types.iterator(); it.hasNext();) {
-                    Type type = it.next();
-                    // unifying primitives
-                    if (canBeSubstituted(type)) {
-                        Type varType = getVarType(var);
-                        if (varType != null) {
-                            // la variable a déjà un type assigné
-                            varType.unify(type);
-                            return true;
-                        } else {
-                            // la variable n'avait pas de type assigné
-                            this.getTypes().put(var, type);
-                            return true;
-                        }
+            for (var it = types.iterator(); it.hasNext();) {
+                Type type = it.next();
+                // unifying primitives
+                if (canBeSubstituted(type)) {
+                    Type varType = getVarType(var);
+                    if (varType != null) {
+                        // la variable a déjà un type assigné
+                        varType.unify(type);
+                        return true;
+                    } else {
+                        // la variable n'avait pas de type assigné
+                        this.getTypes().put(var, type);
+                        return true;
                     }
                 }
             }
@@ -374,10 +359,8 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         Map<UnknownType, List<Type>> newConstraints = new HashMap<>();
         while (true) {
             // add new constraints
-            if (!getConstraints().empty() && !newConstraints.isEmpty()) {
-                addAllConstraintsTo(getConstraints().getLast(), newConstraints);
-                newConstraints.clear();
-            }
+            addAllConstraintsTo(getConstraints(), newConstraints);
+            newConstraints.clear();
 
             // try substitute
             if (substituteVar != null) {
@@ -483,7 +466,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         UnknownType temp = new UnknownType();
         addUnifyConstraint(p0, arrayType, new ArrayType(temp));
         addUnifyConstraint(p2, visit(p2), new PrimitiveType(Type.Base.INT));
-        
+
         // on peut être dans une déclaration
         this.tempVarTypes.add(new UnknownType(p0));
 
