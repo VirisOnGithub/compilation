@@ -43,6 +43,9 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
      * Contains the number of the next non utilised label number, should always be incremented immediately after each use
      */
     private Integer nextLabel;
+    /**
+     * Contains the name of the function that is currently being declared
+     */
     private String currentFunction;
 
 
