@@ -37,6 +37,33 @@ public class RegisterAllocator {
         allocateRegisters();
     }
 
+
+	 /**
+     * Sauvegarde les variables dans la pile avant l'appel de la fonction
+     * @param variables
+     * @param result
+     */
+    public void saveGPR(List<String> variables, StringBuilder result) {
+        for (String variable : variables) {
+            String register = getRegister(variable);
+            result.append("PUSH ").append(register).append("\n");
+        }
+    }
+
+
+	/**
+     * Restaure les variables de la pile après le retour de la fonction
+     * @param variables
+     * @param result
+     */
+    public void restoreGPR(List<String> variables, StringBuilder result) {
+        for (int i = variables.size() - 1; i >= 0; i--) {
+            String variable = variables.get(i);
+            String register = getRegister(variable);
+            result.append("POP ").append(register).append("\n");
+        }
+    }
+
    /**
 	* Alloue les registres
     */

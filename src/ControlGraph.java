@@ -42,6 +42,8 @@ public class ControlGraph extends OrientedGraph<Instruction> {
             this.addVertex(instruction);
             if (!instruction.getLabel().isEmpty()) {
                 labelMap.put(instruction.getLabel(), instruction);
+            }else{
+                labelMap.put(Integer.toString(index), instruction);
             }
             if (instruction instanceof Mem || instruction instanceof UAL || instruction instanceof UALi || instruction instanceof IO) {
                 labelMap.put(Integer.toString(index), instruction);
@@ -50,7 +52,8 @@ public class ControlGraph extends OrientedGraph<Instruction> {
                     && !(prevInstruction instanceof JumpCall) // Changement ici
                     && !(prevInstruction instanceof Ret)) {
                 this.addEdge(prevInstruction, instruction);
-            }
+                    }
+
             if (!(instruction instanceof Stop)) {
                 prevInstruction = instruction;
             } else {
@@ -82,6 +85,9 @@ public class ControlGraph extends OrientedGraph<Instruction> {
                         this.addEdge(instruction, returnTo);
                     }
                 }
+            }else{
+            //    int index = program.getInstructions().indexOf(instruction);
+             //   connectJump(prevInstruction, Integer.toString(index));
             }
         }
     }
