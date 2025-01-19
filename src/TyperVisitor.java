@@ -455,18 +455,16 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         FunctionType funcDeclType = (FunctionType) getVarType(functionList.get(funcName));
 
         int NbChildren = ctx.getChildCount();
-        if (NbChildren != 3) {
-            int argCount = (NbChildren - 2) / 2;
+        int argCount = (NbChildren - 2) / 2;
 
-            if (argCount != funcDeclType.getNbArgs()) {
-                throwCustomError("pas le bon nombre d'arguments lors de l'appel de la fonction " + funcName);
-            }
+        if (argCount != funcDeclType.getNbArgs()) {
+            throwCustomError("pas le bon nombre d'arguments lors de l'appel de la fonction " + funcName);
+        }
 
-            for (int i = 0; i < argCount; i++) {
-                ParseTree p2 = ctx.getChild(2 + i * 2);
+        for (int i = 0; i < argCount; i++) {
+            ParseTree p2 = ctx.getChild(2 + i * 2);
 
-                addUnifyConstraint(p2, visit(p2), funcDeclType.getArgsType(i));
-            }
+            addUnifyConstraint(p2, visit(p2), funcDeclType.getArgsType(i));
         }
         return funcDeclType.getReturnType();
     }
