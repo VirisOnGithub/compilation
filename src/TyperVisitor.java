@@ -483,6 +483,9 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         UnknownType temp = new UnknownType();
         addUnifyConstraint(p0, arrayType, new ArrayType(temp));
         addUnifyConstraint(p2, visit(p2), new PrimitiveType(Type.Base.INT));
+        
+        // on peut être dans une déclaration
+        this.tempVarTypes.add(new UnknownType(p0));
 
         return temp;
     }
@@ -700,6 +703,9 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
                 }
             }
 
+            // plus besoin de ça
+            this.tempVarTypes.clear();
+
             endTempChangesMode();
 
             // et on le remet
@@ -724,7 +730,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
         UnknownType declaredVar = this.varStack.getVar(ctx.VAR().getText());
 
-        this.printStack.getLast().add(declaredVar);
+        this.printStack.getLast().add(new UnknownType(ctx.VAR()));
         addUnifyConstraint(ctx.VAR(), declaredVar);
 
         return null;
