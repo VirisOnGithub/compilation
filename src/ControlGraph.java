@@ -38,15 +38,19 @@ public class ControlGraph extends OrientedGraph<Instruction> {
         // Première passe : construction du graphe et de la map des labels
         Instruction prevInstruction = null;
         for (Instruction instruction : program.getInstructions()) {
+            int index = program.getInstructions().indexOf(instruction);
             this.addVertex(instruction);
             if (!instruction.getLabel().isEmpty()) {
                 labelMap.put(instruction.getLabel(), instruction);
+            }else{
+                labelMap.put(Integer.toString(index), instruction);
             }
             if (prevInstruction != null && !(prevInstruction instanceof Stop)
                     && !(prevInstruction instanceof JumpCall) // Changement ici
                     && !(prevInstruction instanceof Ret)) {
                 this.addEdge(prevInstruction, instruction);
-            }
+                    }
+
             if (!(instruction instanceof Stop)) {
                 prevInstruction = instruction;
             } else {
@@ -78,6 +82,9 @@ public class ControlGraph extends OrientedGraph<Instruction> {
                         this.addEdge(instruction, returnTo);
                     }
                 }
+            }else{
+            //    int index = program.getInstructions().indexOf(instruction);
+             //   connectJump(prevInstruction, Integer.toString(index));
             }
         }
     }
@@ -123,9 +130,18 @@ public class ControlGraph extends OrientedGraph<Instruction> {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         for (Instruction u : this.vertices) {
-            sb.append(u.getLabel()).append(" -> ");
+            int index = vertices.indexOf(u);
+            if (u.getLabel().isEmpty()) {
+                sb.append(index + 1).append("-> ");
+            } else {
+                sb.append(u.getLabel()).append("-> ");
+            }
             for (Instruction v : this.adjList.get(u)) {
+                if (v.getLabel().isEmpty()) {
+                    sb.append(vertices.indexOf(v) + 1).append(", ");
+                } else {
                 sb.append(v.getLabel()).append(", ");
+                }
             }
             if (this.adjList.get(u).size() > 0) {
                 sb.setLength(sb.length() - 2); // Remove the last comma and space
