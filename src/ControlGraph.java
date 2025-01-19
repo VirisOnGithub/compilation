@@ -167,6 +167,8 @@ public class ControlGraph extends OrientedGraph<Instruction> {
         Instruction instr13 = new UAL("LABEL2", UAL.Op.DIV, 1004, 1003, 1001) {};
         Instruction instr14 = new IO(IO.Op.PRINT, 1004) {};
         Instruction instr15 = new Ret("END") {};
+        Instruction instr16 = new Mem(Mem.Op.LD, 1002, 1) {};
+        Instruction instr17 = new Mem(Mem.Op.ST, 1, 2) {};
 
         program.addInstruction(instr0);
         program.addInstruction(instr1);
@@ -184,6 +186,8 @@ public class ControlGraph extends OrientedGraph<Instruction> {
         program.addInstruction(instr13);
         program.addInstruction(instr14);
         program.addInstruction(instr15);
+        program.addInstruction(instr16);
+        program.addInstruction(instr17);
 
         ControlGraph controlGraph = new ControlGraph(program);
         System.out.println(controlGraph);
