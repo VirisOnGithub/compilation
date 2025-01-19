@@ -2,6 +2,10 @@ package src;
 
 import src.Asm.Program;
 import src.Asm.Instruction;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import src.Asm.CondJump;
 import src.Asm.JumpCall;
 import src.Asm.Mem;
@@ -21,6 +25,26 @@ public class AssemblerGenerator {
         this.program = program;
         this.allocator = allocator;
     }
+    
+
+       private void generateFunctionCall(Instruction instruction, StringBuilder result) {
+        if (!(instruction instanceof JumpCall)) {
+            throw new IllegalArgumentException("Invalid instruction type for function call: " + instruction.getName());
+        }
+        JumpCall jumpCall = (JumpCall) instruction;
+        List<String> parameters = getFunctionParameters(jumpCall);
+        allocator.saveGPR(parameters, result);
+        result.append("CALL ").append(jumpCall.getAddress()).append("\n");
+        allocator.restoreGPR(parameters, result);
+    }
+
+
+
+    private List<String> getFunctionParameters(JumpCall jumpCall) {
+        // Récupérer les parametres ici jspfaire
+        return new ArrayList<>();
+    }
+
 
     /**
      * Génère le code assembleur à partir du programme et de l'allocation de registres
@@ -144,6 +168,9 @@ public class AssemblerGenerator {
                     break;
 
                 case "CALL":
+                    generateFunctionCall(instruction, result);
+                break;
+                    
                 case "JMP":
                     if (!(instruction instanceof JumpCall)) {
                         throw new IllegalArgumentException("Invalid instruction type for jump/call: " + instruction.getName());

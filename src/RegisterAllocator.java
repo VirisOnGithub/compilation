@@ -3,8 +3,11 @@ package src;
 import src.Asm.Program;
 import src.Asm.Ret;
 import src.Asm.Stop;
+import src.Asm.UAL;
+import src.Asm.UALi;
 import src.Asm.Instruction;
 import src.Asm.CondJump;
+import src.Asm.IO;
 import src.Asm.JumpCall;
 import src.Asm.Mem;
 
@@ -32,6 +35,33 @@ public class RegisterAllocator {
         this.dynamicInstructions = new ArrayList<>();
         this.dynamicArrayIndex = 0;
         allocateRegisters();
+    }
+
+
+	 /**
+     * Sauvegarde les variables dans la pile avant l'appel de la fonction
+     * @param variables
+     * @param result
+     */
+    public void saveGPR(List<String> variables, StringBuilder result) {
+        for (String variable : variables) {
+            String register = getRegister(variable);
+            result.append("PUSH ").append(register).append("\n");
+        }
+    }
+
+
+	/**
+     * Restaure les variables de la pile après le retour de la fonction
+     * @param variables
+     * @param result
+     */
+    public void restoreGPR(List<String> variables, StringBuilder result) {
+        for (int i = variables.size() - 1; i >= 0; i--) {
+            String variable = variables.get(i);
+            String register = getRegister(variable);
+            result.append("POP ").append(register).append("\n");
+        }
     }
 
    /**
@@ -93,22 +123,22 @@ public class RegisterAllocator {
     public static void main(String[] args) {
         Program program = new Program();
 
-		Instruction instr0 = new Mem("L0", Mem.Op.ST, 0, 1) {};
-		Instruction instr1 = new Instruction("L1", "XOR R1000 R1000 R1000") {};
-		Instruction instr2 = new Instruction("L2", "SUBi R1000 R1000 1") {};
-		Instruction instr3 = new Instruction("L3", "PRINT R1001") {};
-		Instruction instr4 = new CondJump("L4", CondJump.Op.JEQU, 1000, 1001, "LABEL2") {};
-		Instruction instr5 = new CondJump("L5", CondJump.Op.JINF, 1000, 1001, "L6") {};
-		Instruction instr6 = new CondJump("L6", CondJump.Op.JSUP, 1000, 1001, "L7") {};
-		Instruction instr7 = new JumpCall("L7", JumpCall.Op.CALL, "FUNC1") {};
-		Instruction instr8 = new JumpCall("L8", JumpCall.Op.JMP, "END") {};
-		Instruction instr9 = new Stop("L9") {};
-		Instruction instr10 = new Instruction("LABEL1", "ADD R1002 R1003 R1004") {};
-		Instruction instr11 = new Instruction("L11", "MUL R1005 R1006 R1007") {};
-		Instruction instr12 = new JumpCall("L12", JumpCall.Op.JMP, "END") {};
-		Instruction instr13 = new Instruction("LABEL2", "DIV R1008 R1009 R1010") {};
-		Instruction instr14 = new Instruction("L14", "PRINT R1011") {};
-		Instruction instr15 = new Ret("END") {};
+		 Instruction instr0 = new Mem(Mem.Op.ST, 0, 1) {};
+        Instruction instr1 = new UAL(UAL.Op.XOR, 1000, 1000, 1000) {};
+        Instruction instr2 = new UALi(UALi.Op.SUB, 1000, 1000, 1) {};
+        Instruction instr3 = new IO(IO.Op.PRINT, 1001) {};
+        Instruction instr4 = new CondJump(CondJump.Op.JEQU, 1000, 1001, "LABEL2") {};
+        Instruction instr5 = new CondJump(CondJump.Op.JINF, 1000, 1001, "FUNC1") {};
+        Instruction instr6 = new CondJump(CondJump.Op.JSUP, 1000, 1001, "LABEL1") {};
+        Instruction instr7 = new JumpCall(JumpCall.Op.CALL, "FUNC1") {};
+        Instruction instr8 = new JumpCall(JumpCall.Op.JMP, "END") {};
+        Instruction instr9 = new Stop("STOP") {};
+        Instruction instr10 = new UAL("LABEL1", UAL.Op.ADD, 1002, 1000, 1001) {};
+        Instruction instr11 = new UAL("FUNC1", UAL.Op.MUL, 1003, 1002, 1000) {};
+        Instruction instr12 = new JumpCall(JumpCall.Op.JMP, "END") {};
+        Instruction instr13 = new UAL("LABEL2", UAL.Op.DIV, 1004, 1003, 1001) {};
+        Instruction instr14 = new IO(IO.Op.PRINT, 1004) {};
+        Instruction instr15 = new Ret("END") {};
 
 		// Instructions utilisant plus de registres
 		Instruction instr16 = new Instruction("L15", "ADD R1012 R1013 R1014") {};
