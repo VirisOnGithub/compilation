@@ -100,6 +100,7 @@ public class UnknownType extends Type {
         return this.equals(v);
     }
 
+    /* HashCode sur le nom uniquement
     @Override
     public int hashCode() {
         if (this.getVarName().equals("#")) {
@@ -109,6 +110,7 @@ public class UnknownType extends Type {
         }
 
     }
+     */
 
     @Override
     public boolean equals(Object t) {
