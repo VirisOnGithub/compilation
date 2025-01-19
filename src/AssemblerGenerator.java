@@ -75,12 +75,13 @@ public class AssemblerGenerator {
                 case "ADD":
                 case "MUL":
                 case "DIV":
-                    if (parts.length < 4) {
-                        throw new IllegalArgumentException("Invalid instruction format: " + instruction.getName());
-                    }
-                    String reg1 = allocator.getRegister(parts[2]);
-                    String reg2 = allocator.getRegister(parts[3]);
-                    String destReg = allocator.getRegister(parts[1]);
+                    if (!(instruction instanceof UAL) && !(instruction instanceof UALi)) {
+                        throw new IllegalArgumentException("Type d'instruction invalide pour UAL/UALi: " + instruction.getName());
+                    } else if ((instruction instanceof UAL) && !(instruction instanceof UALi)) {
+                        UAL ual = (UAL) instruction;
+                    String destReg = allocator.getRegister("R" + ual.getDest());
+                    String reg1 = allocator.getRegister("R" + ual.getSr1());
+                    String reg2 = allocator.getRegister("R" + ual.getSr2());
                     if (reg1.startsWith("DYNAMIC")) {
                         result.append("LD R30, [SP + ").append(reg1.substring(8, reg1.length() - 1)).append("]\n");
                     } else {
@@ -93,39 +94,38 @@ public class AssemblerGenerator {
                     }
                     result.append(parts[0]).append(" R30, R30, R31\n");
                     result.append("ST ").append("R30, ").append(destReg).append("\n");
+                    } else if (!(instruction instanceof UAL) && (instruction instanceof UALi)) {
+                        UALi uali = (UALi) instruction;
+                        String destRegi = allocator.getRegister("R" + uali.getDest());
+                        String reg1i = allocator.getRegister("R" + uali.getSr());
+                        if (reg1i.startsWith("DYNAMIC")) {
+                            result.append("LD R30, [SP + ").append(reg1i.substring(8, reg1i.length() - 1)).append("]\n");
+                        } else {
+                            result.append("LD R30, ").append(reg1i).append("\n");
+                        }
+                        result.append(parts[0]).append(" R30, R30, ").append(uali.getImm()).append("\n");
+                        result.append("ST ").append("R30, ").append(destRegi).append("\n");
+                    }
                     break;
 
                 case "SUBi":
                 case "ADDi":
                 case "MULi":
                 case "DIVi":
-                    if (parts.length < 4) {
-                        throw new IllegalArgumentException("Invalid instruction format: " + instruction.getName());
-                    }
-                    reg1 = allocator.getRegister(parts[2]);
-                    String immediateValue = parts[3];
-                    destReg = allocator.getRegister(parts[1]);
-                    if (reg1.startsWith("DYNAMIC")) {
-                        result.append("LD R30, [SP + ").append(reg1.substring(8, reg1.length() - 1)).append("]\n");
-                    } else {
-                        result.append("LD R30, ").append(reg1).append("\n");
-                    }
-                    result.append(parts[0]).append(" R30, R30, ").append(immediateValue).append("\n");
-                    result.append("ST ").append("R30, ").append(destReg).append("\n");
-                    break;
-
-                case "PRINT":
-                    if (parts.length < 2) {
-                        throw new IllegalArgumentException("Invalid instruction format: " + instruction.getName());
-                    }
-                    String reg = allocator.getRegister(parts[1]);
-                    if (reg.startsWith("DYNAMIC")) {
-                        result.append("LD R30, [SP + ").append(reg.substring(8, reg.length() - 1)).append("]\n");
-                        result.append("PRINT R30\n");
-                    } else {
-                        result.append("PRINT ").append(reg).append("\n");
-                    }
-                    break;
+                if (!(instruction instanceof UALi)) {
+                    throw new IllegalArgumentException("Type d'instruction invalide pour UALi: " + instruction.getName());
+                }
+                UALi uali = (UALi) instruction;
+                String destRegi = allocator.getRegister("R" + uali.getDest());
+                String reg1i = allocator.getRegister("R" + uali.getSr());
+                if (reg1i.startsWith("DYNAMIC")) {
+                    result.append("LD R30, [SP + ").append(reg1i.substring(8, reg1i.length() - 1)).append("]\n");
+                } else {
+                    result.append("LD R30, ").append(reg1i).append("\n");
+                }
+                result.append(parts[0]).append(" R30, R30, ").append(uali.getImm()).append("\n");
+                result.append("ST ").append("R30, ").append(destRegi).append("\n");
+                break;
 
                 case "JEQU":
                 case "JINF":
@@ -137,8 +137,9 @@ public class AssemblerGenerator {
                         throw new IllegalArgumentException("Invalid instruction type for conditional jump: " + instruction.getName());
                     }
                     CondJump condJump = (CondJump) instruction;
-                    reg1 = allocator.getRegister("R" + condJump.getSr1());
-                    reg2 = allocator.getRegister("R" + condJump.getSr2());
+                    String reg1 = allocator.getRegister("R" + condJump.getSr1());
+                    String reg2 = allocator.getRegister("R" + condJump.getSr2());
+
                     String label = condJump.getAddress();
                     if (reg1.startsWith("DYNAMIC")) {
                         result.append("LD R30, [SP + ").append(reg1.substring(8, reg1.length() - 1)).append("]\n");
@@ -159,7 +160,7 @@ public class AssemblerGenerator {
                         throw new IllegalArgumentException("Invalid instruction type for load: " + instruction.getName());
                     }
                     Mem mem = (Mem) instruction;
-                    result.append("LD ").append("R").append(mem.getDest()).append(", ").append("R").append(mem.getAddress()).append("\n");
+                    result.append("LD ").append(allocator.getRegister("R" + mem.getDest())).append(", ").append(allocator.getRegister("R" + mem.getAddress())).append("\n");
                     break;
 
                 case "ST":
@@ -167,7 +168,7 @@ public class AssemblerGenerator {
                         throw new IllegalArgumentException("Invalid instruction type for store: " + instruction.getName());
                     }
                     mem = (Mem) instruction;
-                    result.append("ST ").append("R").append(mem.getDest()).append(", ").append("R").append(mem.getAddress()).append("\n");
+                    result.append("ST ").append(allocator.getRegister("R" + mem.getAddress())).append(", ").append(allocator.getRegister("R" + mem.getDest())).append("\n");
                     break;
 
                 case "CALL":
@@ -191,6 +192,15 @@ public class AssemblerGenerator {
                     result.append("RET\n");
                     break;
 
+                case "PRINT":
+                    if (!(instruction instanceof IO)) {
+                        throw new IllegalArgumentException("Invalid instruction type for print: " + instruction.getName());
+                    }
+                    IO io = (IO) instruction;
+                    result.append("PRINT ").append(allocator.getRegister("R" + io.getReg())).append("\n");
+                    break;
+
+
                 default:
                     throw new IllegalArgumentException("Unknown instruction: " + parts[0]);
             }
@@ -202,41 +212,36 @@ public class AssemblerGenerator {
     public static void main(String[] args) {
         Program program = new Program();
 
-        Instruction instr0 = new Mem(Mem.Op.ST, 0, 1) {};
-        Instruction instr1 = new UAL(UAL.Op.XOR, 1000, 1000, 1000) {};
-        Instruction instr2 = new UALi(UALi.Op.SUB, 1000, 1000, 1) {};
-        Instruction instr3 = new IO(IO.Op.PRINT, 1001) {};
-        Instruction instr4 = new CondJump(CondJump.Op.JEQU, 1000, 1001, "LABEL2") {};
-        Instruction instr5 = new CondJump(CondJump.Op.JINF, 1000, 1001, "FUNC1") {};
-        Instruction instr6 = new CondJump(CondJump.Op.JSUP, 1000, 1001, "LABEL1") {};
-        Instruction instr7 = new JumpCall(JumpCall.Op.CALL, "FUNC1") {};
-        Instruction instr8 = new JumpCall(JumpCall.Op.JMP, "END") {};
-        Instruction instr9 = new Stop("STOP") {};
-        Instruction instr10 = new UAL("LABEL1", UAL.Op.ADD, 1002, 1000, 1001) {};
-        Instruction instr11 = new UAL("FUNC1", UAL.Op.MUL, 1003, 1002, 1000) {};
-        Instruction instr12 = new JumpCall(JumpCall.Op.JMP, "END") {};
-        Instruction instr13 = new UAL("LABEL2", UAL.Op.DIV, 1004, 1003, 1001) {};
-        Instruction instr14 = new IO(IO.Op.PRINT, 1004) {};
-        Instruction instr15 = new Ret("END") {};
-        Instruction instr16 = new Mem(Mem.Op.LD, 1002, 1) {};
+        // Instructions utilisant des registres uniques et augmentant progressivement le nombre
+        for (int i = 0; i < 40; i++) {
+            // Exemple d'opérations arithmétiques utilisant des registres R0 à R39
+            Instruction instr = new UAL(UAL.Op.ADD, i, i, (i + 1) % 40) {};
+            program.addInstruction(instr);
+        }
 
-        program.addInstruction(instr0);
-        program.addInstruction(instr1);
-        program.addInstruction(instr2);
-        program.addInstruction(instr3);
-        program.addInstruction(instr4);
-        program.addInstruction(instr5);
-        program.addInstruction(instr6);
-        program.addInstruction(instr7);
-        program.addInstruction(instr8);
-        program.addInstruction(instr9);
-        program.addInstruction(instr10);
-        program.addInstruction(instr11);
-        program.addInstruction(instr12);
-        program.addInstruction(instr13);
-        program.addInstruction(instr14);
-        program.addInstruction(instr15);
-        program.addInstruction(instr16);
+        // Ajout d'opérations avec des registres existants
+        Instruction instr40 = new UALi(UALi.Op.SUB, 39, 38, 10) {};
+        Instruction instr41 = new CondJump(CondJump.Op.JEQU, 37, 36, "LABEL_EXTRA") {};
+        Instruction instr42 = new JumpCall(JumpCall.Op.CALL, "FUNC_EXTRA") {};
+        Instruction instr43 = new IO(IO.Op.PRINT, 35) {};
+        Instruction instr44 = new Mem(Mem.Op.LD, 34, 33) {};
+        Instruction instr45 = new Mem(Mem.Op.ST, 32, 31) {};
+        Instruction instr46 = new Stop("STOP") {};
+
+        // Ajout des instructions restantes au programme
+        program.addInstruction(instr40);
+        program.addInstruction(instr41);
+        program.addInstruction(instr42);
+        program.addInstruction(instr43);
+        program.addInstruction(instr44);
+        program.addInstruction(instr45);
+        program.addInstruction(instr46);
+
+        // Ajout d'un label et d'une instruction de retour pour valider les sauts
+        Instruction instrLabel = new UAL("LABEL_EXTRA", UAL.Op.MUL, 10, 9, 8) {};
+        Instruction instrReturn = new Ret("FUNC_EXTRA") {};
+        program.addInstruction(instrLabel);
+        program.addInstruction(instrReturn);
 
         ControlGraph controlGraph = new ControlGraph(program);
         ConflictGraph conflictGraph = new ConflictGraph(controlGraph, program);
