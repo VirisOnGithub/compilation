@@ -1027,8 +1027,8 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
     private Program getTabAccessProgram() {
         Program program = new Program();
 
-        int[] r = new int[9];
-        for (int i = 0; i < 9; i++) {
+        int[] r = new int[10];
+        for (int i = 0; i < 10; i++) {
             r[i] = this.nextRegister;
             this.nextRegister++;
         }
@@ -1047,6 +1047,8 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         program.addInstruction(new UALi(UALi.Op.ADD, r[2], r[2], 1));
         program.addInstruction(new UAL(UAL.Op.XOR, r[5], r[5], r[5]));
         program.addInstruction(new UAL(UAL.Op.XOR, r[6], r[6], r[6]));
+        program.addInstruction(new UAL(UAL.Op.XOR, r[9], r[9], r[9]));
+        program.addInstruction(new UALi(UALi.Op.ADD, r[9], r[9], 1));
         
         program.addInstruction(new UALi("*begin_loop", UALi.Op.MOD, r[7], r[5], 10));
         program.addInstruction(new CondJump(CondJump.Op.JNEQ, r[7], r[6], "*skip_tab_access_end"));
@@ -1058,7 +1060,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         program.addInstruction(new Mem("*skip_alloc", Mem.Op.LD, r[2], r[2]));
 
         program.addInstruction(new CondJump("*skip_tab_access_end", CondJump.Op.JINF, r[5], r[3], "*skip_fill"));
-        program.addInstruction(new CondJump(CondJump.Op.JNEQ, r[0], r[6], "*skip_simple_init"));
+        program.addInstruction(new CondJump(CondJump.Op.JNEQ, r[0], r[9], "*skip_simple_init"));
         program.addInstruction(new Mem(Mem.Op.ST, r[6], r[2]));
         program.addInstruction(new JumpCall(JumpCall.Op.JMP, "*skip_fill"));
 
