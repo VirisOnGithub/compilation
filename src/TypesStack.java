@@ -3,24 +3,24 @@ package src;
 import src.Type.Type;
 import src.Type.UnknownType;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Stack;
+import java.util.*;
 
 public class TypesStack {
 
-	private final Stack<Map<UnknownType, Type>> stack;
+	private final List<Map<UnknownType, Type>> stack;
 
 	public TypesStack() {
-		this.stack = new Stack<>();
+		this.stack = new ArrayList<>();
 	}
 
-	public void enterBlock() {
+	public void addNewBlock() {
 		stack.add(new HashMap<>());
 	}
 
 	public Map<UnknownType, Type> pop() {
-		return stack.pop();
+		Map<UnknownType, Type> elementToPop = stack.getLast();
+		this.stack.remove(this.stack.size()-1);
+		return elementToPop;
 	}
 
 	public Map<UnknownType, Type> getLastStack () {
@@ -28,9 +28,37 @@ public class TypesStack {
 		return this.stack.get(size-1);
 	}
 
+	/**
+	 * Rajoute la key et la value à la dernière map
+	 * @param key UnknownType
+	 * @param value Type
+	 */
 	public void putLastStack (UnknownType key, Type value) {
+		if (this.stack.isEmpty()) {
+			HashMap<UnknownType, Type> tmp = new HashMap<>();
+			tmp.put(key, value);
+			this.stack.add(tmp);
+		} else {
+			this.stack.get(this.stack.size()-1).put(key, value);
+		}
+	}
+
+	/**
+	 * Regarde dans toute la stack si ut exist en tant que clé ou valeur.
+	 * @param ut UnknownType
+	 * @return boolean
+	 */
+	public boolean contains(UnknownType ut) {
 		int size = this.stack.size();
-		this.stack.get(size-1).put(key, value);
+		for (int i = size-1; i >= 0; i--) {
+			Map<UnknownType, Type> tmp = this.stack.get(i);
+			for (Map.Entry<UnknownType, Type> entry : tmp.entrySet()) {
+                if (entry.getKey().equals(ut) || entry.getValue().equals(ut)) {
+                    return true;
+                }
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -42,14 +70,23 @@ public class TypesStack {
 		return this.getLastStackOfUT(key) != null;
 	}
 
-	public Map<UnknownType, Type> getLastStackOfUT(UnknownType key) {
+	public boolean containsVarName(String varName) {
+		return this.getLastStackOfVarName(varName) != null;
+	}
+
+	/**
+	 * Récupère le dernier layer où ut est une key ou une value de celui ci, retourne null sinon
+	 * @param ut UnknownType
+	 * @return Map<UnknownType, Type> || null, si ut n'est pas présent dans les map de this.stack
+	 */
+	public Map<UnknownType, Type> getLastStackOfUT(UnknownType ut) {
 		Map<UnknownType, Type> result = null;
 		int size = this.stack.size();
 		boolean notFound = true;
 
 		for (int i = size-1; i >= 0 && notFound; i--) {
 			Map<UnknownType, Type> tmp = this.stack.get(i);
-			if (tmp.containsKey(key)) {
+			if (tmp.containsKey(ut) || tmp.containsValue(ut)) {
 				result = tmp;
 				notFound = false;
 			}
@@ -58,21 +95,17 @@ public class TypesStack {
 	}
 
 	public Map<UnknownType, Type> getLastStackOfVarName (String varName) {
-		Map<UnknownType, Type> result = null;
 		int size = this.stack.size();
-		boolean notFound = true;
 
-		for (int i = size-1; i >= 0 && notFound; i--) {
+		for (int i = size-1; i >= 0; i--) {
 			Map<UnknownType, Type> tmp = this.stack.get(i);
 			for (UnknownType key : tmp.keySet()) {
                 if (key.getVarName().equals(varName)) {
-                    result   = tmp;
-                    notFound = false;
-                    break;
+                    return tmp;
                 }
-			};
+			}
 		}
-		return result;
+		return null;
 	}
 
 	/**
@@ -113,13 +146,17 @@ public class TypesStack {
                     notFound = false;
                     break;
                 }
-			};
+			}
 		}
 		return result;
 	}
 
-	public Stack<Map<UnknownType, Type>> getStack() {
-		return this.stack;
+	public int indexOf(Map<UnknownType, Type> layer) {
+		return this.stack.indexOf(layer);
+	}
+
+	public void set(int index, Map<UnknownType, Type> map) {
+		this.stack.set(index, map);
 	}
 
 	public int size() {
@@ -130,4 +167,18 @@ public class TypesStack {
 		return stack.isEmpty();
 	}
 
+	@Override
+	public String toString() {
+		StringBuilder s = new StringBuilder("TypesStack{");
+
+		int size = this.stack.size();
+		for (int i = size-1; i >= 0; i--) {
+			s.append("\n\tlayer ").append(i).append(" : ");
+			Map<UnknownType, Type> tmp = this.stack.get(i);
+			s.append(tmp);
+		}
+
+		s.append("\n}");
+		return s.toString();
+	}
 }

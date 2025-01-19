@@ -2,7 +2,6 @@ package src.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Function;
 
 public class FunctionType extends Type {
     private Type returnType;
@@ -26,12 +25,16 @@ public class FunctionType extends Type {
         return returnType;
     }
 
+    public ArrayList<Type> getArgs() {
+        return this.argsTypes;
+    }
+
     /**
      * Getter du type du i-eme argument
      * @param i entier
      * @return type du i-eme argument
      */
-    public Type getArgsType(int i) {
+    public Type getArgType(int i) {
         return argsTypes.get(i);
     }
 
@@ -72,7 +75,7 @@ public class FunctionType extends Type {
                 throw new Error("TypeError: cannot unify " + this + " to " + t);
             }
             for (int i = 0; i<this.getNbArgs(); i++) {
-                    map.putAll(this.getArgsType(i).unify(tempT.getArgsType(i)));
+                    map.putAll(this.getArgType(i).unify(tempT.getArgType(i)));
             }
             return map;
         }
