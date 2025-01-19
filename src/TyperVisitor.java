@@ -1,7 +1,6 @@
 package src;
 
 import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
 import org.antlr.v4.runtime.tree.ParseTree;
 import src.Type.*;
@@ -24,7 +23,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
     }
 
     /**
-     * Lors de la sorti d'un block, pop la stack et met ses valeurs dans types.
+     * Lors de la sortie d'un block, pop la stack et met ses valeurs dans types.
      */
     private void leaveBlock() {
         System.out.println("leaveBlock");
@@ -176,7 +175,6 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         Type functionType;
         if(typesStack.containsVarName(key.getVarName())) {
                 functionType = typesStack.getLastTypeOfVarName(key.getVarName());
-                System.out.println(functionType);
         } else {
             throw new TyperError("Call of undefined function \"" + calledFunctionNode.getText() + "\"", ctx);
         }
@@ -199,7 +197,8 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
         this.substituteTypes(constraints);
         System.out.println("TEST : SubstituteTypes du call ok");
-        return null;
+        System.out.println("Type de la fonction : " + functionType);
+        return functionType;
     }
 
     @Override
@@ -612,6 +611,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
         try {
             HashMap<UnknownType, Type> constraints = new HashMap<>(exprType.unify(this.lastReturnType));
+            System.out.println("Contraintes " + constraints);
             this.substituteTypes(constraints);
         } catch (Error e) {
             throw new TyperError("Problème return", ctx);
@@ -678,14 +678,14 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         FunctionType functionType = new FunctionType(functionReturnType, paramTypeList);
 
         HashMap<UnknownType, Type> functionConstraints = new HashMap<>(functionName.unify(functionType));
-        //Mise des types de la fonction et sont nom au layer 0 ("variable globale")
+        //Mise des types de la fonction et son nom au layer 0 ("variable globale")
         //Pour que cela soit utilisable tout au long du programme
         this.substituteTypes(functionConstraints);
 
-        //Passage dans le layer d'au dessus
-        //Parce que les nom de paramètres et les variables du core_fct
+        //Passage dans le layer d'au-dessus
+        //Parce que les noms de paramètres et les variables du core_fct
         // ne sont pas des variables globales
-        this.enterBlock();
+        this.enterBlock(); // pas utile pour moi (Luka)
 
         this.substituteTypes(paramConstraints);
         HashMap<UnknownType, Type> returnConstraints = new HashMap<>(functionReturnType.unify(new UnknownType()));
