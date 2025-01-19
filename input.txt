@@ -69,5 +69,7 @@ int main() {
     print(line);
     auto sum = sum(100);
     print(sum);
+    print(line);
+    test = test_auto();
     return 0;
 }
