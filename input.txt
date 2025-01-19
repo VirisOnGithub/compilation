@@ -50,26 +50,35 @@ int sum(int n) {
     return (n + sum(n - 1));
 }
 
-int testTabStacking(int num) {
-    if (num == 0) return 0;
-    int[] local = {num, num + 1};
-    auto a = testTabStacking(num - 1);
-    print(num);
-    print(local);
+int allBinaries(int[] tab, int i, int n) {
+    if (i==n) {
+        print(tab);
+        return 0;
+    }
+    tab[i] = 0;
+    auto b = allBinaries(tab, i + 1, n);
+    tab[i] = 1;
+    b = allBinaries(tab, i + 1, n);
+    return 0;
+}
+
+int testBinaries(int n) {
+    int[] tab = {};
+    auto test = allBinaries(tab, 0, n);
     return 0;
 }
 
 int main() {
-    int line = 111111;
-    auto test = hanoi(3);
-    print(line);
-    test = testTabStacking(5);
+    int line = 11111111;
+    auto test = test_auto();
     print(line);
     test = testTab();
+    print(line);
+    test = hanoi(3);
     print(line);
     auto sum = sum(100);
     print(sum);
     print(line);
-    test = test_auto();
+    test = testBinaries(4);
     return 0;
 }
