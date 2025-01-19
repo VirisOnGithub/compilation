@@ -147,11 +147,7 @@ public class ConflictGraph extends UnorientedGraph<String> {
                 def.add("R" + memInstr.getDest());
             }
             return def;
-        } else if (instruction instanceof CondJump){
-            CondJump condJump = (CondJump) instruction;
-            def.add("R" + condJump.getAddress());
-            return def;
-        } else if ((instruction instanceof Ret) || (instruction instanceof Stop) || (instruction instanceof JumpCall)){ 
+        } else if ((instruction instanceof Ret) || (instruction instanceof Stop) || (instruction instanceof JumpCall) || (instruction instanceof CondJump)){ 
             return def;
         } else {
             return def;
