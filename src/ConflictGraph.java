@@ -71,7 +71,7 @@ public class ConflictGraph extends UnorientedGraph<String> {
      */
     private void buildConflictGraph(ControlGraph controlGraph, Program program) {
         for (Instruction instruction : controlGraph.getAllVertices(program)) {
-            Set<String> def = getDef(instruction); // Variables définies
+            Set<String> def = getDef(instruction);
             Set<String> out = this.out.getOrDefault(instruction, new HashSet<>());
             for (String d : def) {
                 for (String o : out) {

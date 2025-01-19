@@ -35,7 +35,6 @@ public class ControlGraph extends OrientedGraph<Instruction> {
      * @param program le programme à partir duquel construire le graphe de contrôle
      */
     private void buildControlGraph(Program program) {
-        // Première passe : construction du graphe et de la map des labels
         Instruction prevInstruction = null;
         for (Instruction instruction : program.getInstructions()) {
             int index = program.getInstructions().indexOf(instruction);
@@ -61,7 +60,6 @@ public class ControlGraph extends OrientedGraph<Instruction> {
             }
         }
 
-        // Deuxième passe : gestion des sauts (JMP, CALL et RET)
         Stack<Instruction> callStack = new Stack<>();
         for (Instruction instruction : program.getInstructions()) {
             if (instruction instanceof CondJump) {
@@ -85,9 +83,6 @@ public class ControlGraph extends OrientedGraph<Instruction> {
                         this.addEdge(instruction, returnTo);
                     }
                 }
-            }else{
-            //    int index = program.getInstructions().indexOf(instruction);
-             //   connectJump(prevInstruction, Integer.toString(index));
             }
         }
     }
@@ -147,7 +142,7 @@ public class ControlGraph extends OrientedGraph<Instruction> {
                 }
             }
             if (this.adjList.get(u).size() > 0) {
-                sb.setLength(sb.length() - 2); // Remove the last comma and space
+                sb.setLength(sb.length() - 2);
             }
             sb.append("\n");
         }
