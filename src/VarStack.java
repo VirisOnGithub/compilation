@@ -1,5 +1,6 @@
 package src;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
@@ -17,10 +18,6 @@ public class VarStack<T> {
 	 * A stack whose top is the furthest variables are still in reach within the execution context, mainly used for function calls
 	 */
 	private final Stack<Integer> lastAccessibleDepth;
-	/**
-	 * The name of the last added variable
-	 */
-	private String lastAdded;
 
 	/**
 	 * Constructor
@@ -28,7 +25,6 @@ public class VarStack<T> {
 	public VarStack() {
 		this.stack = new Stack<>();
 		this.lastAccessibleDepth = new Stack<>();
-		this.lastAdded = null;
 		this.enterFunction(); // getVar() will return an error if you never entered a block or function
 	}
 
@@ -37,7 +33,7 @@ public class VarStack<T> {
 	 * @apiNote needs to be called just before entering a {} block
 	 */
 	public void enterBlock() {
-		stack.add(new HashMap<>());
+		this.stack.add(new HashMap<>());
 	}
 
 	/**
@@ -45,7 +41,7 @@ public class VarStack<T> {
 	 * @apiNote needs to be called just after leaving a {} block
 	 */
 	public void leaveBlock() {
-		stack.pop();
+		this.stack.pop();
 	}
 
 	/**
@@ -53,7 +49,7 @@ public class VarStack<T> {
 	 * @apiNote needs to be called just before entering a function
 	 */
 	public void enterFunction() {
-		lastAccessibleDepth.add(stack.size());
+		this.lastAccessibleDepth.add(this.stack.size());
 		this.enterBlock();
 	}
 
@@ -63,7 +59,7 @@ public class VarStack<T> {
 	 */
 	public void leaveFunction() {
 		this.leaveBlock();
-		lastAccessibleDepth.pop();
+		this.lastAccessibleDepth.pop();
 	}
 
 	/**
@@ -72,8 +68,8 @@ public class VarStack<T> {
 	 * @return the value associated with varName is it if, RuntimeException else
 	 */
 	public T getVar(String varName) throws RuntimeException {
-		for (int depth = stack.size() - 1; depth >= lastAccessibleDepth.getLast(); depth--) { // we un-stack all the accessible maps
-			var varMap = stack.get(depth);
+		for (int depth = this.stack.size() - 1; depth >= this.lastAccessibleDepth.getLast(); depth--) { // we un-stack all the accessible maps
+			var varMap = this.stack.get(depth);
 			if (varMap.containsKey(varName)) { // we stop at the first corresponding variable name
 				return varMap.get(varName);
 			}
@@ -89,7 +85,6 @@ public class VarStack<T> {
 	 * @return true if the var did not exist
 	 */
 	public boolean assignVar(String varName, T value) {
-		this.lastAdded = varName;
 		return this.stack.getLast().put(varName, value) == null;
 	}
 
@@ -99,8 +94,8 @@ public class VarStack<T> {
 	 * @return true if the variable exists, false else
 	 */
 	public boolean varExists(String varName) {
-		for (int depth = stack.size() - 1; depth >= lastAccessibleDepth.getLast(); depth--) { // we un-stack all the accessible maps
-			var varMap = stack.get(depth);
+		for (int depth = this.stack.size() - 1; depth >= this.lastAccessibleDepth.getLast(); depth--) { // we un-stack all the accessible maps
+			var varMap = this.stack.get(depth);
 			if (varMap.containsKey(varName)) { // we stop at the first corresponding variable name
 				return true;
 			}
@@ -109,10 +104,17 @@ public class VarStack<T> {
 	}
 
 	/**
-	 * Returns the name of the last variable added
-	 * @return the name of the last variable added
+	 * Gets the associated values of all the currently accessible variables
+	 * @return the list of values
 	 */
-	public String getLastAdded() {
-		return this.lastAdded;
+	public ArrayList<T> getVars() {
+		ArrayList<T> vars = new ArrayList<>();
+		for (int depth = this.stack.size() - 1; depth >= this.lastAccessibleDepth.getLast(); depth--) { // we un-stack all the accessible maps
+			var varMap = this.stack.get(depth);
+			for (String varName : varMap.keySet()) { // we add all the accessible variables
+				vars.add(varMap.get(varName));
+			}
+		}
+		return vars;
 	}
 }

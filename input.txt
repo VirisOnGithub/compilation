@@ -4,10 +4,12 @@ int num(int num) {
 }
 
 bool hanoi_swap(int start, int middle, int end, int rings) {
-    print(rings);
+    int line = 11111;
     if ((rings == 0)) return true;
     auto pass1 = hanoi_swap(start, end, middle, rings - 1);
-    print(rings);
+    print(line);
+    print(start);
+    print(end);
     auto pass2 = hanoi_swap(middle, start, end, rings - 1);
     return pass1 && pass2;
 }
@@ -17,8 +19,24 @@ bool hanoi(int number) {
     return pass;
 }
 
+bool recursive(int number) {
+    if ((number == 0)) return true;
+    int line = 11111;
+    int var = 5 - number;
+    print(line);
+    print(var);
+    auto pass = recursive(number - 1);
+    print(line);
+    print(line);
+    print(number);
+    print(var);
+    return pass;
+}
+
 int main() {
-    auto number = 1;
+    int var = 10;
+    auto number = 3;
     auto pass = hanoi(number);
+    print(var);
     return 0;
 }

@@ -1,5 +1,6 @@
 package src;
 
+import java.util.ArrayList;
 import java.util.Map;
 
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
@@ -42,6 +43,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
      * Contains the number of the next non utilised label number, should always be incremented immediately after each use
      */
     private Integer nextLabel;
+    private String currentFunction;
 
 
     /**
@@ -54,6 +56,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         this.returnRegisters = new VarStack<>();
         this.nextRegister = 2;
         this.nextLabel = 0;
+        this.currentFunction = "";
     }
 
     /**
@@ -299,15 +302,32 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         Program program = new Program();
         int childCount = ctx.getChildCount();
         int nbArguments = (childCount == 3) ? 0 : (childCount - 2)/2;
-        int returnRegister = this.returnRegisters.getVar(ctx.VAR().getText());
+        String calledFunction = ctx.VAR().getText();
+        int returnRegister = this.returnRegisters.getVar(calledFunction);
+        ArrayList<Integer> vars = new ArrayList<>();
+        ArrayList<Integer> arguments = new ArrayList<>();
 
         for (int i = 0; i < nbArguments; i++) { // expr*
             program.addInstructions(visit(ctx.getChild((2 * i) + 2))); // value of expression will be stocked in R(nextRegister-1)
-            program.addInstructions(this.stackRegister(this.nextRegister-1)); // we stack the arguments
+            arguments.addLast(this.nextRegister-1);
+        }
+        if (calledFunction.equals(this.currentFunction)) { // if it's a recursive call
+            vars = this.varRegisters.getVars();
+            for (int i = 0; i < vars.size(); i++) { // we save the current state of variables
+                program.addInstructions(this.stackRegister(vars.get(i)));
+            }
+        }
+        for (int i = 0; i < arguments.size(); i++) {
+            program.addInstructions(this.stackRegister(arguments.get(i))); // we stack the arguments
         }
         program.addInstruction(new JumpCall(JumpCall.Op.CALL, ctx.getChild(0).getText())); // we call the function
         program.addInstruction(new UALi(UALi.Op.ADD, this.nextRegister, returnRegister, 0)); // we stock the return value in R(nextRegister - 1)
         nextRegister++;
+        if (calledFunction.equals(this.currentFunction)) { // if it's a recursive call
+            for (int i = vars.size() - 1; i >= 0; i--) { // we load the old state of variables (un-stack in reverse order!)
+                program.addInstructions(this.unstackRegister(vars.get(i)));
+            }
+        }
 
         return program;
     }
@@ -559,11 +579,11 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         int varRegister = this.nextRegister;
         this.nextRegister++;
 
-        this.varRegisters.assignVar(ctx.VAR().getText(), varRegister); // declare the variable
         if (childCount == 5) { // if the variable is assigned a value
             program.addInstructions(visit(ctx.expr()));
             program.addInstruction(new UALi(UALi.Op.ADD, varRegister, this.nextRegister - 1, 0)); // varRegister := nextRegister - 1
         }
+        this.varRegisters.assignVar(ctx.VAR().getText(), varRegister); // declare the variable
 
         return program;
     }
@@ -626,7 +646,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         
         for (int i = 0; i < bracketsCount; i++) {
             int child = 2 + (i * 3);
-            if(i > 0) // if we were accessing an array, get the pointed value
+            if (i > 0) // if we were accessing an array, get the pointed value
                 program.addInstruction(new Mem(Mem.Op.LD, leftRegister, leftRegister));
             program.addInstructions(visit(ctx.getChild(child))); // element pointer returned in R(nextRegister - 1)
             int indexRegister = this.nextRegister - 1;
@@ -724,7 +744,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
     @Override
     public Program visitWhile(grammarTCLParser.WhileContext ctx) {
         // WHILE '(' expr ')' instr
-        /* pseudo-assembler: while(i<10) { instr }
+        /* pseudo-assembler: while (i<10) { instr }
          * loop: R1 := visit(cond)
          *   XOR R2 R2 R2
          *   JEQU R1 R2 end_loop
@@ -766,7 +786,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
     @Override
     public Program visitFor(grammarTCLParser.ForContext ctx) {
         // FOR '(' instr  expr ';' instr ')' instr
-        /* pseudo-assembler: for(int i = 0; i < 10; i++;) { instr }
+        /* pseudo-assembler: for (int i = 0; i < 10; i++;) { instr }
          *   ST R0 1
          * loop: R1 := visit(cond)
          *   XOR R2 R2 R2
@@ -817,7 +837,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         // RETURN expr SEMICOL
 
         Program program = new Program();
-        String functionName = this.returnRegisters.getLastAdded();
+        String functionName = this.currentFunction;
         int returnRegister = this.returnRegisters.getVar(functionName);
 
         program.addInstructions(visit(ctx.expr())); // expr, return value will be in R(nextRegister-1)
@@ -838,7 +858,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
 
         Program program = new Program();
         int nbInstructions = ctx.getChildCount() - 5;
-        String functionName = this.returnRegisters.getLastAdded();
+        String functionName = this.currentFunction;
         int returnRegister = this.returnRegisters.getVar(functionName);
 
         for (int i = 0; i < nbInstructions; i++) { // instr*
@@ -866,6 +886,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         String functionName = ctx.getChild(1).getText();
 
         this.varRegisters.enterFunction();
+        this.currentFunction = functionName;
         this.returnRegisters.assignVar(functionName, this.nextRegister); // set the register were the return value will be stocked
         nextRegister++;
         for (int i = nbArguments - 1; i >= 0; i--) { // the arguments are stacked before the call so we un-stack them, in reverse order
@@ -904,6 +925,9 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         }
 
         this.varRegisters.enterFunction(); // 'main' function declaration
+        this.currentFunction = "*main";
+        this.returnRegisters.assignVar(this.currentFunction, this.nextRegister); // set the register were the return value will be stocked
+        nextRegister++;
         Program mainCoreProgram = visit(ctx.core_fct()); // core_fct
         mainCoreProgram.getInstructions().getFirst().setLabel("*main"); // main label
         program.addInstructions(mainCoreProgram);
