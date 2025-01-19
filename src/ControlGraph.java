@@ -45,6 +45,9 @@ public class ControlGraph extends OrientedGraph<Instruction> {
             }else{
                 labelMap.put(Integer.toString(index), instruction);
             }
+            if (instruction instanceof Mem || instruction instanceof UAL || instruction instanceof UALi || instruction instanceof IO) {
+                 labelMap.put(Integer.toString(index), instruction);
+              }
             if (prevInstruction != null && !(prevInstruction instanceof Stop)
                     && !(prevInstruction instanceof JumpCall) // Changement ici
                     && !(prevInstruction instanceof Ret)) {
@@ -150,7 +153,7 @@ public class ControlGraph extends OrientedGraph<Instruction> {
         }
         return sb.toString();
     }
-
+    
     public static void main(String[] args) {
         Program program = new Program();
 
