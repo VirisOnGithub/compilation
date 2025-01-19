@@ -38,12 +38,6 @@ int sum(int n) {
     return (n + sum(n - 1));
 }
 
-int testHannoi() {
-    auto number = 10;
-    auto pass = hanoi(number);
-    return 0;
-}
-
 int testTabStacking(int num) {
     if (num == 0) return 0;
     int[] local = {num, num + 1};

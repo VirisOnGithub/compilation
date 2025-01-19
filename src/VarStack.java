@@ -1,6 +1,5 @@
 package src;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
@@ -101,20 +100,5 @@ public class VarStack<T> {
 			}
 		}
 		return false;
-	}
-
-	/**
-	 * Gets the associated values of all the currently accessible variables
-	 * @return the list of values
-	 */
-	public ArrayList<T> getVars() {
-		ArrayList<T> vars = new ArrayList<>();
-		for (int depth = this.stack.size() - 1; depth >= this.lastAccessibleDepth.getLast(); depth--) { // we un-stack all the accessible maps
-			var varMap = this.stack.get(depth);
-			for (String varName : varMap.keySet()) { // we add all the accessible variables
-				vars.add(varMap.get(varName));
-			}
-		}
-		return vars;
 	}
 }

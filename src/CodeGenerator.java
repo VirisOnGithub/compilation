@@ -308,28 +308,30 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         int nbArguments = (childCount == 3) ? 0 : (childCount - 2)/2;
         String calledFunction = ctx.VAR().getText();
         int returnRegister = this.returnRegisters.getVar(calledFunction);
-        ArrayList<Integer> vars = new ArrayList<>();
-        ArrayList<Integer> arguments = new ArrayList<>();
 
+        ArrayList<Integer> arguments = new ArrayList<>();
         for (int i = 0; i < nbArguments; i++) { // expr*
             program.addInstructions(visit(ctx.getChild((2 * i) + 2))); // value of expression will be stocked in R(nextRegister-1)
-            arguments.addLast(this.nextRegister-1);
+            arguments.addLast(this.nextRegister-1); // we save the registers because we want to calculate the arguments first but stack the local variables first
         }
+
+        int lastUsedRegister = this.nextRegister - 1;
         if (calledFunction.equals(this.currentFunction)) { // if it's a recursive call
-            vars = this.varRegisters.getVars();
-            for (int i = 0; i < vars.size(); i++) { // we save the current state of variables
-                program.addInstructions(this.stackRegister(vars.get(i)));
+            for (int i = returnRegister + 1; i <= lastUsedRegister; i++) { // returnRegister is the first assigned register in visitDecl_fct
+                program.addInstructions(this.stackRegister(i)); // we save the current state of used registers in the function
             }
         }
-        for (int i = 0; i < arguments.size(); i++) {
+
+        for (int i = 0; i < arguments.size(); i++) { // don't use foreach to be sure of the order of the elements
             program.addInstructions(this.stackRegister(arguments.get(i))); // we stack the arguments
         }
         program.addInstruction(new JumpCall(JumpCall.Op.CALL, ctx.getChild(0).getText())); // we call the function
         program.addInstruction(new UALi(UALi.Op.ADD, this.nextRegister, returnRegister, 0)); // we stock the return value in R(nextRegister - 1)
         nextRegister++;
+
         if (calledFunction.equals(this.currentFunction)) { // if it's a recursive call
-            for (int i = vars.size() - 1; i >= 0; i--) { // we load the old state of variables (un-stack in reverse order!)
-                program.addInstructions(this.unstackRegister(vars.get(i)));
+            for (int i = lastUsedRegister; i > returnRegister; i--) { // (un-stack in reverse order!)
+                program.addInstructions(this.unstackRegister(i)); // we load the state of used registers before the call
             }
         }
 
