@@ -20,8 +20,9 @@ int testTab() {
         print(a);
     int g = a[0][5];
         print(g);
-    e = a[1][2];
-        print(e);
+    auto ee = a[4];
+        print(a);
+        print(ee);
     return 0;
 }
 
