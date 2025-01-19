@@ -98,7 +98,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
     }
 
     private void leaveBlock() {
-        this.debugConstraints();
+        this.bigAssSubstitute();
         this.varStack.leaveBlock();
         forcePrintTypes();
         this.printStack.pop();
