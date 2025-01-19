@@ -239,26 +239,9 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         for (var constraint : getConstraints().entrySet()) {
             // UnknownType weakVar = constraint.getKey();
             List<Type> types = constraint.getValue();
-            List<Type> newTypes = new ArrayList<>();
 
-            boolean removed = false;
-            for (var it = types.iterator(); it.hasNext() && !removed;) {
-                Type type = it.next();
-                Type newType = varType;
-                while (type instanceof ArrayType at) {
-                    type = at.getTabType();
-                    newType = new ArrayType(newType);
-                }
-
-                if (type.equals(var)) {
-                    it.remove();
-                    newTypes.add(newType);
-                    break;
-                }
-            }
-
-            for (Type type : newTypes) {
-                types.add(type);
+            for (int i = 0; i < types.size(); i++) {
+                types.set(i, types.get(i).substitute(var, varType));
             }
         }
     }
@@ -267,24 +250,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         for (var entry : getTypes().entrySet()) {
             // UnknownType varEntry = entry.getKey();
             Type type = entry.getValue();
-            if (type instanceof FunctionType ft) {
-                ArrayList<Type> params = new ArrayList<>();
-                // substitute params
-                for (int i = 0; i < ft.getNbArgs(); i++) {
-                    Type argType = ft.getArgsType(i);
-                    if (argType.equals(var)) {
-                        params.add(varType);
-                    } else {
-                        params.add(argType);
-                    }
-                }
-                // substiture return type
-                Type returnType = ft.getReturnType();
-                if (returnType.equals(var)) {
-                    returnType = varType;
-                }
-                entry.setValue(new FunctionType(returnType, params));
-            }
+            entry.setValue(type.substitute(var, varType));
         }
     }
 
