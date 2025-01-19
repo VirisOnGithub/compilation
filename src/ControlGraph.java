@@ -46,8 +46,8 @@ public class ControlGraph extends OrientedGraph<Instruction> {
                 labelMap.put(Integer.toString(index), instruction);
             }
             if (instruction instanceof Mem || instruction instanceof UAL || instruction instanceof UALi || instruction instanceof IO) {
-                 labelMap.put(Integer.toString(index), instruction);
-              }
+                labelMap.put(Integer.toString(index), instruction);
+            }
             if (prevInstruction != null && !(prevInstruction instanceof Stop)
                     && !(prevInstruction instanceof JumpCall) // Changement ici
                     && !(prevInstruction instanceof Ret)) {
@@ -143,7 +143,7 @@ public class ControlGraph extends OrientedGraph<Instruction> {
                 if (v.getLabel().isEmpty()) {
                     sb.append(vertices.indexOf(v) + 1).append(", ");
                 } else {
-                sb.append(v.getLabel()).append(", ");
+                    sb.append(v.getLabel()).append(", ");
                 }
             }
             if (this.adjList.get(u).size() > 0) {
@@ -153,7 +153,7 @@ public class ControlGraph extends OrientedGraph<Instruction> {
         }
         return sb.toString();
     }
-    
+
     public static void main(String[] args) {
         Program program = new Program();
 
@@ -174,24 +174,24 @@ public class ControlGraph extends OrientedGraph<Instruction> {
         Instruction instr14 = new IO(IO.Op.PRINT, 1004) {};
         Instruction instr15 = new Ret("END") {};
 
-	program.addInstruction(instr0);
-    program.addInstruction(instr1);
-	program.addInstruction(instr2);
-	program.addInstruction(instr3);
-	program.addInstruction(instr4);
-	program.addInstruction(instr5);
-	program.addInstruction(instr6);
-	program.addInstruction(instr7);
-	program.addInstruction(instr8);
-	program.addInstruction(instr9);
-	program.addInstruction(instr10);
-	program.addInstruction(instr11);
-	program.addInstruction(instr12);
-	program.addInstruction(instr13);
-	program.addInstruction(instr14);
-	program.addInstruction(instr15);
+        program.addInstruction(instr0);
+        program.addInstruction(instr1);
+        program.addInstruction(instr2);
+        program.addInstruction(instr3);
+        program.addInstruction(instr4);
+        program.addInstruction(instr5);
+        program.addInstruction(instr6);
+        program.addInstruction(instr7);
+        program.addInstruction(instr8);
+        program.addInstruction(instr9);
+        program.addInstruction(instr10);
+        program.addInstruction(instr11);
+        program.addInstruction(instr12);
+        program.addInstruction(instr13);
+        program.addInstruction(instr14);
+        program.addInstruction(instr15);
 
-    ControlGraph controlGraph = new ControlGraph(program);
-    System.out.println(controlGraph);
+        ControlGraph controlGraph = new ControlGraph(program);
+        System.out.println(controlGraph);
     }
 }
