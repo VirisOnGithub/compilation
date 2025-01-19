@@ -1,3 +1,30 @@
+int testTab() {
+    auto b = {42, 666, 99};
+    auto a = {{18}, {69}};
+        print(b);
+        print(a);
+    auto d = b;
+        print(d);
+    auto c = a[1];
+        print(c);
+    auto e = b[30];
+        print(e);
+        print(b);
+    a[1] = {8, 58, 75, 89};
+        print(a);
+    a[1][2] = 69;
+        print(a);
+    c = a[0];
+        print(c);
+    c[5] = 333;
+        print(a);
+    int g = a[0][5];
+        print(g);
+    e = a[1][2];
+        print(e);
+    return 0;
+}
+
 int num(int num) {
     int sum = num;
     return sum;
@@ -33,10 +60,16 @@ bool recursive(int number) {
     return pass;
 }
 
-int main() {
+int testHannoi() {
     int var = 10;
     auto number = 3;
     auto pass = hanoi(number);
     print(var);
     return 0;
+}
+
+int main() {
+    auto test = testHannoi();
+    test = testTab();
+    return test;
 }
