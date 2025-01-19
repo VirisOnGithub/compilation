@@ -20,7 +20,7 @@ begin_loop:
 	MODi R7 R5 10					# R7 := i % 10
 	JNEQ R7 R6 skip_tab_access_end	# i % 10 != 0
 	JEQU R5 R6 skip_tab_access_end	# i == 0
-	JIEQ R3 R0 skip_alloc
+	JIEQ R5 R3 skip_alloc			# if (i >= longueur)
 	ST TP R2						# *pointeur = TP
 	ADDi TP TP 11					# TP += 11
 skip_alloc:

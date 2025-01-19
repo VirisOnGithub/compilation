@@ -1056,7 +1056,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         program.addInstruction(new UALi("*begin_loop", UALi.Op.MOD, r[7], r[5], 10));
         program.addInstruction(new CondJump(CondJump.Op.JNEQ, r[7], r[6], "*skip_tab_access_end"));
         program.addInstruction(new CondJump(CondJump.Op.JEQU, r[5], r[6], "*skip_tab_access_end"));
-        program.addInstruction(new CondJump(CondJump.Op.JIEQ, r[3], r[0], "*skip_alloc"));
+        program.addInstruction(new CondJump(CondJump.Op.JIEQ, r[5], r[3], "*skip_alloc"));
         program.addInstruction(new Mem(Mem.Op.ST, this.TP, r[2]));
         program.addInstruction(new UALi(UALi.Op.ADD, this.TP, this.TP, 11));
 
