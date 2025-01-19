@@ -155,8 +155,11 @@ public class ConflictGraph extends UnorientedGraph<String> {
     public static void main(String[] args) {
         Program program = new Program();
 
+        Instruction instr0 = new IO(IO.Op.READ, 10000) {};
+        program.addInstruction(instr0);
+        
         // Instructions utilisant des registres uniques et augmentant progressivement le nombre
-        for (int i = 0; i < 40; i++) {
+        for (int i = 1; i < 40; i++) {
             // Exemple d'opérations arithmétiques utilisant des registres R0 à R39
             Instruction instr = new UAL(UAL.Op.ADD, i, i, (i + 1) % 40) {};
             program.addInstruction(instr);

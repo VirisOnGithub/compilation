@@ -153,7 +153,7 @@ public class AssemblerGenerator {
                         throw new IllegalArgumentException("Invalid instruction type for print: " + instruction.getName());
                     }
                     IO io = (IO) instruction;
-                    result.append("PRINT ").append(allocator.getRegister("R" + io.getReg())).append("\n");
+                    result.append(parts[0]).append(" ").append(allocator.getRegister("R" + io.getReg())).append("\n");
                     break;
 
                 default:
@@ -167,6 +167,9 @@ public class AssemblerGenerator {
     public static void main(String[] args) {
         Program program = new Program();
 
+        Instruction instr0 = new IO(IO.Op.READ, 10000) {};
+        program.addInstruction(instr0);
+        
         // Instructions utilisant des registres uniques et augmentant progressivement le nombre
         for (int i = 0; i < 40; i++) {
             // Exemple d'opérations arithmétiques utilisant des registres R0 à R39
