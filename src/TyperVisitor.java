@@ -32,11 +32,10 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
             this.types.putAll(other.getTypes());
             this.constraints = new HashMap<>();
             // boring copying stuff
-            Map<UnknownType, List<Type>> map = new HashMap<>();
             for (var entry : other.getConstraints().entrySet()) {
                 List<Type> types = new ArrayList<>();
                 types.addAll(entry.getValue());
-                map.put(entry.getKey(), types);
+                this.constraints.put(entry.getKey(), types);
             }
         }
 
