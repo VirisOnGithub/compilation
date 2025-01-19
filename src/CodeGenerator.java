@@ -114,6 +114,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
      * @return 0 if it is not an array, else the depth (or dimension) of the array
      */
     private static int getArrayDepth(Type type) {
+        assert type != null : "Le type ne devrait pas être nul !";
         if (type instanceof ArrayType array)
             return 1 + getArrayDepth(array.getTabType());
         return 0;
