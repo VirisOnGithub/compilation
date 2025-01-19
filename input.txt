@@ -1,28 +1,19 @@
 int testTab() {
-    auto b = {42, 666, 99};
     auto a = {{18}, {69}};
-        print(b);
         print(a);
-    auto d = b;
-        print(d);
-    auto c = a[1];
-        print(c);
-    auto e = b[30];
-        print(e);
-        print(b);
     a[1] = {8, 58, 75, 89};
         print(a);
-    a[1][2] = 69;
+    auto g = a[5];
         print(a);
-    c = a[0];
-        print(c);
-    c[5] = 333;
-        print(a);
-    int g = a[0][5];
-        print(g);
+    auto h = g[5];
+        print(h);
     auto ee = a[4];
-        print(a);
         print(ee);
+    a[3][8] = 42;
+    auto oui = a[3][8];
+        print(oui);
+        print(a);
+
     return 0;
 }
 
