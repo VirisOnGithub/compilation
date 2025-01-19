@@ -14,6 +14,8 @@ skip_resize:
 	ADDi R2 R2 1			        # pointeur++
 	XOR R5 R5 R5			        # i = 0
 	XOR R6 R6 R6			        # constante à 0
+	XOR R9 R9 R9
+	ADDi R9 R9 1					# constante à 1
 begin_loop:
 	MODi R7 R5 10					# R7 := i % 10
 	JNEQ R7 R6 skip_tab_access_end	# i % 10 != 0
@@ -25,7 +27,7 @@ skip_alloc:
 	LD R2 R2						# pointeur = *pointeur
 skip_tab_access_end:
 	JINF R5 R3 skip_fill			# if (i >= longueur)
-	JNEQ R0 R6 skip_simple_init		# if (profondeur == 0)
+	JNEQ R0 R9 skip_simple_init		# if (profondeur == 1)
 	ST R6 R2						# *pointeur = 0
 	JMP skip_fill					
 skip_simple_init:					# else
