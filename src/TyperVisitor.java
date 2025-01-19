@@ -155,7 +155,17 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         } catch (Error e) {
             throw new TyperError(e.getMessage(), ctx);
         }
+
+        if (exprType instanceof UnknownType) {
+            exprType = this.typesStack.getLastTypeOfVarName(new UnknownType(exprNode).getVarName());
+            constraints.putAll(exprType.unify(new ArrayType(new UnknownType())));
+        }
+
         this.substituteTypes(constraints);
+
+        if (!(exprType instanceof ArrayType)) {
+            throw  new TyperError(exprNode +" doit être un tableau", ctx);
+        }
 
         return ((ArrayType) exprType).getTabType();
     }
@@ -172,9 +182,9 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         System.out.println("visit call");
         ParseTree calledFunctionNode = ctx.getChild(0);
         UnknownType key = new UnknownType(calledFunctionNode);
-        Type functionType;
+        FunctionType functionType;
         if(typesStack.containsVarName(key.getVarName())) {
-                functionType = typesStack.getLastTypeOfVarName(key.getVarName());
+                functionType =(FunctionType) typesStack.getLastTypeOfVarName(key.getVarName());
         } else {
             throw new TyperError("Call of undefined function \"" + calledFunctionNode.getText() + "\"", ctx);
         }
@@ -198,7 +208,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         this.substituteTypes(constraints);
         System.out.println("TEST : SubstituteTypes du call ok");
         System.out.println("Type de la fonction : " + functionType);
-        return functionType;
+        return functionType.getReturnType();
     }
 
     @Override

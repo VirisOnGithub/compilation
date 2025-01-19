@@ -115,11 +115,7 @@ public class UnknownType extends Type {
     @Override
     public boolean equals(Object t) {
         if (t instanceof UnknownType tempT) {
-            if (this.getVarName().equals("#") && tempT.getVarName().equals("#")) {
-                return this.getVarIndex() == tempT.getVarIndex();
-            }
-
-            return this.getVarName().equals(tempT.getVarName());
+            return this.getVarName().equals(tempT.getVarName()) && this.getVarIndex() == tempT.getVarIndex();
         } else {
             return false;
         }
