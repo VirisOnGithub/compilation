@@ -1,3 +1,15 @@
+auto fonction_auto(auto a, auto b, auto c){
+    return {a};
+}
+
+int test_auto() {
+    auto gg = fonction_auto({5}, 3, 2);
+    print(gg);
+    auto ff = fonction_auto(5, 3, 2);
+    print(ff);
+    return 0;
+}
+
 int testTab() {
     auto a = {{18}, {69}};
         print(a);
@@ -60,8 +72,5 @@ int main() {
     test = testTabStacking(5);
     print(line);
     test = testTab();
-    print(line);
-    auto sum = sum(100);
-    print(sum);
-    return 0;
+    return test;
 }
