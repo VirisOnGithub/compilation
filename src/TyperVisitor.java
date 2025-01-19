@@ -557,6 +557,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         addUnifyConstraint(variable, declVarNode);
         if (this.currentState == tempState) {
             tempVarTypes.add(declVarNode);
+            tempVarTypes.add(variable);
         }
         return variable;
     }
@@ -741,6 +742,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         }
 
         UnknownType varRef = this.varStack.getVar(variableNode.getText());
+        addUnifyConstraint(variableNode, varRef);
 
         int nbChildren = ctx.getChildCount();
         // no tab access
