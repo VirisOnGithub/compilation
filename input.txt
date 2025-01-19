@@ -13,57 +13,55 @@ int testTab() {
     auto oui = a[3][8];
         print(oui);
         print(a);
-
     return 0;
 }
 
-int num(int num) {
-    int sum = num;
-    return sum;
-}
-
 bool hanoi_swap(int start, int middle, int end, int rings) {
-    int line = 11111;
     if (rings == 0)
         return true;
     auto pass1 = hanoi_swap(start, end, middle, rings - 1);
-    print(line);
-    print(start);
-    print(end);
+    int[] printable = {start, end};
+    print(printable);
     auto pass2 = hanoi_swap(middle, start, end, rings - 1);
     return pass1 && pass2;
 }
 
-bool hanoi(int number) {
+int hanoi(int number) {
     auto pass = hanoi_swap(0, 1, 2, number);
-    return pass;
+    if (pass)
+        return 1;
+    return 0;
 }
 
-bool recursive(int number) {
-    if (number == 0)
-        return true;
-    int line = 11111;
-    int var = 5 - number;
-    print(line);
-    print(var);
-    auto pass = recursive(number - 1);
-    print(line);
-    print(line);
-    print(number);
-    print(var);
-    return pass;
+int sum(int n) {
+    if (n == 0) return 0;
+    return (n + sum(n - 1));
 }
 
 int testHannoi() {
-    int var = 10;
-    auto number = 3;
+    auto number = 10;
     auto pass = hanoi(number);
-    print(var);
+    return 0;
+}
+
+int testTabStacking(int num) {
+    if (num == 0) return 0;
+    int[] local = {num, num + 1};
+    auto a = testTabStacking(num - 1);
+    print(num);
+    print(local);
     return 0;
 }
 
 int main() {
-    auto test = testHannoi();
+    int line = 111111;
+    auto test = hanoi(3);
+    print(line);
+    test = testTabStacking(5);
+    print(line);
     test = testTab();
-    return test;
+    print(line);
+    auto sum = sum(100);
+    print(sum);
+    return 0;
 }
