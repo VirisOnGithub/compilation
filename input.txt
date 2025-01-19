@@ -72,5 +72,8 @@ int main() {
     test = testTabStacking(5);
     print(line);
     test = testTab();
-    return test;
+    print(line);
+    auto sum = sum(100);
+    print(sum);
+    return 0;
 }
