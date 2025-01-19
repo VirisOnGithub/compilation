@@ -262,7 +262,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         int tabRegister = this.nextRegister - 1; // stock the name of the array
         program.addInstructions(visit(ctx.getChild(2)));
         int indexRegister = this.nextRegister - 1; // stock the index we access in the array
-        int depth = getArrayDepth(this.types.get(new UnknownType(ctx.getChild(0)))) - 1; // depth of elements is 1 less than the depth of the array
+        int depth = getArrayDepth(this.types.get(new UnknownType(ctx.getChild(0))));
 
         program.addInstructions(this.stackRegister(tabRegister)); // stack the arguments
         program.addInstructions(this.stackRegister(indexRegister));
@@ -653,13 +653,13 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
                 program.addInstruction(new Mem(Mem.Op.LD, leftRegister, leftRegister));
             program.addInstructions(visit(ctx.getChild(child))); // element pointer returned in R(nextRegister - 1)
             int indexRegister = this.nextRegister - 1;
-            arrayDepth--; // the content of the array has less depth
             program.addInstructions(this.stackRegister(leftRegister)); // we stack the arguments
             program.addInstructions(this.stackRegister(indexRegister));
             program.addInstructions(this.setRegisterTo(depthRegister, arrayDepth));
             program.addInstructions(this.stackRegister(depthRegister));
             program.addInstruction(new JumpCall(JumpCall.Op.CALL, "*tab_access")); // we call the tab_access function
             program.addInstructions(this.unstackRegister(leftRegister)); // we get the result
+            arrayDepth--; // the content of the array has less depth
         }
 
         if (bracketsCount == 0) { // if it's not a pointer, we store the value in the register
