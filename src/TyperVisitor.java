@@ -721,7 +721,10 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
             throwCustomError("Type error: variable " + varName + " isn't defined at line " + getLine(ctx));
         }
 
-        this.printStack.getLast().add(this.varStack.getVar(ctx.VAR().getText()));
+        UnknownType declaredVar = this.varStack.getVar(ctx.VAR().getText());
+
+        this.printStack.getLast().add(declaredVar);
+        addUnifyConstraint(ctx.VAR(), declaredVar);
 
         return null;
     }
