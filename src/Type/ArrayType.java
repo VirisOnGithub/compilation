@@ -31,7 +31,7 @@ public class ArrayType extends Type {
                 throw new Error("TypeError: cannot unify " + this + " to " + t);
             } else {
                 //cas Tab[X] ~ Y
-                map.put((UnknownType) t, this.tabType);
+                map.put((UnknownType) t, this);
                 return map;
             }
         }

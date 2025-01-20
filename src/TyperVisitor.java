@@ -581,17 +581,16 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         ParseTree expr = ctx.getChild(1);
         Type exprType = visit(expr);
 
-        if ((exprType instanceof PrimitiveType || exprType instanceof ArrayType) && !exprType.equals(lastReturnType)) {
-            throw new TyperError("Tous les return de la même fonction doivent être du même type", ctx);
-        }
-
         try {
+            System.out.println("LAAAAAAAA"+ this.lastReturnType);
             HashMap<UnknownType, Type> constraints = new HashMap<>(exprType.unify(this.lastReturnType));
             System.out.println("Contraintes " + constraints);
             this.substituteTypes(constraints);
         } catch (Error e) {
-            throw new TyperError("Problème return", ctx);
+            throw new TyperError("Tous les return doivent avoir le même type", ctx);
         }
+
+        this.lastReturnType = exprType;
 
 
         return exprType;
@@ -610,6 +609,14 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         int returnExprIndex = nbChildren - 3;
         ParseTree returnExpr = ctx.getChild(returnExprIndex);
         Type returnType = visit(returnExpr);
+
+        try {
+            HashMap<UnknownType, Type> constraints = new HashMap<>(returnType.unify(this.lastReturnType));
+            System.out.println("Contraintes " + constraints);
+            this.substituteTypes(constraints);
+        } catch (Error e) {
+            throw new TyperError("Problème return", ctx);
+        }
 
         return returnType;
     }
@@ -673,7 +680,13 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         ParseTree core_fctNode = ctx.getChild(core_fctIndex);
         visit(core_fctNode);
 
+        FunctionType functionType3 = new FunctionType(functionReturnType, paramTypeList);
+        HashMap<UnknownType, Type> functionConstraints3 = new HashMap<>(functionName.unify(functionType3));
+
         this.leaveBlock();
+
+        this.substituteTypes(functionConstraints3);
+
         return null;
     }
 
