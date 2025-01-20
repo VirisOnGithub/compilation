@@ -6,6 +6,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import src.Type.*;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements grammarTCLVisitor<Type> {
 
@@ -34,35 +35,57 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         System.out.println("types = "+this.types);
     }
 
+    private boolean isKnown(Type type) {
+        if (type instanceof PrimitiveType) {
+            return true;
+        }
+        if (type instanceof ArrayType) {
+            return isKnown(((ArrayType) type).getTabType());
+        }
+        return false;
+    }
+
     private void substituteTypes(HashMap<UnknownType, Type> constraints) {
-        constraints.forEach((variable, type) -> {
-            if (!this.typesStack.contains(variable)) {
-                this.typesStack.assignVar(variable, type);
-            } else {
-                Stack<Map<UnknownType, Type>> oldTypesStack = this.typesStack.getStack();
-                Stack<Map<UnknownType, Type>> newTypesStack = (Stack<Map<UnknownType, Type>>) oldTypesStack.clone();
+        AtomicBoolean isFinish = new AtomicBoolean(true);
+        Map<UnknownType, Type> newConstraints = new HashMap<>();
+        Map<UnknownType, Type> oldConstraints = new HashMap<>();
+        do {
+            isFinish.set(true);
+            constraints.forEach((variable, type) -> {
+                if (!this.typesStack.contains(variable)) {
+                    this.typesStack.assignVar(variable, type);
+                } else {
+                    Stack<Map<UnknownType, Type>> oldTypesStack = this.typesStack.getStack();
+                    Stack<Map<UnknownType, Type>> newTypesStack = (Stack<Map<UnknownType, Type>>) oldTypesStack.clone();
 
-
-                oldTypesStack.forEach((layer) -> {
-                    int indexOfTmp = newTypesStack.indexOf(layer);
-                    HashMap<UnknownType, Type> newLayer = new HashMap<>(layer);
-                    if (layer.containsKey(variable)) {
-                        Type typeTmp = layer.get(variable);
-                        newLayer.put(variable, typeTmp.substituteAll(constraints));
-                    } else {
-                        layer.forEach((key, value) -> {
-                            if (value.contains(variable)) {
-                                newLayer.put(key, value.substituteAll(constraints));
+                    oldTypesStack.forEach((layer) -> {
+                        oldConstraints.put(variable, type);
+                        int indexOfTmp = newTypesStack.indexOf(layer);
+                        HashMap<UnknownType, Type> newLayer = new HashMap<>(layer);
+                        if (layer.containsKey(variable)) {
+                            if (isKnown(type)) {
+                                Type oldTypeToSubstitute = this.typesStack.getLastTypeOfVarName(variable.getVarName());
+                                newConstraints.putAll(oldTypeToSubstitute.unify(type));
+                                isFinish.set(false);
                             }
-                        });
-                    }
-                    newTypesStack.set(indexOfTmp, newLayer);
-                });
+                            newLayer.put(variable, variable.substituteAll(constraints));
+                        } else {
+                            layer.forEach((key, value) -> {
+                                if (value.contains(variable)) {
+                                    newLayer.put(key, value.substituteAll(constraints));
+                                }
+                            });
+                        }
+                        newTypesStack.set(indexOfTmp, newLayer);
+                    });
 
-                this.typesStack.setStack(newTypesStack);
+                    this.typesStack.setStack(newTypesStack);
 
-            }
-        });
+                }
+            });
+            oldConstraints.forEach(constraints::remove);
+            constraints.putAll(newConstraints);
+        } while (!isFinish.get());
         System.out.println(this.typesStack);
     }
 
@@ -461,8 +484,9 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         if(reservedKeywords.contains(firstVariableNode.getText())){
             throw new TyperError("Keyword is not allowed for variable name", ctx, 1);
         }
-        UnknownType firstVariable = new UnknownType(firstVariableNode);
+        UnknownType firstVariable = this.typesStack.getLastUTOfVarName((new UnknownType(firstVariableNode)).getVarName());
         HashMap<UnknownType, Type> constraints = new HashMap<>();
+        System.out.println("!!!!!!" + constraints);
         int nbChildren = ctx.getChildCount();
         if (nbChildren == 4) {
             // Si on n'a pas de tableau
@@ -470,6 +494,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
             Type expression = visit(expressionNode);
             try {
                 constraints.putAll(firstVariable.unify(expression));
+                System.out.println("!!!!!!" + constraints);
             } catch (Error e) {
                 throw new TyperError(e.getMessage(), ctx);
             }
@@ -582,17 +607,16 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         ParseTree expr = ctx.getChild(1);
         Type exprType = visit(expr);
 
-        if ((exprType instanceof PrimitiveType || exprType instanceof ArrayType) && !exprType.equals(lastReturnType)) {
-            throw new TyperError("Tous les return de la même fonction doivent être du même type", ctx);
-        }
-
         try {
+            System.out.println("LAAAAAAAA"+ this.lastReturnType);
             HashMap<UnknownType, Type> constraints = new HashMap<>(exprType.unify(this.lastReturnType));
             System.out.println("Contraintes " + constraints);
             this.substituteTypes(constraints);
         } catch (Error e) {
-            throw new TyperError("Problème return", ctx);
+            throw new TyperError("Tous les return doivent avoir le même type", ctx);
         }
+
+        this.lastReturnType = exprType;
 
 
         return exprType;
@@ -612,13 +636,19 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         ParseTree returnExpr = ctx.getChild(returnExprIndex);
         Type returnType = visit(returnExpr);
 
+        try {
+            HashMap<UnknownType, Type> constraints = new HashMap<>(returnType.unify(this.lastReturnType));
+            System.out.println("Contraintes " + constraints);
+            this.substituteTypes(constraints);
+        } catch (Error e) {
+            throw new TyperError("Problème return", ctx);
+        }
+
         return returnType;
     }
 
     @Override
     public Type visitDecl_fct(grammarTCLParser.Decl_fctContext ctx) throws TyperError {
-        System.out.println("Visit declare function : type VAR '(' (type VAR (',' type VAR)*)? ')' core_fct;");
-
         ParseTree functionReturnTypeNode = ctx.getChild(0);
         Type functionReturnType = visit(functionReturnTypeNode);
 
@@ -660,7 +690,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         this.substituteTypes(functionConstraints);
 
         //Passage dans le layer d'au-dessus
-        //Parce que les noms de paramètres et les variables du core_fct
+        //Parce que les noms de paramÃ¨tres et les variables du core_fct
         // ne sont pas des variables globales
         this.enterBlock(); // pas utile pour moi (Luka)
 
@@ -675,6 +705,12 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         visit(core_fctNode);
 
         this.leaveBlock();
+
+        UnknownType oldFunction = this.typesStack.getLastUTOfVarName(functionName.getVarName());
+        FunctionType oldFunctionType = (FunctionType) this.typesStack.getLastTypeOfVarName(functionName.getVarName());
+        HashMap<UnknownType, Type> lastConstraint = (HashMap<UnknownType, Type>) oldFunction.unify(new FunctionType(this.lastReturnType, oldFunctionType.getArgs()));
+        substituteTypes(lastConstraint);
+
         return null;
     }
 
