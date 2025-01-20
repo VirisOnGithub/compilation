@@ -11,7 +11,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     private final Map<UnknownType,Type> types = new HashMap<>();
     private Type lastReturnType = null;
-    private final TypesStack typesStack = new TypesStack();
+    private final VarStack<UnknownType, Type> typesStack = new VarStack<>();
 
     public Map<UnknownType, Type> getTypes() {
         return types;
@@ -19,7 +19,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     private void enterBlock() {
         System.out.println("enterBlock");
-        this.typesStack.addNewBlock();
+        this.typesStack.enterBlock();
     }
 
     /**
@@ -35,8 +35,8 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     private void substituteTypes(HashMap<UnknownType, Type> constraints) {
         constraints.forEach((variable, type) -> {
-            if (!this.typesStack.contains(variable)) {
-                this.typesStack.putLastStack(variable, type);
+            if (!this.typesStack.varExists(variable)) {
+                this.typesStack.assignVar(variable, type);
             } else {
                 Map<UnknownType, Type> layer = this.typesStack.getLastStackOfUT(variable);
                 int indexOfTmp = this.typesStack.indexOf(layer);
