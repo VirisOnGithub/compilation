@@ -8,6 +8,11 @@ public class ConflictGraph extends UnorientedGraph<String> {
     private Map<Instruction, Set<String>> in;
     private Map<Instruction, Set<String>> out;
 
+    /**
+     * Constructeur
+     * @param controlGraph
+     * @param program
+     */
     public ConflictGraph(ControlGraph controlGraph, Program program) {
         super();
         this.in = new HashMap<>();
@@ -16,6 +21,11 @@ public class ConflictGraph extends UnorientedGraph<String> {
         buildConflictGraph(controlGraph, program);
     }
 
+    /**
+     * Retourne les variables vivantes
+     * @param controlGraph
+     * @param program
+     */
     private void computeLiveness(ControlGraph controlGraph, Program program) {
         boolean changed;
         for (Instruction instruction : controlGraph.getAllVertices(program)) {
@@ -44,6 +54,11 @@ public class ConflictGraph extends UnorientedGraph<String> {
         } while (changed);
     }
 
+    /**
+     * Construit le graphe de conflit
+     * @param controlGraph
+     * @param program
+     */
     private void buildConflictGraph(ControlGraph controlGraph, Program program) {
         for (Instruction instruction : controlGraph.getAllVertices(program)) {
             Set<String> def = getDef(instruction);
@@ -73,7 +88,11 @@ public class ConflictGraph extends UnorientedGraph<String> {
         }
     }
     
-
+    /**
+     * Retourne les variables utilisées
+     * @param instruction
+     * @return
+     */
     private Set<String> getUse(Instruction instruction) {
         Set<String> use = new HashSet<>();
         if (instruction instanceof IO) {
@@ -94,6 +113,11 @@ public class ConflictGraph extends UnorientedGraph<String> {
         return use;
     }
 
+    /**
+     * Retourne les variables définies
+     * @param instruction
+     * @return
+     */
     private Set<String> getDef(Instruction instruction) {
         Set<String> def = new HashSet<>();
         if (instruction instanceof IO) {
