@@ -147,8 +147,9 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         Type indexType = visit(indexNode);
 
         HashMap<UnknownType, Type> constraints = new HashMap<>();
+        UnknownType contentType = new UnknownType();
         try {
-            constraints.putAll(exprType.unify(new ArrayType(new UnknownType())));
+            constraints.putAll(exprType.unify(new ArrayType(contentType)));
             this.substituteTypes(constraints);
 
             constraints.putAll(indexType.unify(new PrimitiveType(Type.Base.INT)));
@@ -163,11 +164,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
         this.substituteTypes(constraints);
 
-        if (!(exprType instanceof ArrayType)) {
-            throw  new TyperError(exprNode +" doit être un tableau", ctx);
-        }
-
-        return ((ArrayType) exprType).getTabType();
+        return  contentType;
     }
 
     @Override
