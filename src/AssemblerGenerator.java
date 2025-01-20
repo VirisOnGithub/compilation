@@ -18,19 +18,26 @@ public class AssemblerGenerator {
     private Program program;
     private ConflictGraph conflictGraph;
     private int dynamicArrayIndex;
+    private int USE_CONFLICT_GRAPH;
 
     /**
      * Constructeur
      * @param program
      */
-    public AssemblerGenerator(Program program, ConflictGraph conflictGraph) {
+    public AssemblerGenerator(Program program, ConflictGraph conflictGraph, int USE_CONFLICT_GRAPH) {
         this.program = program;
         this.conflictGraph = conflictGraph;
         this.dynamicArrayIndex = 57000 - conflictGraph.color();
+        this.USE_CONFLICT_GRAPH = USE_CONFLICT_GRAPH;
     }
 
     private int getActualRegister(int register) {
-        return conflictGraph.getColor("R" + register);
+        if (this.USE_CONFLICT_GRAPH == 1) {
+            return conflictGraph.getColor("R" + register);
+        }
+        else {
+            return register;
+        }
     }
 
     private String getRegister(int register, StringBuilder result, int operationRegister) {
@@ -121,7 +128,7 @@ public class AssemblerGenerator {
                         int imm = uali.getImm();
                         String newDestReg = this.getRegisterNumber(destReg);
                         String newReg1 = this.getRegister(reg1, result, 30);
-                        currentlyBuildInstruction += (op + " " + newDestReg + " " + newReg1 + " " + imm + "\n");
+                        currentlyBuildInstruction += (op + "i " + newDestReg + " " + newReg1 + " " + imm + "\n");
                         result.append(currentlyBuildInstruction);
                         this.returnRegister(destReg, result);
                     }
@@ -292,7 +299,7 @@ public class AssemblerGenerator {
         ControlGraph controlGraph = new ControlGraph(program);
         ConflictGraph conflictGraph = new ConflictGraph(controlGraph, program);
 
-        AssemblerGenerator generator = new AssemblerGenerator(program, conflictGraph);
+        AssemblerGenerator generator = new AssemblerGenerator(program, conflictGraph, 1);
 
         String assemblyCode = generator.generateAssembly();
         System.out.println(assemblyCode);
