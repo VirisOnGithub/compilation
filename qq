@@ -1,0 +1,1833 @@
+[33mcommit 5a7ad1dab24ba615468f5a9c151a6e5e958634a9[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Mon Jan 20 20:25:00 2025 +0100
+
+    update README.md
+
+[33mcommit b1ea59165c48b3bf8d4eb347e371d353305b9159[m
+Merge: 726f0af 14da695
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Mon Jan 20 20:10:14 2025 +0100
+
+    Merge remote-tracking branch 'origin/groupe3'
+
+[33mcommit 14da6959efe4aa7e767e0fa98892c356e63e8cce[m
+Author: Nadir Ayoub <zenkai0401@gmail.com>
+Date:   Mon Jan 20 20:09:44 2025 +0100
+
+    javadoc
+
+[33mcommit 726f0aff5bcd0e2eb16aa9f55bde10419ad35969[m
+Merge: 00f4405 50b5d22
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Mon Jan 20 20:09:30 2025 +0100
+
+    Merge remote-tracking branch 'origin/groupe3'
+
+[33mcommit 50b5d224be58782dfd8f5fe409d1c6ff6bd56eb7[m
+Author: Nadir Ayoub <zenkai0401@gmail.com>
+Date:   Mon Jan 20 20:03:25 2025 +0100
+
+    fix graphe de conflit
+
+[33mcommit 00f44054f905101847f338c2c929e1726110c695[m
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Mon Jan 20 19:54:06 2025 +0100
+
+    update README.md
+
+[33mcommit 059077c1b7ec6c8662829de92393591008c0aeba[m
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Mon Jan 20 19:48:24 2025 +0100
+
+    update README.md
+
+[33mcommit 442d447a2e62b87ec84ae25963870f945d597ebe[m
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Mon Jan 20 19:30:15 2025 +0100
+
+    ajout options main
+
+[33mcommit 44203782ef632a46828a56cc45a8bf542efe0605[m
+Merge: 6a42a3d 9d0b094
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Mon Jan 20 19:08:59 2025 +0100
+
+    Merge remote-tracking branch 'origin/groupe3'
+    
+    # Conflicts:
+    #       src/Main.java
+
+[33mcommit 9d0b094393959ca8a2a6450a47ac692e35b09139[m
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Mon Jan 20 19:07:28 2025 +0100
+
+    AssemblerGenerator marche ? je crois ?
+
+[33mcommit ddebdb761f5fee3aeed394467b3d8dc50205f109[m
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Mon Jan 20 18:55:46 2025 +0100
+
+    AssemblerGenerator marche
+
+[33mcommit 6a42a3de7403dd81b5b18632313fca061fef3f10[m
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Mon Jan 20 18:26:07 2025 +0100
+
+    ALED SIMON
+
+[33mcommit fefb1f45e0c9daac3d23dcc73a8abf641d7b83af[m
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Mon Jan 20 18:18:57 2025 +0100
+
+    fix fix fix
+
+[33mcommit e76570a7bbef22602939fac67a6b424b69203228[m
+Author: Amin - Ayoub <ayoub.nadir@etu.univlyon1.fr>
+Date:   Mon Jan 20 18:12:45 2025 +0100
+
+    update
+
+[33mcommit 95fe7845048a8bad227c72d282c6201e875f1a28[m
+Merge: 89553e2 d619711
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Mon Jan 20 18:08:55 2025 +0100
+
+    Merge remote-tracking branch 'origin/groupe2'
+    
+    # Conflicts:
+    #       README.md
+    #       input.txt
+    #       src/Type/UnknownType.java
+    #       src/TyperVisitor.java
+    #       src/VarStack.java
+
+[33mcommit 97a228d9dbf0162641499e35b598edd3f0a97e19[m
+Author: Amin - Ayoub <ayoub.nadir@etu.univlyon1.fr>
+Date:   Mon Jan 20 17:58:40 2025 +0100
+
+    fix allocation registre en mémoire
+
+[33mcommit 89553e272f1c934a3cd92df754725064c59bc0c3[m
+Author: Melvyn <melvyn.bauvent@etu.univ-lyon1.fr>
+Date:   Mon Jan 20 17:43:45 2025 +0100
+
+    fix : profondeur de variables
+
+[33mcommit 62099aa50ec6a669c372c290194bdf7c7891769d[m
+Author: Melvyn <melvyn.bauvent@etu.univ-lyon1.fr>
+Date:   Mon Jan 20 16:59:07 2025 +0100
+
+    fix TypeVisitor
+
+[33mcommit 26cca4c6a73267679efd00eb45d5a4ca3d386e07[m
+Author: Melvyn <melvyn.bauvent@etu.univ-lyon1.fr>
+Date:   Mon Jan 20 16:07:59 2025 +0100
+
+    feat : toString VarStack
+
+[33mcommit 356d6005ed833f69e8f9cff40ab6b153f7ac1dc4[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Mon Jan 20 15:41:12 2025 +0100
+
+    fix tab access :)
+
+[33mcommit 88033b8a2bc06ef35fbf87457bd28edb8b5a8ed1[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Mon Jan 20 15:35:42 2025 +0100
+
+    bye bye typestack
+
+[33mcommit 624509622ce5a9b1fa8b42304169ae2f9c207c28[m
+Author: Melvyn <melvyn.bauvent@etu.univ-lyon1.fr>
+Date:   Mon Jan 20 11:17:15 2025 +0100
+
+    fix : c'est finis ?
+
+[33mcommit d619711b878bfea2a6beaafd6f402070d19efcdc[m[33m ([m[1;31morigin/groupe2[m[33m, [m[1;32mgroupe2[m[33m)[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Mon Jan 20 00:12:46 2025 +0100
+
+    fix tab_access asm code
+
+[33mcommit 35be22cfc2d2dacab7f92eecbeacbe19cad63608[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Sun Jan 19 23:52:07 2025 +0100
+
+    fix arg count
+
+[33mcommit 257bc9574f72c262e42cfef80fd661aae055805f[m
+Author: Nadir Ayoub <zenkai0401@gmail.com>
+Date:   Sun Jan 19 22:03:08 2025 +0100
+
+    final push
+
+[33mcommit d5323026fa9ba8281cf13dff154b808012ff66eb[m
+Author: Nadir Ayoub <zenkai0401@gmail.com>
+Date:   Sun Jan 19 21:47:32 2025 +0100
+
+    update avec javadoc
+
+[33mcommit 2756e300b0796e729490d6a60e443680f85d7ccc[m
+Author: Nadir Ayoub <zenkai0401@gmail.com>
+Date:   Sun Jan 19 21:22:10 2025 +0100
+
+    version 2.0 qui marche avec un program de test
+
+[33mcommit 15c8b844637e8ca151d9b1151996b7686df5db2d[m
+Author: Melvyn <melvyn.bauvent@etu.univ-lyon1.fr>
+Date:   Sun Jan 19 20:13:29 2025 +0100
+
+    fix : mini fix tjr pas fonctionnel
+
+[33mcommit 54d4768331aefc2c7f62ac483053f7e0feb18cfb[m
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Sun Jan 19 18:11:40 2025 +0100
+
+    meilleur fichier de tests
+
+[33mcommit 479d93c4893da06ecc9848fd393f3b656522b93f[m
+Merge: 95cbede 9bf64ec
+Author: Nadir Ayoub <zenkai0401@gmail.com>
+Date:   Sun Jan 19 17:05:30 2025 +0100
+
+    Merge branch 'groupe3' of https://github.com/VirisOnGithub/compilation into groupe3
+
+[33mcommit 95cbede4db6b5a327543d84c63b80932c76e7770[m
+Author: Nadir Ayoub <zenkai0401@gmail.com>
+Date:   Sun Jan 19 17:04:19 2025 +0100
+
+    synch
+
+[33mcommit 9bf64ec617361a82c14f6b7883ca189496bf18b4[m
+Merge: 36d01c1 e27a364
+Author: ZartoxSFT <darkfireyo@gmail.com>
+Date:   Sun Jan 19 17:03:12 2025 +0100
+
+    Merge branch 'groupe3' of https://github.com/VirisOnGithub/compilation into groupe3
+
+[33mcommit 36d01c13c1870fa941260875a36608b0a5280503[m
+Author: ZartoxSFT <darkfireyo@gmail.com>
+Date:   Sun Jan 19 17:02:13 2025 +0100
+
+    Mise en place du systeme de registre sauvegardé
+
+[33mcommit e27a3642552893d8becf9c291ee1b885319397ab[m
+Author: Nadir Ayoub <zenkai0401@gmail.com>
+Date:   Sun Jan 19 16:58:30 2025 +0100
+
+    update
+
+[33mcommit e077a36528acef0fa05a357d732d055b79c5ae47[m
+Author: Nadir Ayoub <zenkai0401@gmail.com>
+Date:   Sun Jan 19 16:57:24 2025 +0100
+
+    update
+
+[33mcommit 7c663f1e9c69c5bcd071cd9b7b44249cd2af04de[m
+Merge: 67dff8f d081f25
+Author: ZartoxSFT <darkfireyo@gmail.com>
+Date:   Sun Jan 19 16:26:13 2025 +0100
+
+    Merge branch 'groupe3' of https://github.com/VirisOnGithub/compilation into groupe3
+
+[33mcommit d081f25b3eaf53be3ba2b96d071cea723f00ec69[m
+Author: Nadir Ayoub <zenkai0401@gmail.com>
+Date:   Sun Jan 19 16:25:58 2025 +0100
+
+    fix ConflictGraph
+
+[33mcommit 6c43c4fe7e011bed3125ccae59b06224e1fc5657[m
+Author: Nadir Ayoub <zenkai0401@gmail.com>
+Date:   Sun Jan 19 16:24:45 2025 +0100
+
+    update
+
+[33mcommit 67dff8f2217187ecbf5b4825445d6c2303737e7b[m
+Author: ZartoxSFT <darkfireyo@gmail.com>
+Date:   Sun Jan 19 16:16:47 2025 +0100
+
+    Réparations des instructions sans label
+
+[33mcommit 065df58e73037cd24bfde37b4bb203f4bbbb2650[m
+Author: Nadir Ayoub <zenkai0401@gmail.com>
+Date:   Sun Jan 19 15:14:39 2025 +0100
+
+    fixes
+
+[33mcommit 63628a4ee3c174926fbdda7091d2674e36041fec[m
+Author: Clément <clement.reniers@etu.univ-lyon1.fr>
+Date:   Sun Jan 19 14:36:42 2025 +0100
+
+    mini changement
+
+[33mcommit 25f2c741c3d5c51705049c974dd23b2e54cfb9b6[m
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Sun Jan 19 14:18:15 2025 +0100
+
+    meilleur fichier de tests
+
+[33mcommit 94b76b151f814b200fe701497b3510833a57cf9e[m
+Merge: bdd3c78 7d7166a
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Sun Jan 19 14:14:36 2025 +0100
+
+    Merge remote-tracking branch 'origin/groupe2' into groupe2
+
+[33mcommit bdd3c785c669ec9656df53908558eb2df711432a[m
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Sun Jan 19 14:14:18 2025 +0100
+
+    c'est sale mais ça marche
+
+[33mcommit 4d7d6aa9c68780ad1921b37ec5095236e9b2a9cb[m
+Author: Melvyn <melvyn.bauvent@etu.univ-lyon1.fr>
+Date:   Sun Jan 19 13:49:30 2025 +0100
+
+    fix : toujours des pbs
+
+[33mcommit 7d7166aac28b2031a5f1e13e63d89e2aa27720d5[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Sun Jan 19 13:47:18 2025 +0100
+
+    fix merge
+
+[33mcommit 263f34cfc15db0901745c3cc55a502af1c951a73[m
+Merge: 781e8ee 9743f43
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Sun Jan 19 13:45:50 2025 +0100
+
+    Merge branch 'groupe2-simon' into groupe2
+
+[33mcommit 9743f43c7d2acdc44d10349b22eb57200b0ad85c[m[33m ([m[1;31morigin/groupe2-simon[m[33m)[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Sun Jan 19 13:43:15 2025 +0100
+
+    un peu moins de magie noire
+
+[33mcommit c378785fd211bedf56a3511d042bb24524eb121b[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Sun Jan 19 13:26:14 2025 +0100
+
+    un peu plus simple
+
+[33mcommit 781e8ee904ec1cf48fca9c645671126271740ed9[m
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Sun Jan 19 13:20:10 2025 +0100
+
+    meilleur fichier de tests
+
+[33mcommit 6d4c5c424e8b8966b948278cded7d7d26d1e12c4[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Sun Jan 19 13:15:59 2025 +0100
+
+    exemple avec des fonctions auto :O
+
+[33mcommit 72db2448eb4971c3d10d51ff77648cc38f2f3d68[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Sun Jan 19 13:15:15 2025 +0100
+
+    oups
+
+[33mcommit a24a5cd30e090ea047fea97cf4d11177bbdf685d[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Sun Jan 19 13:13:49 2025 +0100
+
+    un peu con le simon
+
+[33mcommit 336ce489ccfbf93207eea6bbafdb35e784230b4f[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Sun Jan 19 12:56:40 2025 +0100
+
+    stack inutile
+
+[33mcommit 4e32e2debf6c638a2bf29dddf251305dff005cd1[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Sun Jan 19 12:32:33 2025 +0100
+
+    remove criminal parenthesis
+
+[33mcommit b39bb0da8d451234bbb9c4ff9faf1f9cbcc70b37[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Sun Jan 19 12:31:37 2025 +0100
+
+    fix bool expressions
+
+[33mcommit 4c7c8405c4255bbfdcd90b2a8bc0cf7b7712c74a[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Sun Jan 19 12:23:24 2025 +0100
+
+    "better" example
+
+[33mcommit 0fbeeda49d38cf4bf3ee2f2f30366e34859ec882[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Sun Jan 19 12:22:58 2025 +0100
+
+    update tab_access.asm
+
+[33mcommit 2d61995b908644349600b10c24ab65c7f1957472[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Sun Jan 19 12:22:04 2025 +0100
+
+    fix declaration of vars as other arrays
+
+[33mcommit a61bc09b9a9c0826321c47dd5d4072c8ea6e745b[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Sun Jan 19 12:18:59 2025 +0100
+
+    assertion
+
+[33mcommit 1ed65cba331b3b95d8c5e67d9b39be289f52b2b7[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Sun Jan 19 12:18:52 2025 +0100
+
+    oups
+
+[33mcommit 7d07763b9d617f9f083040c345ad191b70c68510[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Sun Jan 19 11:43:07 2025 +0100
+
+    petit oubli d'unification
+
+[33mcommit e0152de0af2d906a81a0d671d5fbe6be8277906c[m
+Author: Melvyn <melvyn.bauvent@etu.univ-lyon1.fr>
+Date:   Sun Jan 19 11:08:20 2025 +0100
+
+    ajout gestion des profondeurs
+
+[33mcommit 735d9bb31af88b0a960817242023803ecf3f75fd[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Sun Jan 19 10:58:47 2025 +0100
+
+    meilleur exemple
+
+[33mcommit 853558523994ba3219c000cc4a2e304b06bba354[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Sun Jan 19 10:41:36 2025 +0100
+
+    test tableaux
+
+[33mcommit 4d3bf24fadbd1211551acb6932d66098f6419024[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Sun Jan 19 10:39:50 2025 +0100
+
+    faut unifier aussi quand on print ...
+
+[33mcommit cbabd3e66ddcdc3e4e6d29e9ec8fe48a2ee7fc9a[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Sun Jan 19 10:39:09 2025 +0100
+
+    bro messed up array depth
+
+[33mcommit db7c6aa6f9f820482ad0b767c687a21db40feb08[m
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Sun Jan 19 01:33:08 2025 +0100
+
+    javadoc of new attribute
+
+[33mcommit cf5b13db6dcf1b435be2285ba84f811abcc7f491[m
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Sun Jan 19 01:30:55 2025 +0100
+
+    recursive calls works
+
+[33mcommit 36a8b2084f25ef31ea45be8cb09e2eeea833dc0c[m
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Sun Jan 19 00:26:20 2025 +0100
+
+    fix functions return
+
+[33mcommit 702ff6c71fb6d6388a23df518d51e80c4cbff766[m[33m ([m[1;31morigin/groupe2-julien[m[33m)[m
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Sat Jan 18 23:14:02 2025 +0100
+
+    ajout returnRegisters
+
+[33mcommit d98a3804b2139b371bbb1f4965bb8bd5a9a32ac0[m
+Author: Nadir Ayoub <zenkai0401@gmail.com>
+Date:   Sat Jan 18 22:41:17 2025 +0100
+
+    update
+
+[33mcommit 9a590f1b2be8958702eff6403408830264f57c30[m
+Merge: 5780042 6fca4fb
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Sat Jan 18 22:14:38 2025 +0100
+
+    Merge remote-tracking branch 'refs/remotes/origin/groupe2' into groupe2-julien
+
+[33mcommit 771cb6d6a6d95e539e1346f0e5aba86be9de15d7[m
+Author: Nadir Ayoub <zenkai0401@gmail.com>
+Date:   Sat Jan 18 18:55:40 2025 +0100
+
+    update général
+
+[33mcommit 6fca4fb9fa5f450e2f3a6ad565d2b76e5fbdc5f3[m
+Author: julienc <162288701+zulianc@users.noreply.github.com>
+Date:   Sat Jan 18 18:42:00 2025 +0100
+
+    fix visitOpposite
+
+[33mcommit 6370531f5f90e1571a245956b890efa142d9a00d[m
+Author: julienc <162288701+zulianc@users.noreply.github.com>
+Date:   Sat Jan 18 18:32:07 2025 +0100
+
+    Update CodeGenerator.java
+
+[33mcommit 57800427b0322904d3b3bdb75bc78c3e2e1f4412[m
+Merge: b3e3a0e 80c5a3b
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Sat Jan 18 17:53:51 2025 +0100
+
+    Merge remote-tracking branch 'origin/groupe1-simon' into groupe2-julien
+    
+    # Conflicts:
+    #       input.txt
+    #       src/TyperVisitor.java
+    #       src/VarStack.java
+
+[33mcommit 61d59810b632608b0d4f5feade3b8c3de3083674[m
+Merge: ce053a3 37a36e8
+Author: Nadir Ayoub <zenkai0401@gmail.com>
+Date:   Sat Jan 18 17:34:32 2025 +0100
+
+    Merge branch 'groupe3' of https://github.com/VirisOnGithub/compilation into groupe3
+
+[33mcommit ce053a3b6e33a931815fe1f8a5060ebad8421d9a[m
+Author: Nadir Ayoub <zenkai0401@gmail.com>
+Date:   Sat Jan 18 17:34:19 2025 +0100
+
+    update
+
+[33mcommit faba22a5c1a8ef5096e959846e5a0d30126bc2f6[m
+Author: Nadir Ayoub <zenkai0401@gmail.com>
+Date:   Sat Jan 18 17:27:17 2025 +0100
+
+    fix ControlGraph
+
+[33mcommit 80c5a3b4e68d0b642c7a14564b4f65be3257c803[m[33m ([m[1;31morigin/groupe1-simon[m[33m)[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Sat Jan 18 16:22:21 2025 +0100
+
+    fix programme de la mort fait par ChatGPT
+
+[33mcommit b3e3a0e3e318b629065ac1890fcd637b1937f80b[m
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Sat Jan 18 16:01:16 2025 +0100
+
+    ajout README.md
+
+[33mcommit 40ae197183f8fecb8f2b3a957db7b2c3aa4921fe[m
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Sat Jan 18 14:38:42 2025 +0100
+
+    javadoc
+
+[33mcommit 8869b0f8249a65035b10b4d374c20ac0a62fb8ce[m
+Author: Luka COUTANT <luka.coutant@etu.univ-lyon1.fr>
+Date:   Sat Jan 18 14:27:23 2025 +0100
+
+    stack pour les blocks sans l'unification finale avec types
+
+[33mcommit 24d81e7d64bbda733bef1a25f1bf2c4ee0ed1673[m
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Sat Jan 18 14:23:23 2025 +0100
+
+    javadoc
+
+[33mcommit 37a36e85226a3bd4ec858c8dafdedbf9566bd9ab[m
+Author: ZartoxSFT <darkfireyo@gmail.com>
+Date:   Sat Jan 18 14:20:52 2025 +0100
+
+    Full Assembly prog
+
+[33mcommit b5dee6e79b0936151804fa80ebb2ef24df3039ea[m
+Author: ZartoxSFT <darkfireyo@gmail.com>
+Date:   Sat Jan 18 14:19:24 2025 +0100
+
+    JMP fixed
+
+[33mcommit 274c8b9e9d498cda3e28d0f019359b7785d4ee8d[m
+Author: Nadir Ayoub <zenkai0401@gmail.com>
+Date:   Sat Jan 18 13:30:18 2025 +0100
+
+    pseudo fix de ControlGraph
+
+[33mcommit 3db237aeb2f308211a5d634121b7ad624db40dca[m
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Sat Jan 18 13:08:25 2025 +0100
+
+    rename assignRegister() to setRegisterTo()
+
+[33mcommit ad3468b06bb4476dcb6deb3c79bc559f95e39001[m
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Sat Jan 18 13:05:39 2025 +0100
+
+    remis des trucs un peu plus jolis
+
+[33mcommit 16b0d2afbb489fe650eba0d4e2c1d6b3c25d9dd1[m[33m ([m[1;32mgroupe1-simon[m[33m)[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Sat Jan 18 13:03:03 2025 +0100
+
+    bah non du coup
+
+[33mcommit 510795a9162e0ad34210675cf95b1ac9c475d7f7[m
+Author: Nadir Ayoub <zenkai0401@gmail.com>
+Date:   Sat Jan 18 13:00:53 2025 +0100
+
+    update AssemblerGenerator
+
+[33mcommit dd9ecde22cf00e615a050f8abae665fc4d66e28e[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Sat Jan 18 12:53:14 2025 +0100
+
+    monkey
+
+[33mcommit c4ced8c16734582a074025251f385fcb573eb9fb[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Sat Jan 18 12:52:22 2025 +0100
+
+    devoirs
+
+[33mcommit 2678f04c8b67e80e772631364fc248d34a132718[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Sat Jan 18 12:40:19 2025 +0100
+
+    update tab_access.asm
+
+[33mcommit efa1f6a442d9621fa0d805ff3ef1fc51783bc133[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Sat Jan 18 12:40:05 2025 +0100
+
+    test qui va bien
+
+[33mcommit c5ecb221ef6596af68a33df0dbe571fd3180194f[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Sat Jan 18 12:39:36 2025 +0100
+
+    tableauuuuuuuuuuuuux
+
+[33mcommit d44328db1378a55e3efa101d2b64a8398e852691[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Sat Jan 18 12:22:48 2025 +0100
+
+    un peu plus lisible
+
+[33mcommit 6432319bcd70f3eace65a235a14dff4e2d59b3d6[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Sat Jan 18 11:11:39 2025 +0100
+
+    un peu moins dégueu
+
+[33mcommit e9a7597f1a0b57bed2ff677f00c5e53569b38548[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Fri Jan 17 23:26:06 2025 +0100
+
+    gg ça marche
+
+[33mcommit 87c2b37d8008de27f0fff08072d30cfc38c65ff8[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Fri Jan 17 22:27:42 2025 +0100
+
+    almost perfect
+
+[33mcommit e4043b21f5e45357910f0a8f9b1338fa6ab6c5b9[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Fri Jan 17 22:06:39 2025 +0100
+
+    return type set correctly
+
+[33mcommit 003e6771036d1a9e3ef4c9ec59e23d4d9d5cdfd5[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Fri Jan 17 20:22:09 2025 +0100
+
+    no need for that
+
+[33mcommit 169e233ccc045ab8c60806e29a6ed84c8538fa4f[m
+Author: Melvyn <melvyn.bauvent@etu.univ-lyon1.fr>
+Date:   Fri Jan 17 19:42:11 2025 +0100
+
+    feat : TypesStack
+
+[33mcommit 810853c52c10369768ef30b663831f8fd2a64acf[m
+Author: Nadir Ayoub <zenkai0401@gmail.com>
+Date:   Fri Jan 17 18:16:44 2025 +0100
+
+    update
+
+[33mcommit 8effdc5565e0f8918c615322cc80a6fa75a14258[m
+Merge: bb7b5b9 aa1832e
+Author: Nadir Ayoub <zenkai0401@gmail.com>
+Date:   Fri Jan 17 18:16:34 2025 +0100
+
+    Merge branch 'groupe3' of https://github.com/VirisOnGithub/compilation into groupe3
+
+[33mcommit bb7b5b9f768155a0b10ac650dc62307f9cfb3168[m
+Author: Nadir Ayoub <zenkai0401@gmail.com>
+Date:   Fri Jan 17 18:08:33 2025 +0100
+
+    v1.4
+
+[33mcommit 4a65c0880d3b5ea7f8c0cda64bcbbbd30915c9f3[m
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Fri Jan 17 17:35:18 2025 +0100
+
+    javadoc
+
+[33mcommit aa1832e5d6bc7dcd0173524ace4bbb495b0a54dd[m
+Author: ZartoxSFT <darkfireyo@gmail.com>
+Date:   Fri Jan 17 17:28:11 2025 +0100
+
+    RETTTTTTTT
+
+[33mcommit 50d9a9c759f65fde89f3c3cb60c1e62e37d6cf47[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Fri Jan 17 16:06:59 2025 +0100
+
+    plus qu'à freeze les arguments
+
+[33mcommit 144b5cef4a6bd668b96d2c193d4ddc931b01b63c[m
+Author: Nadir Ayoub <zenkai0401@gmail.com>
+Date:   Fri Jan 17 15:49:02 2025 +0100
+
+    bug fixes
+
+[33mcommit 2cd69d76f717ef4743d76cbbb63e45479e0b33ce[m
+Author: Nadir Ayoub <zenkai0401@gmail.com>
+Date:   Fri Jan 17 15:24:27 2025 +0100
+
+    upadate
+
+[33mcommit 3b4fd535cc74d2cb71810397f3e96a121c985952[m
+Merge: 8e8a3d9 b1fe73e
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Fri Jan 17 14:38:02 2025 +0100
+
+    Merge remote-tracking branch 'origin/groupe1' into groupe2
+    
+    # Conflicts:
+    #       .gitignore
+    #       input.txt
+    #       src/Main.java
+
+[33mcommit 1fb20d82718c49e5af26339be7b3fce653983fe7[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Fri Jan 17 13:48:29 2025 +0100
+
+    normalement y a toutes les contraintes
+
+[33mcommit b1fe73e679781a2b76159bf7308848c763d3e38f[m
+Author: Melvyn <melvyn.bauvent@etu.univ-lyon1.fr>
+Date:   Fri Jan 17 12:49:07 2025 +0100
+
+    fix : tab_access + refactor bigAssSubstitute
+
+[33mcommit 883362e68da8f2755b0a176e4f21b7a54ea31023[m
+Author: Clément <clement.reniers@etu.univ-lyon1.fr>
+Date:   Fri Jan 17 09:59:01 2025 +0100
+
+    `refactor: improve variable naming and add error handling in TyperVisitor.java`
+
+[33mcommit 16bc9378108c0981e242053bb2e08859a40ae721[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Thu Jan 16 23:55:52 2025 +0100
+
+    douteux un peu
+
+[33mcommit 66e92573e19c24592c0ef923ef8996ffc8c09852[m
+Author: Janet-Doe <lilas.grenier@etu.univ-lyon1.fr>
+Date:   Thu Jan 16 23:33:48 2025 +0100
+
+    start fix for visitFunction
+
+[33mcommit 0b7db6b7369fe9551a33e8dbeb7346fafa9596fb[m
+Author: Clément <clement.reniers@etu.univ-lyon1.fr>
+Date:   Thu Jan 16 22:52:06 2025 +0100
+
+    `refactor: improve error messages and variable naming for clarity in TyperVisitor and TyperError classes`
+
+[33mcommit 57e1d5235f3bc51145ed87118737f54c59e35db1[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Thu Jan 16 22:10:43 2025 +0100
+
+    omg ça marche
+
+[33mcommit ca04dcbbb33decf39ca7d81fa813c9e7fdeb4f68[m
+Author: Clément <clement.reniers@etu.univ-lyon1.fr>
+Date:   Thu Jan 16 22:00:41 2025 +0100
+
+    fix: added missing try/catch for visitNegation
+
+[33mcommit d4abba98d27d975223c5f249bfe66287fb883053[m
+Author: Clément <clement.reniers@etu.univ-lyon1.fr>
+Date:   Thu Jan 16 21:59:07 2025 +0100
+
+    fix: prevent usage of reserved keywords as variable names in assignments
+
+[33mcommit 5e698e41eff7e44bfbbb2052c1f123e26b9fcddb[m
+Author: Clément <clement.reniers@etu.univ-lyon1.fr>
+Date:   Thu Jan 16 21:52:19 2025 +0100
+
+    fix: handle errors and unify types in TyperVisitor methods
+
+[33mcommit 97bf030dc64753da63bb14a3581527a8124789cc[m
+Author: Nadir Ayoub <zenkai0401@gmail.com>
+Date:   Thu Jan 16 21:08:16 2025 +0100
+
+    update
+
+[33mcommit 9a9d63f9e4939dbf1504c67cd36340d802884d6b[m
+Author: Nadir Ayoub <zenkai0401@gmail.com>
+Date:   Thu Jan 16 20:19:26 2025 +0100
+
+    bug fixes
+
+[33mcommit b73ad86c1b8f44eeea8401fb6ad08e0370c357d2[m
+Author: Clément <clement.reniers@etu.univ-lyon1.fr>
+Date:   Thu Jan 16 19:46:07 2025 +0100
+
+    `refactor: rename bigAssSubstitute to substituteTypes
+
+[33mcommit 00db13696b66545f1fb9f3ed5b21268f0ebe5190[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Thu Jan 16 19:40:46 2025 +0100
+
+    begin bigAssSubstitute
+
+[33mcommit 00b1e06b58fc87ba877c8658bf3e683f407e1813[m
+Author: Clément <clement.reniers@etu.univ-lyon1.fr>
+Date:   Thu Jan 16 19:17:57 2025 +0100
+
+    add : try/catch for `unify`
+
+[33mcommit c6bc48072f95e852bbcb1ecce160b104b0036448[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Thu Jan 16 19:13:17 2025 +0100
+
+    au revoir
+
+[33mcommit b6a79a937354a0f9645f4751ad6b0dd7e24b1345[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Thu Jan 16 19:11:52 2025 +0100
+
+    big unify
+
+[33mcommit 317a70d090b20a6db49d4408b7f21dbb03bf6cc9[m
+Author: Nadir Ayoub <zenkai0401@gmail.com>
+Date:   Thu Jan 16 19:01:04 2025 +0100
+
+    ajout du stack pointer
+
+[33mcommit 47f571bfe2c0a48732729a259ab811977a07737a[m
+Author: Nadir Ayoub <zenkai0401@gmail.com>
+Date:   Thu Jan 16 18:50:55 2025 +0100
+
+    AssemblerGenerator v1.0
+
+[33mcommit 4c047efed72ca8305f4fcb3c041932dabdc90d2f[m
+Author: Nadir Ayoub <zenkai0401@gmail.com>
+Date:   Thu Jan 16 18:37:31 2025 +0100
+
+    MaJ de ConflictGraph pour ajouter d'autres types d'opérations + allocation des registres après minimalisation
+
+[33mcommit d59e26434f72bbecd16e24af69058fb3de11ff15[m
+Author: Clément <clement.reniers@etu.univ-lyon1.fr>
+Date:   Thu Jan 16 18:11:16 2025 +0100
+
+    doc : added documentation for TyperError
+    fix : changed the name of a variable to improve readability
+
+[33mcommit 42a727e3ea1b23d8594dca65254f8b2afde1d577[m
+Author: Nadir Ayoub <zenkai0401@gmail.com>
+Date:   Thu Jan 16 17:34:31 2025 +0100
+
+    fix graphe de conflits
+
+[33mcommit 84554c190a9f6bbe3ef0cee95a7f6a22ad3dc3e4[m
+Author: Clément <clement.reniers@etu.univ-lyon1.fr>
+Date:   Thu Jan 16 15:59:53 2025 +0100
+
+    Handle typer errors with a new exception class
+    
+    Introduced `TyperError` to standardize error handling across the type-checking process. Replaced inconsistent custom error handling with structured exceptions, adding better error context and messages. Updated visitors to throw `TyperError` when applicable and added a detailed error-printing method for improved debugging.
+
+[33mcommit 3cca2ef0d7ee4cc64ec9ef6e6d6352e6e2a08cfd[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Thu Jan 16 15:10:27 2025 +0100
+
+    update VarStack
+
+[33mcommit 4282111eb552b2ba6c2333cb6a824b4f3217fcc3[m
+Author: Clément <clement.reniers@etu.univ-lyon1.fr>
+Date:   Thu Jan 16 14:32:04 2025 +0100
+
+    fixed var name
+
+[33mcommit 8e8a3d975e5c8dc6a0d70e9bbe81b43d19915deb[m
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Thu Jan 16 14:01:49 2025 +0100
+
+    fix pour de vrai
+
+[33mcommit bb07630190033b2d5a9873fcfe306a44e0fa3a82[m
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Thu Jan 16 13:56:09 2025 +0100
+
+    fix
+
+[33mcommit 9b5197ba5b84672d614395c5c761062db0257c1b[m
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Thu Jan 16 13:28:04 2025 +0100
+
+    cleanup
+
+[33mcommit 9484c86ceb61cf259665b2050f7433c0c1dd6e2e[m
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Thu Jan 16 12:40:31 2025 +0100
+
+    rajouté la VarStack del hombre de la matriz
+
+[33mcommit b829f2b8519e9a78e862579355c680b7da1b16fe[m
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Thu Jan 16 12:10:11 2025 +0100
+
+    bonjour le groupe 1
+
+[33mcommit dfc06f504495eee1ef5a02916db2d7c6277fd51c[m
+Merge: 0dfb04d 330011b
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Thu Jan 16 12:08:53 2025 +0100
+
+    Merge remote-tracking branch 'origin/groupe1' into groupe2
+    
+    # Conflicts:
+    #       input.txt
+    #       src/Main.java
+    #       src/TyperVisitor.java
+
+[33mcommit 0dfb04d04eeb6059c2f557864b949735de74b988[m
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Thu Jan 16 12:06:58 2025 +0100
+
+    julien est passé par là aussi
+
+[33mcommit 6f92889a9d9b46f505dc32c6b4cabfcf3829de8f[m
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Thu Jan 16 12:06:03 2025 +0100
+
+    julien est encore passé par là
+
+[33mcommit 0beeedb7dedff697cf261c77ab689d98415e811c[m
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Thu Jan 16 12:01:41 2025 +0100
+
+    julien est passé par là
+
+[33mcommit 7db016b789f6a4451777600f51a6993909bff1e8[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Wed Jan 15 17:59:54 2025 +0100
+
+    ça maaaaaaaaaaaaaarche
+
+[33mcommit 330011b3aabd134e7947a45c88ba376da5a44195[m
+Merge: ccd4a5c 063bfa4
+Author: Melvyn <melvyn.bauvent@etu.univ-lyon1.fr>
+Date:   Wed Jan 15 14:05:09 2025 +0100
+
+    merge
+
+[33mcommit ccd4a5c64173db850b4a79f1da0686937436aeff[m
+Author: Melvyn <melvyn.bauvent@etu.univ-lyon1.fr>
+Date:   Wed Jan 15 14:04:39 2025 +0100
+
+    fix : visitDecl
+
+[33mcommit b5100ba48416b9d98eb2da85a62ebb8619878a71[m
+Author: ZartoxSFT <darkfireyo@gmail.com>
+Date:   Wed Jan 15 14:03:44 2025 +0100
+
+    Delete getLabel() method and code optimisations
+
+[33mcommit 21e5d8f5cc2dcf261f1855e92a4616b00178e0be[m
+Author: ZartoxSFT <darkfireyo@gmail.com>
+Date:   Wed Jan 15 13:58:17 2025 +0100
+
+    Ajout des labels pour les CondJump et JumpCall
+
+[33mcommit 063bfa4ccfc860ec091f229636526f80c8a9bff4[m
+Author: Clément <clement.reniers@etu.univ-lyon1.fr>
+Date:   Wed Jan 15 13:56:57 2025 +0100
+
+    custom errors
+
+[33mcommit baeeca055e47898ff585b35a15006c6702369f0a[m
+Author: ZartoxSFT <darkfireyo@gmail.com>
+Date:   Wed Jan 15 13:01:35 2025 +0100
+
+    test
+
+[33mcommit ca5b2578d28fbc0cd1dc893bfa04e2c59bba73e9[m
+Author: ZartoxSFT <darkfireyo@gmail.com>
+Date:   Wed Jan 15 12:52:59 2025 +0100
+
+    Remplacement de méthode de verifications par des comparaisons de type
+
+[33mcommit 749cbe11207b4d407722728297a19e2e68e6f187[m
+Author: Janet-Doe <lilas.grenier@etu.univ-lyon1.fr>
+Date:   Wed Jan 15 12:39:47 2025 +0100
+
+    add stacks attributes in TyperVisitor
+
+[33mcommit c6867387d6300b3f6fe33be9d4f1c43ca305d56c[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Wed Jan 15 12:15:02 2025 +0100
+
+    t'as rien vu
+
+[33mcommit 097c4c189b5c08585caeea37431828f7e6f0fe4f[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Wed Jan 15 12:13:21 2025 +0100
+
+    bonjour, je m'appelle l'homme stack
+
+[33mcommit 05f049ee715507b9191d7d20fa995ab6f53429e0[m
+Merge: 136aa7e ccaca3c
+Author: Melvyn <melvyn.bauvent@etu.univ-lyon1.fr>
+Date:   Wed Jan 15 11:57:25 2025 +0100
+
+    Merge branch 'groupe1' of https://github.com/VirisOnGithub/compilation into groupe1
+    ff
+
+[33mcommit ccaca3c0debb30f8cb9b93fa3b824656e7e4f3f7[m
+Author: Clément <clement.reniers@etu.univ-lyon1.fr>
+Date:   Wed Jan 15 11:56:56 2025 +0100
+
+    fixed important grammar changes
+
+[33mcommit 136aa7e7f6c703ad93937ac93931e8cd8456f6c9[m
+Merge: bd62a98 fed3d89
+Author: Melvyn <melvyn.bauvent@etu.univ-lyon1.fr>
+Date:   Wed Jan 15 11:55:33 2025 +0100
+
+    Merge branch 'groupe1' of https://github.com/VirisOnGithub/compilation into groupe1
+    ff
+
+[33mcommit bd62a988310039f53ea2a1f97247cda7e19948b2[m
+Merge: 1a69b13 38f0860
+Author: Melvyn <melvyn.bauvent@etu.univ-lyon1.fr>
+Date:   Wed Jan 15 11:55:28 2025 +0100
+
+    merge
+
+[33mcommit fed3d89ea6692852f91e63898eb24e06d38c899c[m
+Author: Clément <clement.reniers@etu.univ-lyon1.fr>
+Date:   Wed Jan 15 11:54:22 2025 +0100
+
+    fixed important grammar changes
+
+[33mcommit 1a69b136dd6e2dacd135001f3ef84765387c522a[m
+Author: Melvyn <melvyn.bauvent@etu.univ-lyon1.fr>
+Date:   Wed Jan 15 11:53:42 2025 +0100
+
+    fix : visitPrint
+
+[33mcommit 38f08604baedde6211649af9c2c760b940bf3a11[m
+Author: Clément <clement.reniers@etu.univ-lyon1.fr>
+Date:   Wed Jan 15 11:26:55 2025 +0100
+
+    fixed visitBlock
+
+[33mcommit c61c002bac5f7e4ea55f836bf931f4d0e581ef49[m
+Author: Luka COUTANT <luka.coutant@etu.univ-lyon1.fr>
+Date:   Wed Jan 15 11:07:57 2025 +0100
+
+    if and while works
+
+[33mcommit c3f194cfe995d306bc2c17e3dbd1560fb2584e01[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Wed Jan 15 00:45:22 2025 +0100
+
+    bon bah ça marche je crois
+
+[33mcommit a55069d83ac6618fc5372c8b4f8521d0042ed41f[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Tue Jan 14 22:56:32 2025 +0100
+
+    tab_access fonctionne !
+
+[33mcommit e2d2bde6b30a6e3a4abd3e2d7e0fce31edf2246b[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Tue Jan 14 22:08:01 2025 +0100
+
+    tab_access assembly
+
+[33mcommit f6c9cd35c800da06e26b842a6bd67429b255d8d1[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Tue Jan 14 21:24:13 2025 +0100
+
+    ça aussi
+
+[33mcommit c141f3ebc2c7d7e2b8fc03d0f6de16f1daf1f616[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Tue Jan 14 21:22:21 2025 +0100
+
+    tuez moi
+
+[33mcommit 63a0cfd6c64b97328f51761fc2c041e177770008[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Tue Jan 14 20:45:35 2025 +0100
+
+    foireux
+
+[33mcommit 12bf41fe0c5c5634bd6399f3a53717ca3792d41f[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Tue Jan 14 19:04:53 2025 +0100
+
+    update print_tab.asm
+
+[33mcommit 3bc58e934a64454ed143d8093df3059eac534040[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Tue Jan 14 19:03:42 2025 +0100
+
+    ça printe
+
+[33mcommit f864ca7e40282af42dffae416bfaa3c1ccb77dd4[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Tue Jan 14 19:01:24 2025 +0100
+
+    plus de sorties
+
+[33mcommit efa439e5b2955cda3ff1343e4aec6f018ac9fc6b[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Tue Jan 14 19:00:04 2025 +0100
+
+    tkt on a rien vu
+
+[33mcommit a408a528b4bb2a28e1b7cd5bdf17e2c79b9b6cb1[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Tue Jan 14 18:59:32 2025 +0100
+
+    ignore prog.asm
+
+[33mcommit 69fc5c90a9cd8d4845abd5c7a6dd8a7293a950ac[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Tue Jan 14 17:57:30 2025 +0100
+
+    small fixes
+
+[33mcommit 4c168d4871aada03e3ac9d50c653e06a90c35036[m
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Tue Jan 14 17:44:06 2025 +0100
+
+    orthographe
+
+[33mcommit 3e1a6f7a781b448df49c7fb8f4d5be009e0dd078[m
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Tue Jan 14 17:37:04 2025 +0100
+
+    finit écrire getPrintProgram
+
+[33mcommit 3c3ce9de3b98cdd7fa7a171e2ab05096e81f4c32[m
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Tue Jan 14 12:57:10 2025 +0100
+
+    fix call/ret function
+
+[33mcommit f8fa1e1ee1a3c64c79dd3fd472c92a1fd96d97f9[m
+Author: Janet-Doe <lilas.grenier@etu.univ-lyon1.fr>
+Date:   Tue Jan 14 12:42:29 2025 +0100
+
+    fix visitOpposite
+
+[33mcommit 15e5e0f09c6e82295b0fff26b16b2c8041455f3a[m
+Author: Janet-Doe <lilas.grenier@etu.univ-lyon1.fr>
+Date:   Tue Jan 14 12:32:55 2025 +0100
+
+    fix visitAssignment in case of array
+
+[33mcommit de6d7252a4cad2417fa4de3a7d3892fd01921f07[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Tue Jan 14 11:51:31 2025 +0100
+
+    vas-y julien
+
+[33mcommit 44c750533211e4171220625b3f2e0f98997e755d[m
+Merge: 6855f6e e857755
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Tue Jan 14 11:33:55 2025 +0100
+
+    Merge remote-tracking branch 'origin/groupe2-simon' into groupe2
+    
+    # Conflicts:
+    #       input.txt
+    #       src/CodeGenerator.java
+    #       src/Main.java
+
+[33mcommit a7b8051ec1aec1642ec8fe039a45fc06f6c482dc[m
+Author: Janet-Doe <lilas.grenier@etu.univ-lyon1.fr>
+Date:   Tue Jan 14 11:27:48 2025 +0100
+
+    fix visitAssignement
+
+[33mcommit 6855f6ea8c3352265fc8abdc6da63c92a7766cb7[m
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Tue Jan 14 11:25:42 2025 +0100
+
+    implement visitVariable
+
+[33mcommit e8577551e617ee2e50fb61817a09689a10b120c1[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Tue Jan 14 11:24:27 2025 +0100
+
+    sdfssfjois
+
+[33mcommit 4623921792610f2a47adac0565ffb7db96bb351d[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Tue Jan 14 11:23:38 2025 +0100
+
+    yes
+
+[33mcommit f636d13bb7dcbe741ea2180ae69444a69ad0e810[m
+Author: Melvyn <melvyn.bauvent@etu.univ-lyon1.fr>
+Date:   Tue Jan 14 11:12:04 2025 +0100
+
+    fix : visitDecl_fct
+
+[33mcommit f30b9d9f3c29910c424c9cad7e18854b62613112[m
+Author: Melvyn <melvyn.bauvent@etu.univ-lyon1.fr>
+Date:   Tue Jan 14 11:02:14 2025 +0100
+
+    fix : bigAssSubstitute
+
+[33mcommit fcb077c8b66541bbe92ecd227c8fe7afdfa8c38f[m
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Tue Jan 14 11:01:23 2025 +0100
+
+    code peut être testé
+
+[33mcommit 6f14f4860273763be87aa30c299cedac978f6a69[m
+Merge: 9a3cba7 93bcfb6
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Tue Jan 14 10:09:32 2025 +0100
+
+    Merge remote-tracking branch 'origin/groupe1' into groupe2
+    
+    # Conflicts:
+    #       input
+
+[33mcommit 9a3cba79b7ae6b614ae21afaee2c9177993dda25[m
+Merge: 988f648 7923f8c
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Tue Jan 14 10:05:53 2025 +0100
+
+    Merge remote-tracking branch 'origin/groupe2-simon' into groupe2
+
+[33mcommit 93bcfb632ad6d44c64c0fc6563fc5f730cb4eead[m
+Author: Melvyn <melvyn.bauvent@etu.univ-lyon1.fr>
+Date:   Tue Jan 14 09:58:20 2025 +0100
+
+    fix : visitPrint
+
+[33mcommit a49c6343858319515c14e702bf6acf4650037d09[m
+Author: Melvyn <melvyn.bauvent@etu.univ-lyon1.fr>
+Date:   Mon Jan 13 22:24:43 2025 +0100
+
+    fix bigAssSubstitute (pas tester entierment)
+
+[33mcommit fffc4c0d4dcc1e2cc2bc5e99d7dc8b120a75e7cc[m
+Author: Melvyn <melvyn.bauvent@etu.univ-lyon1.fr>
+Date:   Mon Jan 13 21:17:53 2025 +0100
+
+    minifix
+
+[33mcommit 01dcfa74e3155f57cca162900686a8288875404c[m
+Author: Melvyn <melvyn.bauvent@etu.univ-lyon1.fr>
+Date:   Mon Jan 13 20:15:27 2025 +0100
+
+    fix : substitue
+
+[33mcommit ec91aeebcd4e0c7353829646cc131d7c63515325[m
+Author: Melvyn <melvyn.bauvent@etu.univ-lyon1.fr>
+Date:   Mon Jan 13 18:42:47 2025 +0100
+
+    fix : oui
+
+[33mcommit 988f6482a62b54da140656212481b1b08b3f0617[m
+Merge: c19a6ba f18ca89
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Mon Jan 13 18:37:41 2025 +0100
+
+    Merge remote-tracking branch 'origin/groupe2-julien' into groupe2
+
+[33mcommit f18ca89cbfed0ab4707c66813a767b272a045a9f[m
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Mon Jan 13 18:35:32 2025 +0100
+
+    fix visitDecl_fct
+
+[33mcommit 7923f8c0b11db460bcc20b5664f2fb1ee2339a33[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Mon Jan 13 18:18:45 2025 +0100
+
+    fix print
+
+[33mcommit a197b00a92c13b3f514db117084601c8570afecd[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Mon Jan 13 18:18:35 2025 +0100
+
+    tab initialisation
+
+[33mcommit a92c7f22e6fc1d1e33f02f74f26524a54e19c9c5[m
+Author: Melvyn <melvyn.bauvent@etu.univ-lyon1.fr>
+Date:   Mon Jan 13 17:56:09 2025 +0100
+
+    redefinition hashcode dans UnknownType pour pouvoir utiliser HashMap.containsKey
+
+[33mcommit f3cc885c5c27664ad0e9bf061e04d3cf899fae56[m
+Author: Janet-Doe <lilas.grenier@etu.univ-lyon1.fr>
+Date:   Mon Jan 13 17:32:23 2025 +0100
+
+    partage code pour fix
+
+[33mcommit cd5d4eb1706864b54afcfd61fdec142427d61d7e[m
+Author: Melvyn <melvyn.bauvent@etu.univ-lyon1.fr>
+Date:   Mon Jan 13 17:23:43 2025 +0100
+
+    ajout input.txt pout test
+
+[33mcommit 4d004b533dac9efe78167e4c2daa66e58bd1b53e[m
+Author: Janet-Doe <lilas.grenier@etu.univ-lyon1.fr>
+Date:   Mon Jan 13 17:19:37 2025 +0100
+
+    continuation ajouts .unify & .substitute in TyperVisitor
+
+[33mcommit 3116a75354159a34c41122ac3debaa860f5ba4b0[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Mon Jan 13 16:59:22 2025 +0100
+
+    assignRegister
+
+[33mcommit c19a6baee29fe41ab88b8c81397a2c71cd818c9b[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Mon Jan 13 16:34:02 2025 +0100
+
+    oupsi
+
+[33mcommit a8c8edf73ed272114673d2c020110c26d1dfe580[m
+Merge: ecdd29d 44e54b6
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Mon Jan 13 16:30:27 2025 +0100
+
+    Merge remote-tracking branch 'origin/groupe2-manu' into groupe2
+
+[33mcommit 44e54b6cfb18b554f726d046f2eddc1148457c20[m[33m ([m[1;31morigin/groupe2-manu[m[33m)[m
+Author: Luquin Emmanuel p2202699 <emmanuel.luquin@etu.univ-lyon1.fr>
+Date:   Mon Jan 13 16:24:25 2025 +0100
+
+    added Declaration
+
+[33mcommit c171b4be64788ea8851ff072818c88df5694d1ee[m
+Merge: d8a3768 6e8eb00
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Mon Jan 13 16:18:48 2025 +0100
+
+    Merge remote-tracking branch 'origin/groupe2-julien' into groupe2-julien
+
+[33mcommit adfeb58fa71424a378061f8514f2d59426c1bf4b[m
+Author: Melvyn <melvyn.bauvent@etu.univ-lyon1.fr>
+Date:   Mon Jan 13 09:09:08 2025 +0100
+
+    visitor suite
+
+[33mcommit f1f54157d096f78adaf3b6532949303c8c9e738c[m
+Author: Nadir Ayoub <zenkai0401@gmail.com>
+Date:   Sun Jan 12 17:01:49 2025 +0100
+
+    "Coloration" du graphe de conflit
+
+[33mcommit 20e479442b3052fc10cdb10494ae202d83fefbdc[m
+Author: Nadir Ayoub <zenkai0401@gmail.com>
+Date:   Sun Jan 12 16:38:50 2025 +0100
+
+    Graphe de conflit v1.5 + fix ControlGraph.java
+
+[33mcommit 159920cf6f3f633ba41eba7f0fd095c3aaa3dc62[m
+Author: Nadir Ayoub <zenkai0401@gmail.com>
+Date:   Sun Jan 12 16:29:41 2025 +0100
+
+    Remise à zero des classes déjà fournies (car il faudrait pas les modifier) + v1.5 Graphe controle
+
+[33mcommit 62a6009e1d9b58cf52b99b8dc4db868dc6579f84[m
+Author: Janet-Doe <lilas.grenier@etu.univ-lyon1.fr>
+Date:   Sun Jan 12 12:47:08 2025 +0100
+
+    addition of Type.unify & .substitute to TyperVisitor methods
+
+[33mcommit 747879241e82089c613b4ba9c86bf4b8d092b481[m
+Author: Nadir Ayoub <zenkai0401@gmail.com>
+Date:   Sat Jan 11 17:25:51 2025 +0100
+
+    groupe3 v1.0
+
+[33mcommit 6e8eb002f0d652938c9043e57bb49183ef52edf0[m[33m ([m[1;32mgroupe2-julien[m[33m)[m
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Fri Jan 10 21:23:59 2025 +0100
+
+    implémenté visitBrackets, visitBase_type, et visitTab_type
+
+[33mcommit 0bba4842ee11cf289239bd996e3ae24976724adb[m
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Fri Jan 10 18:29:13 2025 +0100
+
+    implémenté visitCall + fix des scopes de variables
+
+[33mcommit 5e2e04a7db4d387cd36d882862c3940b1f30cb46[m
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Fri Jan 10 16:08:22 2025 +0100
+
+    implémenté visitIf
+
+[33mcommit d8a3768677b0ec589657e7bf9ea235a108ea9b83[m
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Fri Jan 10 21:23:59 2025 +0100
+
+    implémenté visitBrackets, visitBase_type, et visitTab_type
+
+[33mcommit b41e21d86438456b1f4106c537825c158e35a561[m
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Fri Jan 10 18:29:13 2025 +0100
+
+    implémenté visitCall + fix des scopes de variables
+
+[33mcommit ecdd29d88ff6993c3a2b98a45285c1e614404459[m
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Fri Jan 10 16:08:22 2025 +0100
+
+    implémenté visitIf (je me suis trompé de branche mais trkl je retourne sur ma branche)
+
+[33mcommit 0a28b589c9230042b87967f029173f41ac310b03[m
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Fri Jan 10 13:20:17 2025 +0100
+
+    javadoc des nouvelles fonctions de simon + ajout de la pile de labels de fin de fonctions
+
+[33mcommit cdf51ff5d094ec6791be47b4fa0b58e32488e2df[m
+Merge: 91f3028 a55523b
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Wed Jan 8 11:25:46 2025 +0100
+
+    Merge branch 'groupe2-julien' into groupe2
+
+[33mcommit a55523be18c3c5a83a8e4f6e6d4b43cbacf0beb1[m
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Wed Jan 8 11:22:38 2025 +0100
+
+    simon moment
+
+[33mcommit b0029f4e4227ab40cb1d14b6a3dec9d72645aa33[m
+Merge: 9bbe5f2 e58c9c3
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Wed Jan 8 11:21:14 2025 +0100
+
+    Merge remote-tracking branch 'origin/groupe2' into groupe2-julien
+    
+    # Conflicts:
+    #       src/CodeGenerator.java
+
+[33mcommit 91f302814105dbcedad199606f84e189e9584e23[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Wed Jan 8 11:16:30 2025 +0100
+
+    enter/exit function
+
+[33mcommit 9bbe5f2ed0447d752266892868a4467c81be064d[m
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Wed Jan 8 11:14:55 2025 +0100
+
+    début de javadoc
+
+[33mcommit e58c9c3ced1389b920980d823685265aef72806e[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Wed Jan 8 11:14:25 2025 +0100
+
+    fix merge
+
+[33mcommit 9c9efa692851a816a86afd012b550c0c61856615[m
+Author: Amin - Ayoub <ayoub.nadir@etu.univlyon1.fr>
+Date:   Wed Jan 8 11:14:14 2025 +0100
+
+    graphe de controle + Instruction a corriger
+
+[33mcommit 21484c40c96b99a6ecad0cfdfc02ceb48ec0fd98[m
+Merge: a7d5a38 8921a7d
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Wed Jan 8 11:09:42 2025 +0100
+
+    Merge branch 'groupe2-simon' into groupe2
+
+[33mcommit 8921a7d46eb242b017eb7541c27bf968cab815a0[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Wed Jan 8 11:06:45 2025 +0100
+
+    getVarRegister
+
+[33mcommit 79d23fd3651b71c943e8b97daee35a35d93bd4fa[m[33m ([m[1;32mgroupe3[m[33m)[m
+Merge: 8f37d50 9a147e0
+Author: Melvyn <melvyn.bauvent@etu.univ-lyon1.fr>
+Date:   Wed Jan 8 10:53:12 2025 +0100
+
+    Merge remote-tracking branch 'origin/groupe1' into groupe1
+    
+    # Conflicts:
+    #       src/Type/ArrayType.java
+
+[33mcommit a7d5a38fbc7079e0aef1b592c3fe3530981b3d95[m
+Merge: 7d3d09e 31b0388
+Author: LouisonParant <louison.parant@etu.univ-lyon1.fr>
+Date:   Wed Jan 8 10:52:52 2025 +0100
+
+    Merge pull request #8 from VirisOnGithub/groupe2-louison
+    
+    Add variables
+
+[33mcommit 9a147e045fd3ced689b22e3bd4be64869fa202b4[m
+Author: Janet-Doe <lilas.grenier@etu.univ-lyon1.fr>
+Date:   Wed Jan 8 10:52:48 2025 +0100
+
+    fix UnknownType.equals()
+
+[33mcommit 31b038809deb7caa9520b5bd97bf4f24b369168e[m[33m ([m[1;31morigin/groupe2-louison[m[33m)[m
+Author: Louison Parant <louison.parant@etu.univ-lyon1.fr>
+Date:   Wed Jan 8 10:52:23 2025 +0100
+
+    Add variables
+
+[33mcommit 8f37d50b04e7e1adbe4919bc1b3fcfddc90eb9d5[m
+Author: Melvyn <melvyn.bauvent@etu.univ-lyon1.fr>
+Date:   Wed Jan 8 10:50:19 2025 +0100
+
+    visitor suite
+
+[33mcommit b5ee4f22cedabcb182e9b2a6ac4f70e66a636e7e[m
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Wed Jan 8 10:49:05 2025 +0100
+
+    implémenté visitWhile
+
+[33mcommit 7d3d09e98263e7c0b793e0392696d132423405f1[m
+Merge: 53591f3 6d7eb38
+Author: LouisonParant <louison.parant@etu.univ-lyon1.fr>
+Date:   Wed Jan 8 10:43:02 2025 +0100
+
+    Merge pull request #6 from VirisOnGithub/groupe2-julien
+    
+    Groupe2 julien
+
+[33mcommit 6d7eb38aec776e389583dd02740e4fbf7259136a[m
+Merge: 33f901e 53591f3
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Wed Jan 8 10:42:00 2025 +0100
+
+    Merge remote-tracking branch 'origin/groupe2' into groupe2-julien
+    
+    # Conflicts:
+    #       src/CodeGenerator.java
+
+[33mcommit 33f901ee1727cf60eb41a0a54d13e25aa1570ffb[m
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Wed Jan 8 10:33:51 2025 +0100
+
+    implémenté visitFor
+
+[33mcommit c3881a49247c74a3a8c547309813dbf7bd287eaa[m
+Author: Janet-Doe <lilas.grenier@etu.univ-lyon1.fr>
+Date:   Wed Jan 8 10:32:11 2025 +0100
+
+    implémentation méthodes substitute()
+
+[33mcommit 53591f3b94432b732a7636df048fe16e28c76fd4[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Wed Jan 8 10:22:30 2025 +0100
+
+    add empty functions
+
+[33mcommit 9ba5e04904a44773de27284973b771aa18d64d5f[m
+Merge: e26a7b0 edc2ba5
+Author: Melvyn <melvyn.bauvent@etu.univ-lyon1.fr>
+Date:   Wed Jan 8 10:17:33 2025 +0100
+
+    Merge remote-tracking branch 'origin/groupe1' into groupe1
+    
+    # Conflicts:
+    #       src/Main.java
+    #       src/Type/ArrayType.java
+
+[33mcommit e26a7b0662f0e2c56c769f083b105952b8b9ee59[m
+Author: Melvyn <melvyn.bauvent@etu.univ-lyon1.fr>
+Date:   Wed Jan 8 10:15:46 2025 +0100
+
+    visitor suite
+
+[33mcommit edc2ba582a2e3ed9ca0db082af3aaafaf4f46433[m
+Author: Janet-Doe <lilas.grenier@etu.univ-lyon1.fr>
+Date:   Wed Jan 8 10:09:55 2025 +0100
+
+    implémentation méthodes unify()
+
+[33mcommit 9bd4d65d48e1eb674d8ed3b9c57828af2ca9be1b[m
+Merge: 07524bd 3a9d4f7
+Author: LouisonParant <louison.parant@etu.univ-lyon1.fr>
+Date:   Wed Jan 8 09:27:11 2025 +0100
+
+    Merge pull request #5 from VirisOnGithub/groupe2-louison
+    
+    Groupe2 louison
+
+[33mcommit 3a9d4f76115e162c9d51a9af2434c99b680df965[m
+Merge: d8c8549 07524bd
+Author: Louison Parant <louison.parant@etu.univ-lyon1.fr>
+Date:   Wed Jan 8 09:25:15 2025 +0100
+
+    Merge branch 'groupe2' into groupe2-louison
+    
+    # Conflicts:
+    #       src/CodeGenerator.java
+
+[33mcommit d8c85498a2d440e448468aa28d0552f07acb0d36[m
+Author: Louison Parant <louison.parant@etu.univ-lyon1.fr>
+Date:   Wed Jan 8 09:21:01 2025 +0100
+
+    Add visitEquality
+
+[33mcommit 07524bd31c33fdc6b71b7942a44b5901f447560c[m
+Author: Persson-dev <sim16.prib@gmail.com>
+Date:   Wed Jan 8 09:14:17 2025 +0100
+
+    print function (presque fini)
+
+[33mcommit a30c7b1e396a7ae4a40275f99474b2617af780e7[m
+Merge: e146b7d eeeb7c8
+Author: LouisonParant <louison.parant@etu.univ-lyon1.fr>
+Date:   Wed Jan 8 09:05:32 2025 +0100
+
+    Merge pull request #4 from VirisOnGithub/groupe2-louison
+    
+    Fix merge
+
+[33mcommit eeeb7c89dc9445f9f4cd5c172284e56018d7bcb0[m
+Author: Louison Parant <louison.parant@etu.univ-lyon1.fr>
+Date:   Wed Jan 8 09:00:19 2025 +0100
+
+    Fix merge
+
+[33mcommit e146b7d832f3480ed2ec6253b8ead064a03e65d8[m
+Merge: ec7c1c5 be4b05d
+Author: LouisonParant <louison.parant@etu.univ-lyon1.fr>
+Date:   Wed Jan 8 08:58:30 2025 +0100
+
+    Merge pull request #3 from VirisOnGithub/groupe2-louison
+    
+    Add visitComparison
+
+[33mcommit be4b05d444eb0ccf9e0163bd7760bdd1693e35a2[m
+Merge: 0d73869 ec7c1c5
+Author: LouisonParant <louison.parant@etu.univ-lyon1.fr>
+Date:   Wed Jan 8 08:58:09 2025 +0100
+
+    Merge branch 'groupe2' into groupe2-louison
+
+[33mcommit 0d73869b2726691f84d519773923aa90b4e1624c[m
+Author: Louison Parant <louison.parant@etu.univ-lyon1.fr>
+Date:   Wed Jan 8 08:51:08 2025 +0100
+
+    Add visitComparison
+
+[33mcommit ec7c1c5fdfeda85391b835c055251ea9114cd6d2[m
+Author: Luquin Emmanuel p2202699 <emmanuel.luquin@etu.univ-lyon1.fr>
+Date:   Wed Jan 8 08:34:35 2025 +0100
+
+    adde negation and opposite
+
+[33mcommit 1e6399c24efd8ad2d5b1000b31e3f88a30ee3cc7[m
+Author: zulianc <julien.chataigner@etu.unic-lyon1.fr>
+Date:   Mon Jan 6 17:18:24 2025 +0100
+
+    implémenté visiteCore_fct
+
+[33mcommit e307a391eccc50928790df60f03e0fe3aa62d51c[m
+Merge: d2a1143 e059794
+Author: julienc <162288701+zulianc@users.noreply.github.com>
+Date:   Mon Jan 6 16:43:00 2025 +0100
+
+    Merge pull request #2 from VirisOnGithub/groupe2-julien
+    
+    Groupe2 julien
+
+[33mcommit e05979445237dad0f92635034f3172c73dce5ccd[m
+Merge: 21d6cf0 d2a1143
+Author: julienc <162288701+zulianc@users.noreply.github.com>
+Date:   Mon Jan 6 16:42:02 2025 +0100
+
+    Merge branch 'groupe2' into groupe2-julien
+
+[33mcommit d2a1143d108a6553daa1e6e3e2e4705e88156dd2[m
+Merge: 4093290 40da644
+Author: Louison Parant <115462195+JonquilleSanglante@users.noreply.github.com>
+Date:   Mon Jan 6 16:37:48 2025 +0100
+
+    Merge pull request #1 from VirisOnGithub/groupe2-louison
+    
+    Groupe2 louison
+
+[33mcommit 40da64494b9bccc4015262bd70b256c2b6b8d663[m
+Author: Louison Parant <louison.parant@etu.univ-lyon1.fr>
+Date:   Mon Jan 6 16:29:39 2025 +0100
+
+    Add visitInteger, Boolean, And, Or
+
+[33mcommit 8daa1ac6ba8bc4bf77bab63f4966c2036e6ee679[m
+Author: Luka COUTANT <luka.coutant@etu.univ-lyon1.fr>
+Date:   Tue Dec 17 21:01:05 2024 +0100
+
+    visiton completed partially
+
+[33mcommit be885878bf2c23d4792bb6aafe5770174b630393[m
+Author: Janet-Doe <lilas.grenier@etu.univ-lyon1.fr>
+Date:   Tue Dec 17 18:29:53 2024 +0100
+
+    implémentation méthodes contains()
+
+[33mcommit 5a5552b782ed9bcf07bc60f7c1e6574567606198[m
+Author: Luka COUTANT <luka.coutant@etu.univ-lyon1.fr>
+Date:   Tue Dec 17 17:24:25 2024 +0100
+
+    continue visitor
+
+[33mcommit 21d6cf00c778e8044c3d47420903b26596cd5b88[m
+Author: p2208504 <julien.chataigner@etu.univ-lyon1.fr>
+Date:   Tue Dec 17 17:09:03 2024 +0100
+
+    CodeGenerator -> fait visitMain + visitDecl_fct
+
+[33mcommit e9b9678715737eef74e53054a490e6f599f9f6da[m
+Merge: cead650 8b6cac2
+Author: Luka COUTANT <luka.coutant@etu.univ-lyon1.fr>
+Date:   Tue Dec 17 16:53:36 2024 +0100
+
+    Merge remote-tracking branch 'origin/groupe1' into groupe1
+
+[33mcommit 540dbdddf63d25c95933f0fa472f047c7d4f5143[m
+Author: Louison Parant <louison.parant@etu.univ-lyon1.fr>
+Date:   Tue Dec 17 16:52:30 2024 +0100
+
+    Add visitMultiplication
+
+[33mcommit cead650c00da25e87eeacadca65f88a377631567[m
+Author: Luka COUTANT <luka.coutant@etu.univ-lyon1.fr>
+Date:   Tue Dec 17 16:52:09 2024 +0100
+
+    beggining of visitor
+
+[33mcommit aeab7c132f300bc40e9507e713b1719e88425473[m
+Author: Louison Parant <louison.parant@etu.univ-lyon1.fr>
+Date:   Tue Dec 17 16:44:06 2024 +0100
+
+    Add visitAddition
+
+[33mcommit ee4ef33244c23c7a63db211b2353cf9851838bbd[m
+Merge: f932fb2 4093290
+Author: p2208504 <julien.chataigner@etu.univ-lyon1.fr>
+Date:   Tue Dec 17 16:32:46 2024 +0100
+
+    Merge branch 'main' of https://github.com/VirisOnGithub/compilation into groupe2-julien
+
+[33mcommit f932fb2ced90b4dd504a2c29d59d178c262d7846[m
+Author: p2208504 <julien.chataigner@etu.univ-lyon1.fr>
+Date:   Tue Dec 17 16:32:33 2024 +0100
+
+    CodeGenerator -> en cours visitDecl_fct
+
+[33mcommit 8b6cac284367481e1cfe2bbf201f19a9cb84e0fa[m
+Author: Janet-Doe <lilas.grenier@etu.univ-lyon1.fr>
+Date:   Tue Dec 17 16:22:39 2024 +0100
+
+    ajout des méthodes equals()
+
+[33mcommit 6d7f3e2199e142ced6eed699102f4c8d23463ecf[m
+Merge: b3c8498 4093290
+Author: Janet-Doe <lilas.grenier@etu.univ-lyon1.fr>
+Date:   Tue Dec 17 15:54:59 2024 +0100
+
+    Merge remote-tracking branch 'origin/groupe1' into groupe1
+
+[33mcommit b3c8498d2709b4d0cdbea50a3aa4480febeba1a0[m
+Author: Janet-Doe <lilas.grenier@etu.univ-lyon1.fr>
+Date:   Tue Dec 17 15:54:23 2024 +0100
+
+    "implémentations méthode toString()"
+
+[33mcommit 4093290c0c758d4ff3b7cc4d8006c8ed02dc2753[m
+Author: Clément <clement.reniers@etu.univ-lyon1.fr>
+Date:   Tue Dec 17 15:21:22 2024 +0100
+
+    added input.sh
+
+[33mcommit feebf227bdb1d26db51996ddd0c0f1c3711e9296[m
+Author: Melvyn <melvyn.bauvent@etu.univ-lyon1.fr>
+Date:   Tue Dec 17 14:56:44 2024 +0100
+
+    groupe1 init
+
+[33mcommit b0c08a96ae03ca8024a240e794abcd90d9c110a4[m
+Author: p2208504 <julien.chataigner@etu.univ-lyon1.fr>
+Date:   Tue Dec 17 14:49:07 2024 +0100
+
+    CodeGenerator -> implémenté visitMain
+
+[33mcommit 2c6c2aa3d11eb1e69bc11cb7cc86475038fb833e[m
+Author: Clément <clement.reniers@etu.univ-lyon1.fr>
+Date:   Tue Dec 17 14:48:48 2024 +0100
+
+    fix gitignore
+
+[33mcommit 23098ec36131079515daa21f223d9d3836035405[m
+Author: Clément <clement.reniers@etu.univ-lyon1.fr>
+Date:   Tue Dec 17 14:46:16 2024 +0100
+
+    fix incorrect name for libraries
+
+[33mcommit c727754e52020d923382c6d7a1fee7ddcefe69c3[m
+Author: Louison PARANT <louison.parant@gmail.com>
+Date:   Tue Dec 17 14:28:25 2024 +0100
+
+    Change .gitignore
+
+[33mcommit 367c5a2e4839cabec4c1da042bab3ca5dc51e425[m[33m ([m[1;31morigin/simon[m[33m)[m
+Author: Melvyn <melvyn.bauvent@etu.univ-lyon1.fr>
+Date:   Mon Dec 16 12:51:19 2024 +0100
+
+    Initialisation du projet
+
+[33mcommit a0fe2686f196fe48e69e764646287e4a4074df14[m
+Author: Melvyn <melvyn.bauvent@etu.univ-lyon1.fr>
+Date:   Mon Dec 16 12:26:17 2024 +0100
+
+    test2
+
+[33mcommit 2d92d46f7eb2d364cb345bdd15b2a5d824df2636[m
+Author: Melvyn <melvyn.bauvent@etu.univ-lyon1.fr>
+Date:   Mon Dec 16 12:22:59 2024 +0100
+
+    test
+
+[33mcommit 4b3ae64e984d43d19b89c5bf7846074f27ca9753[m
+Author: Clément <clement.reniers@etu.univ-lyon1.fr>
+Date:   Mon Dec 16 12:00:33 2024 +0100
+
+    first commit
+
+[33mcommit b0086a451b642ca4f9472e3165d9a6071f12aa83[m
+Author: Clément Reniers <133783141+VirisOnGithub@users.noreply.github.com>
+Date:   Mon Dec 16 11:52:10 2024 +0100
+
+    Initial commit

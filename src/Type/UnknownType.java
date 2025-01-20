@@ -1,77 +1,93 @@
 package src.Type;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * This class represents an unknown type used in type variable unification and substitution processes.
+ */
 public class UnknownType extends Type {
     private String varName;
     private int varIndex;
     private static int newVariableCounter = 0;
 
     /**
-     * Constructeur sans nom
+     * Constructor without a name.
+     * Initializes a variable with a default name "#" and assigns a unique index.
      */
-    public UnknownType(){
+    public UnknownType() {
         this.varIndex = newVariableCounter++;
         this.varName = "#";
     }
 
     /**
-     * Constructeur à partir d'un nom de variable et un numéro
-     * @param s nom de variable
-     * @param n numéro de la variable
+     * Constructor with a variable name and a number.
+     *
+     * @param s Variable name.
+     * @param n Variable number.
      */
-    public UnknownType(String s, int n)  {
-        this.varName = s;        
+    public UnknownType(String s, int n) {
+        this.varName = s;
         this.varIndex = n;
     }
 
     /**
-     * Constructeur à partir d'un ParseTree (standardisation du nom de variable)
-     * @param ctx ParseTree
+     * Constructor from a ParseTree.
+     * Standardizes the variable name based on the parse tree's text.
+     *
+     * @param ctx ParseTree used to initialize the variable.
+     * @throws Error if the ParseTree context is not a recognized type.
      */
     public UnknownType(ParseTree ctx) {
         this.varName = ctx.getText();
         if (ctx instanceof TerminalNode) {
-            this.varIndex = ((TerminalNode)ctx).getSymbol().getStartIndex();
+            this.varIndex = ((TerminalNode) ctx).getSymbol().getStartIndex();
         } else {
             if (ctx instanceof ParserRuleContext) {
-                this.varIndex = ((ParserRuleContext)ctx).getStart().getStartIndex();
-            }
-            else {
+                this.varIndex = ((ParserRuleContext) ctx).getStart().getStartIndex();
+            } else {
                 throw new Error("Illegal UnknownType construction");
             }
         }
     }
 
     /**
-     * Getter du nom de variable de type
-     * @return variable de type
+     * Gets the name of the variable.
+     *
+     * @return The variable name as a string.
      */
     public String getVarName() {
         return varName;
     }
 
     /**
-     * Getter du numéro de variable de type
-     * @return numéro de variable de type
+     * Gets the index of the variable.
+     *
+     * @return The variable index as an integer.
      */
     public int getVarIndex() {
         return varIndex;
     }
 
     /**
-     * Setter du numéro de variable de type
-     * @param n numéro de variable de type
+     * Sets the index of the variable.
+     *
+     * @param n The variable index to set.
      */
     public void setVarIndex(int n) {
         this.varIndex = n;
     }
 
+    /**
+     * Unifies the current type with another type.
+     *
+     * @param t The type to unify with.
+     * @return A map of type substitutions, or throws an error if unification is not possible.
+     */
     @Override
     public Map<UnknownType, Type> unify(Type t) {
         HashMap<UnknownType, Type> map = new HashMap<>();
@@ -86,32 +102,51 @@ public class UnknownType extends Type {
         return map;
     }
 
-
+    /**
+     * Substitutes a type variable with another type.
+     *
+     * @param v The type variable to substitute.
+     * @param t The type that replaces the variable.
+     * @return A new type with the substitution applied.
+     */
     @Override
     public Type substitute(UnknownType v, Type t) {
         if (this.equals(v)) {
             return t;
-        }
-        else return this;
+        } else return this;
     }
 
+    /**
+     * Checks if the type contains a given type variable.
+     *
+     * @param v The type variable to check for.
+     * @return True if the type contains the variable, false otherwise.
+     */
     @Override
     public boolean contains(UnknownType v) {
         return this.equals(v);
     }
 
-    /* HashCode sur le nom uniquement
-    @Override
-    public int hashCode() {
-        if (this.getVarName().equals("#")) {
-            return Objects.hash(varIndex);
-        } else {
-            return Objects.hash(varName);
-        }
-
-    }
+    /*
+     * HashCode based on the name only.
+     * Uncomment if needed: Generates a hash code using the variable name or index.
+     *
+     * @Override
+     * public int hashCode() {
+     *     if (this.getVarName().equals("#")) {
+     *         return Objects.hash(varIndex);
+     *     } else {
+     *         return Objects.hash(varName);
+     *     }
+     * }
      */
 
+    /**
+     * Checks if the current object is equal to another object.
+     *
+     * @param t The object to compare.
+     * @return True if the objects are equal, false otherwise.
+     */
     @Override
     public boolean equals(Object t) {
         if (t instanceof UnknownType tempT) {
@@ -121,6 +156,11 @@ public class UnknownType extends Type {
         }
     }
 
+    /**
+     * Converts the unknown type to a string representation.
+     *
+     * @return A string in the format "UnknownType(varName, varIndex)".
+     */
     @Override
     public String toString() {
         return "UnknownType(" + varName + ", " + varIndex + ")";

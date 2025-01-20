@@ -31,14 +31,14 @@ public abstract class Type {
      * Substitution
      * @param v type variable à substituer
      * @param t type par lequel remplacer v
-     * @return src.Type obtenu en remplaçant v par t
+     * @return Type obtenu en remplaçant v par t
      */
     public abstract Type substitute(UnknownType v, Type t);
     
     /**
      * Applique plusieurs substitutions
      * @param h liste de substitutions
-     * @return src.Type obtenu en appliquant toutes les substitutions de h
+     * @return Type obtenu en appliquant toutes les substitutions de h
      */
     public Type substituteAll(Map<UnknownType,Type> h) {
         Type result = this;
