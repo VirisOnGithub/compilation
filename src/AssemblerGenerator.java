@@ -10,19 +10,52 @@ import src.Asm.Ret;
 import src.Asm.Stop;
 import src.Asm.UAL;
 import src.Asm.UALi;
+import src.grammarTCLParser.AdditionContext;
 
 public class AssemblerGenerator {
     private Program program;
-    private RegisterAllocator allocator;
+    private ConflictGraph conflictGraph;
+    private int dynamicArrayIndex;
 
     /**
      * Constructeur
      * @param program
      * @param allocator
      */
-    public AssemblerGenerator(Program program, RegisterAllocator allocator) {
+    public AssemblerGenerator(Program program, ConflictGraph conflictGraph) {
         this.program = program;
-        this.allocator = allocator;
+        this.conflictGraph = conflictGraph;
+        this.dynamicArrayIndex = 57000 - conflictGraph.color();
+    }
+
+    private String getRegister(int register, StringBuilder result, int operationRegister) {
+        if (register < 30) {
+            return "R" + register;
+        }
+        else {
+            int memLocation = (register - 30) + dynamicArrayIndex;
+            result.append("XOR R" + operationRegister + " R" + operationRegister + " R" + operationRegister + "\n");
+            result.append("ADDi R" + operationRegister + " R" + operationRegister + " " + memLocation + "\n");
+            result.append("LD R" + operationRegister + " R" + operationRegister + "\n");
+            return "R" + operationRegister;
+        }
+    }
+
+    private String getRegisterNumber(int register) {
+        if (register < 30) {
+            return "R" + register;
+        }
+        else {
+            return "R30";
+        }
+    }
+
+    private void returnRegister(int register, StringBuilder result) {
+        if (register < 30) return;
+        int memLocation = (register - 30) + dynamicArrayIndex;
+        result.append("XOR R31 R31 R31\n");
+        result.append("ADDi R31 R31 " + memLocation + "\n");
+        result.append("ST R30 R31\n");
     }
 
     /**
@@ -31,15 +64,20 @@ public class AssemblerGenerator {
      */
     public String generateAssembly() {
         StringBuilder result = new StringBuilder();
+        String currentlyBuildInstruction;
+
         for (Instruction instruction : program.getInstructions()) {
             String[] parts = instruction.getName().split(" ");
+            currentlyBuildInstruction = "";
             if (!instruction.getLabel().isEmpty()) {
-                result.append(instruction.getLabel()).append(": ");
+                currentlyBuildInstruction += (instruction.getLabel()) + (": ");
             }
             if (parts.length < 1) {
                 throw new IllegalArgumentException("Format d'instruction invalide : " + instruction.getName());
             }
-            switch (parts[0]) {
+            String op = parts[0];
+
+            switch (op) {
                 case "XOR":
                 case "OR":
                 case "AND":
@@ -52,37 +90,31 @@ public class AssemblerGenerator {
                 case "SR":
                     if (!(instruction instanceof UAL) && !(instruction instanceof UALi)) {
                         throw new IllegalArgumentException("Type d'instruction invalide pour UAL/UALi: " + instruction.getName());
-                    } else if ((instruction instanceof UAL) && !(instruction instanceof UALi)) {
+                    }
+                    if (instruction instanceof UAL) {
                         UAL ual = (UAL) instruction;
-                        String destReg = allocator.getRegister("R" + ual.getDest());
-                        String reg1 = allocator.getRegister("R" + ual.getSr1());
-                        String reg2 = allocator.getRegister("R" + ual.getSr2());
-                        if (reg1.startsWith("DYNAMIC")) {
-                            result.append("LD R30, [SP + ").append(reg1.substring(8, reg1.length() - 1)).append("]\n");
-                        } else {
-                            result.append("LD R30, ").append(reg1).append("\n");
-                        }
-                        if (reg2.startsWith("DYNAMIC")) {
-                            result.append("LD R31, [SP + ").append(reg2.substring(8, reg2.length() - 1)).append("]\n");
-                        } else {
-                            result.append("LD R31, ").append(reg2).append("\n");
-                        }
-                        result.append(parts[0]).append(" R30, R30, R31\n");
-                        result.append("ST ").append("R30, ").append(destReg).append("\n");
-                    } else if (!(instruction instanceof UAL) && (instruction instanceof UALi)) {
+                        int destReg = ual.getDest();
+                        int reg1 = ual.getSr1();
+                        int reg2 = ual.getSr2();
+                        String newDestReg = this.getRegisterNumber(destReg);
+                        String newReg1 = this.getRegister(reg1, result, 30);
+                        String newReg2 = this.getRegister(reg2, result, 31);
+                        currentlyBuildInstruction += (op + " " + newDestReg + " " + newReg1 + " " + newReg2 + "\n");
+                        result.append(currentlyBuildInstruction);
+                        this.returnRegister(destReg, result);
+                    } else {
                         UALi uali = (UALi) instruction;
-                        String destRegi = allocator.getRegister("R" + uali.getDest());
-                        String reg1i = allocator.getRegister("R" + uali.getSr());
-                        if (reg1i.startsWith("DYNAMIC")) {
-                            result.append("LD R30, [SP + ").append(reg1i.substring(8, reg1i.length() - 1)).append("]\n");
-                        } else {
-                            result.append("LD R30, ").append(reg1i).append("\n");
-                        }
-                        result.append(parts[0]).append(" R30, R30, ").append(uali.getImm()).append("\n");
-                        result.append("ST ").append("R30, ").append(destRegi).append("\n");
+                        int destReg = uali.getDest();
+                        int reg1 = uali.getSr();
+                        int imm = uali.getImm();
+                        String newDestReg = this.getRegisterNumber(destReg);
+                        String newReg1 = this.getRegister(reg1, result, 30);
+                        currentlyBuildInstruction += (op + " " + newDestReg + " " + newReg1 + " " + imm + "\n");
+                        result.append(currentlyBuildInstruction);
+                        this.returnRegister(destReg, result);
                     }
                     break;
-
+/*
                 case "JEQU":
                 case "JINF":
                 case "JSUP":
@@ -155,7 +187,7 @@ public class AssemblerGenerator {
                     IO io = (IO) instruction;
                     result.append(parts[0]).append(" ").append(allocator.getRegister("R" + io.getReg())).append("\n");
                     break;
-
+*/
                 default:
                     throw new IllegalArgumentException("Unknown instruction: " + parts[0]);
             }
@@ -167,6 +199,11 @@ public class AssemblerGenerator {
     public static void main(String[] args) {
         Program program = new Program();
 
+        for (int i = 0; i < 40; i++) {
+            program.addInstruction(new UAL(UAL.Op.ADD, 70, i, i+1));
+        }
+
+/*         
         Instruction instr0 = new IO(IO.Op.READ, 10000) {};
         program.addInstruction(instr0);
         
@@ -204,12 +241,12 @@ public class AssemblerGenerator {
         Instruction instrReturn = new Ret("FUNC_EXTRA") {};
         program.addInstruction(instrLabel);
         program.addInstruction(instrReturn);
+*/
 
         ControlGraph controlGraph = new ControlGraph(program);
         ConflictGraph conflictGraph = new ConflictGraph(controlGraph, program);
 
-        RegisterAllocator allocator = new RegisterAllocator(conflictGraph);
-        AssemblerGenerator generator = new AssemblerGenerator(program, allocator);
+        AssemblerGenerator generator = new AssemblerGenerator(program, conflictGraph);
 
         String assemblyCode = generator.generateAssembly();
         System.out.println(assemblyCode);
