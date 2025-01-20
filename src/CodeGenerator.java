@@ -107,7 +107,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         this.nextLabel++;
         return "*label" + (nextLabel-1);
     }
-    
+
     /**
      * Returns the depth (or dimension) of a given variable
      * @param type the type we want to know the depth of
@@ -649,7 +649,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         program.addInstructions(visit(ctx.getChild(ctx.getChildCount() - 2))); // expr result returned in R(nextRegister - 1)
         int rightRegister = this.nextRegister - 1;
         program.addInstruction(new UALi(UALi.Op.ADD, leftRegister, varRegister, 0)); // leftRegister := varRegister
-        
+
         for (int i = 0; i < bracketsCount; i++) {
             int child = 2 + (i * 3);
             if (i > 0) // if we were accessing an array, get the pointed value
@@ -757,7 +757,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
          *   instr
          *   JMP loop
          * end_loop: following code...
-        */
+         */
 
         Program program = new Program();
         String labelStartLoop = this.getLabel();
@@ -801,7 +801,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
          *   ADDi R0 R0 1
          *   JMP loop
          * end_loop: following code...
-        */
+         */
 
         Program program = new Program();
         String labelStartLoop = this.getLabel();
@@ -974,7 +974,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         program.addInstruction(new UAL(UAL.Op.XOR, r[5], r[5], r[5]));
         program.addInstruction(new UALi(UALi.Op.ADD, r[2], r[2], 1));
         program.addInstruction(new UALi(UALi.Op.ADD, this.SP, this.SP, 2));
-        
+
         program.addInstruction(new CondJump("*loop_start", CondJump.Op.JEQU, r[5], r[3], "*loop_end"));
         program.addInstruction(new UAL(UAL.Op.XOR, r[6], r[6], r[6]));
         program.addInstruction(new UALi(UALi.Op.MOD, r[7], r[5], 10));
@@ -1003,17 +1003,17 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         program.addInstruction(new UAL(UAL.Op.XOR, r[4], r[4], r[4]));
         program.addInstruction(new UALi(UALi.Op.ADD, r[4], r[4], SPACE));
         program.addInstruction(new JumpCall(JumpCall.Op.JMP, "*print_elem_end"));
-        
+
         program.addInstruction(new Mem("*print_elem", Mem.Op.LD, r[0], r[2]));
         program.addInstruction(new IO(IO.Op.PRINT, r[0]));
-        
+
         program.addInstruction(new UAL("*print_elem_end", UAL.Op.XOR, r[8], r[8], r[8]));
         program.addInstruction(new UALi(UALi.Op.ADD, r[8], r[8], SPACE));
         program.addInstruction(new IO(IO.Op.OUT, r[8]));
         program.addInstruction(new UALi(UALi.Op.ADD, r[2], r[2], 1));
         program.addInstruction(new UALi(UALi.Op.ADD, r[5], r[5], 1));
         program.addInstruction(new JumpCall(JumpCall.Op.JMP, "*loop_start"));
-        
+
         program.addInstruction(new UAL("*loop_end", UAL.Op.XOR, r[4], r[4], r[4]));
         program.addInstruction(new UALi(UALi.Op.ADD, r[4], r[4], SQUARE_BRACKET_CLOSE));
         program.addInstruction(new IO(IO.Op.OUT, r[4]));
@@ -1052,7 +1052,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         program.addInstruction(new UAL(UAL.Op.XOR, r[6], r[6], r[6]));
         program.addInstruction(new UAL(UAL.Op.XOR, r[9], r[9], r[9]));
         program.addInstruction(new UALi(UALi.Op.ADD, r[9], r[9], 1));
-        
+
         program.addInstruction(new UALi("*begin_loop", UALi.Op.MOD, r[7], r[5], 10));
         program.addInstruction(new CondJump(CondJump.Op.JNEQ, r[7], r[6], "*skip_tab_access_end"));
         program.addInstruction(new CondJump(CondJump.Op.JEQU, r[5], r[6], "*skip_tab_access_end"));
@@ -1081,7 +1081,7 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
         program.addInstruction(new UALi("*skip_return", UALi.Op.ADD, r[2], r[2], 1));
         program.addInstruction(new UALi(UALi.Op.ADD, r[5], r[5], 1));
         program.addInstruction(new JumpCall(JumpCall.Op.JMP, "*begin_loop"));
-        
+
         return program;
     }
 
