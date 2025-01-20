@@ -10,9 +10,6 @@ import src.Asm.Ret;
 import src.Asm.Stop;
 import src.Asm.UAL;
 import src.Asm.UALi;
-import src.grammarTCLParser.AdditionContext;
-
-import javax.lang.model.type.ReferenceType;
 
 public class AssemblerGenerator {
     private Program program;
@@ -29,10 +26,22 @@ public class AssemblerGenerator {
         this.dynamicArrayIndex = 57000 - conflictGraph.color();
     }
 
+    /**
+     * Retourne le registre à utiliser
+     * @param register
+     * @return
+     */
     private int getActualRegister(int register) {
         return conflictGraph.getColor("R" + register);
     }
 
+    /**
+     * Retourne le registre à utiliser
+     * @param register
+     * @param result
+     * @param operationRegister
+     * @return
+     */
     private String getRegister(int register, StringBuilder result, int operationRegister) {
         register = getActualRegister(register);
         if (register < 30) {
@@ -47,6 +56,11 @@ public class AssemblerGenerator {
         }
     }
 
+    /**
+     * Retourne le numéro du registre
+     * @param register
+     * @return
+     */
     private String getRegisterNumber(int register) {
         register = getActualRegister(register);
         if (register < 30) {
@@ -270,51 +284,6 @@ public class AssemblerGenerator {
         program.addInstruction(instr13);
         program.addInstruction(instr14);
         program.addInstruction(instr15);
-        
-
-        /*
-        for (int i = 0; i < 40; i++) {
-            program.addInstruction(new UAL(UAL.Op.ADD, 70, i, i+1));
-        }
-
-        Instruction instr0 = new IO(IO.Op.READ, 10000) {};
-        program.addInstruction(instr0);
-        
-        // Instructions utilisant des registres uniques et augmentant progressivement le nombre
-        for (int i = 0; i < 40; i++) {
-            // Exemple d'opérations arithmétiques utilisant des registres R0 à R39
-            Instruction instr = new UAL(UAL.Op.ADD, i, i, (i + 1) % 40) {};
-            program.addInstruction(instr);
-        }
-
-        // Ajout d'opérations avec des registres existants
-        Instruction instr40 = new UALi(UALi.Op.SUB, 39, 38, 10) {};
-        Instruction instr41 = new CondJump(CondJump.Op.JEQU, 37, 36, "LABEL_EXTRA") {};
-        Instruction instr42 = new JumpCall(JumpCall.Op.CALL, "FUNC_EXTRA") {};
-        Instruction instr43 = new IO(IO.Op.PRINT, 35) {};
-        Instruction instr44 = new Mem(Mem.Op.LD, 34, 33) {};
-        Instruction instr45 = new Mem(Mem.Op.ST, 32, 31) {};
-        Instruction instr46 = new JumpCall(JumpCall.Op.JMP, "STOP") {};
-        Instruction instr47 = new UAL(UAL.Op.MUL, 10, 9, 8) {};
-        Instruction instr48 = new Stop("STOP") {};
-
-        // Ajout des instructions restantes au programme
-        program.addInstruction(instr40);
-        program.addInstruction(instr41);
-        program.addInstruction(instr42);
-        program.addInstruction(instr43);
-        program.addInstruction(instr44);
-        program.addInstruction(instr45);
-        program.addInstruction(instr46);
-        program.addInstruction(instr47);
-        program.addInstruction(instr48);
-
-        // Ajout d'un label et d'une instruction de retour pour valider les sauts
-        Instruction instrLabel = new UAL("LABEL_EXTRA", UAL.Op.MUL, 10, 9, 8) {};
-        Instruction instrReturn = new Ret("FUNC_EXTRA") {};
-        program.addInstruction(instrLabel);
-        program.addInstruction(instrReturn);
-        */
 
         ControlGraph controlGraph = new ControlGraph(program);
         ConflictGraph conflictGraph = new ConflictGraph(controlGraph, program);
