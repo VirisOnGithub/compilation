@@ -23,7 +23,7 @@ public class AssemblerGenerator {
     public AssemblerGenerator(Program program, ConflictGraph conflictGraph) {
         this.program = program;
         this.conflictGraph = conflictGraph;
-        this.dynamicArrayIndex = 57000 - conflictGraph.color();
+        this.dynamicArrayIndex = 57000;
     }
 
     /**
