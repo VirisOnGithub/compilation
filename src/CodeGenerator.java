@@ -20,11 +20,11 @@ public class CodeGenerator extends AbstractParseTreeVisitor<Program> implements 
     /**
      * A stack of maps that links each variable with the number of the register that stocks this variable, at its corresponding depth
      */
-    private final VarStack<Integer> varRegisters;
+    private final VarStack<String, Integer> varRegisters;
     /**
      * A stack of maps that links each function with the number of the register that stocks its return value
      */
-    private final VarStack<Integer> returnRegisters;
+    private final VarStack<String, Integer> returnRegisters;
 
     /**
      * Stack pointer, contains the address of the next free space in the stack, and shouldn't go over 4095

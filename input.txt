@@ -76,8 +76,8 @@ int main() {
     print(line);
     test = hanoi(3);
     print(line);
-    auto sum = sum(100);
-    print(sum);
+    auto sum1 = sum(100);
+    print(sum1);
     print(line);
     test = testBinaries(4);
     return 0;
