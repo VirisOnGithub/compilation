@@ -12,19 +12,18 @@ import src.Asm.UAL;
 import src.Asm.UALi;
 import src.grammarTCLParser.AdditionContext;
 
+import javax.lang.model.type.ReferenceType;
+
 public class AssemblerGenerator {
     private Program program;
-    private ConflictGraph conflictGraph;
     private int dynamicArrayIndex;
 
     /**
      * Constructeur
      * @param program
-     * @param allocator
      */
     public AssemblerGenerator(Program program, ConflictGraph conflictGraph) {
         this.program = program;
-        this.conflictGraph = conflictGraph;
         this.dynamicArrayIndex = 57000 - conflictGraph.color();
     }
 
@@ -63,6 +62,10 @@ public class AssemblerGenerator {
      * @return
      */
     public String generateAssembly() {
+        if (program.getInstructions().isEmpty()) {
+            return "";
+        }
+
         StringBuilder result = new StringBuilder();
         String currentlyBuildInstruction;
 
@@ -87,7 +90,7 @@ public class AssemblerGenerator {
                 case "DIV":
                 case "MOD":
                 case "SL":
-                case "SR":
+                case "SR": {
                     if (!(instruction instanceof UAL) && !(instruction instanceof UALi)) {
                         throw new IllegalArgumentException("Type d'instruction invalide pour UAL/UALi: " + instruction.getName());
                     }
@@ -114,46 +117,59 @@ public class AssemblerGenerator {
                         this.returnRegister(destReg, result);
                     }
                     break;
+                }
 
                 case "JEQU":
                 case "JINF":
                 case "JSUP":
                 case "JNEQ":
                 case "JIEQ":
-                case "JSEQ":
+                case "JSEQ": {
                     if (!(instruction instanceof CondJump)) {
                         throw new IllegalArgumentException("Invalid instruction type for conditional jump: " + instruction.getName());
                     }
                     CondJump condJump = (CondJump) instruction;
-                        String address = condJump.getAddress();
-                        int reg1 = condJump.getSr1();
-                        int reg2 = condJump.getSr2();
-                        String newReg1 = this.getRegister(reg1, result, 30);
-                        String newReg2 = this.getRegister(reg2, result, 31);
-                        currentlyBuildInstruction += (op + " " + newReg1 + " " + newReg2 + address +"\n");
-                        result.append(currentlyBuildInstruction);
+                    String address = condJump.getAddress();
+                    int reg1 = condJump.getSr1();
+                    int reg2 = condJump.getSr2();
+                    String newReg1 = this.getRegister(reg1, result, 30);
+                    String newReg2 = this.getRegister(reg2, result, 31);
+                    currentlyBuildInstruction += (op + " " + newReg1 + " " + newReg2 + " " + address + "\n");
+                    result.append(currentlyBuildInstruction);
                     break;
+                }
 
-                case "LD":
+                case "LD": {
                     if (!(instruction instanceof Mem)) {
                         throw new IllegalArgumentException("Invalid instruction type for load: " + instruction.getName());
                     }
                     Mem mem = (Mem) instruction;
-                    currentlyBuildInstruction += (op + " " + this.getRegisterNumber(mem.getDest()) + " " + this.getRegister(mem.getAddress(), result, 30) + "\n");
+                    int reg1 = mem.getDest();
+                    int reg2 = mem.getAddress();
+                    String newReg1 = this.getRegister(reg1, result, 30);
+                    String newReg2 = this.getRegister(reg2, result, 31);
+                    currentlyBuildInstruction += (op + " " + newReg1 + " " + newReg2 + "\n");
                     result.append(currentlyBuildInstruction);
+                    this.returnRegister(reg1, result);
                     break;
+                }
 
-                case "ST":
+                case "ST": {
                     if (!(instruction instanceof Mem)) {
-                        throw new IllegalArgumentException("Invalid instruction type for store: " + instruction.getName());
+                        throw new IllegalArgumentException("Invalid instruction type for load: " + instruction.getName());
                     }
-                    mem = (Mem) instruction;
-                    currentlyBuildInstruction += (op + " " + this.getRegister(mem.getAddress(), result, 30) + " " + this.getRegister(mem.getDest(), result, 31) + "\n");
+                    Mem mem = (Mem) instruction;
+                    int reg1 = mem.getDest();
+                    int reg2 = mem.getAddress();
+                    String newReg1 = this.getRegister(reg1, result, 30);
+                    String newReg2 = this.getRegister(reg2, result, 31);
+                    currentlyBuildInstruction += (op + " " + newReg1 + " " + newReg2 + "\n");
                     result.append(currentlyBuildInstruction);
                     break;
+                }
 
                 case "CALL":
-                case "JMP":
+                case "JMP": {
                     if (!(instruction instanceof JumpCall)) {
                         throw new IllegalArgumentException("Invalid instruction type for jump/call: " + instruction.getName());
                     }
@@ -162,36 +178,44 @@ public class AssemblerGenerator {
                     currentlyBuildInstruction += (op + " " + jumpLabel + "\n");
                     result.append(currentlyBuildInstruction);
                     break;
+                }
 
                 case "STOP":
-                    if (!(instruction instanceof Stop)) {
+                case "RET": {
+                    if (!(instruction instanceof Stop) && !(instruction instanceof Ret)) {
                         throw new IllegalArgumentException("Invalid instruction type for stop: " + instruction.getName());
                     }
-                    Stop stop = (Stop) instruction;
                     currentlyBuildInstruction += (op + "\n");
                     result.append(currentlyBuildInstruction);
                     break;
-
-                case "RET":
-                    if (!(instruction instanceof Ret)) {
-                        throw new IllegalArgumentException("Invalid instruction type for return: " + instruction.getName());
-                    }
-                    Ret ret = (Ret) instruction;
-                    currentlyBuildInstruction += (op + " " + ret.getName() + "\n");
-                    result.append(currentlyBuildInstruction);
-                    break;
+                }
 
                 case "IN":
-                case "OUT":
-                case "READ":
-                case "PRINT":
+                case "READ": {
                     if (!(instruction instanceof IO)) {
                         throw new IllegalArgumentException("Invalid instruction type for print: " + instruction.getName());
                     }
                     IO io = (IO) instruction;
-                    currentlyBuildInstruction += (op + " " + this.getRegisterNumber(io.getReg()) + "\n");
+                    int reg = io.getReg();
+                    String newReg1 = this.getRegister(reg, result, 30);
+                    currentlyBuildInstruction += (op + " " + newReg1 + "\n");
+                    result.append(currentlyBuildInstruction);
+                    this.returnRegister(reg, result);
+                    break;
+                }
+
+                case "OUT":
+                case "PRINT": {
+                    if (!(instruction instanceof IO)) {
+                        throw new IllegalArgumentException("Invalid instruction type for print: " + instruction.getName());
+                    }
+                    IO io = (IO) instruction;
+                    int reg = io.getReg();
+                    String newReg1 = this.getRegister(reg, result, 30);
+                    currentlyBuildInstruction += (op + " " + newReg1 + "\n");
                     result.append(currentlyBuildInstruction);
                     break;
+                }
 
                 default:
                     throw new IllegalArgumentException("Unknown instruction: " + parts[0]);
@@ -204,11 +228,11 @@ public class AssemblerGenerator {
     public static void main(String[] args) {
         Program program = new Program();
 
+        /*
         for (int i = 0; i < 40; i++) {
             program.addInstruction(new UAL(UAL.Op.ADD, 70, i, i+1));
         }
 
-         
         Instruction instr0 = new IO(IO.Op.READ, 10000) {};
         program.addInstruction(instr0);
         
@@ -246,7 +270,7 @@ public class AssemblerGenerator {
         Instruction instrReturn = new Ret("FUNC_EXTRA") {};
         program.addInstruction(instrLabel);
         program.addInstruction(instrReturn);
-
+        */
 
         ControlGraph controlGraph = new ControlGraph(program);
         ConflictGraph conflictGraph = new ConflictGraph(controlGraph, program);

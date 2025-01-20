@@ -223,8 +223,7 @@ public class Main {
 	ControlGraph controlGraph = new ControlGraph(program);
     ConflictGraph conflictGraph = new ConflictGraph(controlGraph, program);
 
-    RegisterAllocator allocator = new RegisterAllocator(conflictGraph);
-    AssemblerGenerator generator = new AssemblerGenerator(program, allocator);
+    AssemblerGenerator generator = new AssemblerGenerator(program, conflictGraph);
 
     String assemblyCode = generator.generateAssembly();
     System.out.println(assemblyCode);
