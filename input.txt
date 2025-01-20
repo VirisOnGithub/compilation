@@ -48,6 +48,8 @@ int maine2() {
     auto pipi;
     auto popo;
     int[][][][] boi = f(caca, pipi, popo);
+    bool ererer = true;
+    auto rererer = f(ererer, pipi, popo);
     print(caca);
     print(pipi);
     print(popo);

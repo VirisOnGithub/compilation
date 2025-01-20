@@ -1,9 +1,7 @@
 package src;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Stack;
+import java.util.*;
+import java.util.function.BiConsumer;
 
 import src.Type.Type;
 import src.Type.UnknownType;
@@ -16,7 +14,7 @@ public class VarStack<K, T> {
 	/**
 	 * A stack of maps that associates each variable with a value, at its corresponding depth
 	 */
-	private final Stack<Map<K, T>> stack;
+	private Stack<Map<K, T>> stack;
 	/**
 	 * A stack whose top is the furthest variables are still in reach within the execution context, mainly used for function calls
 	 */
@@ -198,6 +196,32 @@ public class VarStack<K, T> {
 
 	public Map<K, T> pop() {
 		return this.stack.pop();
+	}
+
+	/**
+	 * Regarde dans toute la stack si ut exist en tant que clé ou valeur.
+	 * @param ut K
+	 * @return boolean
+	 */
+	public boolean contains(K ut) {
+		int size = this.stack.size();
+		for (int i = size-1; i >= 0; i--) {
+			Map<K, T> tmp = this.stack.get(i);
+			for (Map.Entry<K, T> entry : tmp.entrySet()) {
+                if (entry.getKey().equals(ut) || entry.getValue().equals(ut)) {
+                    return true;
+                }
+			}
+		}
+		return false;
+	}
+
+	public Stack<Map<K, T>> getStack(){
+		return this.stack;
+	}
+
+	public void setStack(Stack<Map<K, T>> newStack) {
+		this.stack = newStack;
 	}
 
 

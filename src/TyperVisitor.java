@@ -35,24 +35,31 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
 
     private void substituteTypes(HashMap<UnknownType, Type> constraints) {
         constraints.forEach((variable, type) -> {
-            if (!this.typesStack.varExists(variable)) {
+            if (!this.typesStack.contains(variable)) {
                 this.typesStack.assignVar(variable, type);
             } else {
-                Map<UnknownType, Type> layer = this.typesStack.getLastStackOfUT(variable);
-                int indexOfTmp = this.typesStack.indexOf(layer);
-                HashMap<UnknownType, Type> lastStackOfTmpVar    = new HashMap<>(layer);
-                HashMap<UnknownType, Type> newLastStackOfTmpVar = new HashMap<>(lastStackOfTmpVar);
-                if (lastStackOfTmpVar.containsKey(variable)) {
-                    Type typeTmp = lastStackOfTmpVar.get(variable);
-                    newLastStackOfTmpVar.put(variable, typeTmp.substituteAll(constraints));
-                } else {
-                    lastStackOfTmpVar.forEach((key, value) -> {
-                        if (value.equals(variable)) {
-                            newLastStackOfTmpVar.put(key, variable.substituteAll(constraints));
-                        }
-                    });
-                }
-                this.typesStack.set(indexOfTmp, newLastStackOfTmpVar);
+                Stack<Map<UnknownType, Type>> oldTypesStack = this.typesStack.getStack();
+                Stack<Map<UnknownType, Type>> newTypesStack = (Stack<Map<UnknownType, Type>>) oldTypesStack.clone();
+
+
+                oldTypesStack.forEach((layer) -> {
+                    int indexOfTmp = newTypesStack.indexOf(layer);
+                    HashMap<UnknownType, Type> newLayer = new HashMap<>(layer);
+                    if (layer.containsKey(variable)) {
+                        Type typeTmp = layer.get(variable);
+                        newLayer.put(variable, typeTmp.substituteAll(constraints));
+                    } else {
+                        layer.forEach((key, value) -> {
+                            if (value.contains(variable)) {
+                                newLayer.put(key, value.substituteAll(constraints));
+                            }
+                        });
+                    }
+                    newTypesStack.set(indexOfTmp, newLayer);
+                });
+
+                this.typesStack.setStack(newTypesStack);
+
             }
         });
         System.out.println(this.typesStack);
@@ -660,7 +667,6 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
     @Override
     public Type visitMain(grammarTCLParser.MainContext ctx) throws TyperError {
         System.out.println("visit main : decl_fct* 'int main()' core_fct EOF;");
-        this.enterBlock();
 
         PrimitiveType intType = new PrimitiveType(Type.Base.INT);
 
@@ -685,6 +691,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         visit(core_fctNode);
 
         this.leaveBlock();
+
         return null;
     }
 }
