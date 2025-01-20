@@ -28,7 +28,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
     private void leaveBlock() {
         System.out.println("leaveBlock");
         Map<UnknownType, Type> typesBlock = this.typesStack.pop();
-        //TODO unify typesBlocks et types
+
         types.putAll(typesBlock);
         System.out.println("types = "+this.types);
     }
@@ -253,58 +253,6 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         }
 
         return varType;
-
-        /* intermediaire visitVariable
-        Stack<Map<UnknownType, Type>> stackCopy = new Stack<>();
-        stackCopy.addAll(this.typesStack.getStack());
-
-        while (!stackCopy.isEmpty()) {
-            Map<UnknownType, Type> currentBlock = stackCopy.pop();
-            if (currentBlock.containsKey(ut)) {
-                result = currentBlock.get(ut);
-                break;
-            }
-        }
-
-
-        if (result == null) {
-            result = this.types.getOrDefault(ut, null);
-        }
-
-
-        if (result == null) {
-            throw new TyperError("Variable " + ut.getVarName() + " is not defined", ctx);
-        }
-
-
-        if (!mapBlock.containsKey(ut)) {
-            HashMap<UnknownType, Type> constraints = new HashMap<>(ut.unify(new UnknownType()));
-            mapBlock.putAll(constraints);
-        }
-
-
-        mapBlock.put(ut, result.substituteAll(new HashMap<>()));
-
-        return result;
-
-         */
-
-        /* old visitVariable
-        System.out.println(this.types);
-
-        ParseTree varNode = ctx.getChild(0);
-        UnknownType ut = new UnknownType(varNode);
-        Type result = this.types.getOrDefault(ut, ut);
-        if (!this.types.containsKey(ut)) {
-            HashMap<UnknownType, Type> constraints = new HashMap<>(ut.unify(new UnknownType()));
-            substituteTypes(constraints);
-        }
-
-        // Substituer le type dans la map
-        this.types.put(ut, result.substituteAll(new HashMap<>()));
-
-        return result;
-         */
     }
 
     @Override
@@ -481,10 +429,11 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         System.out.println("visit print : PRINT '(' VAR ')' SEMICOL ");
         UnknownType parameter = new UnknownType(ctx.getChild(2));
 
-        if (!(this.types.containsKey(parameter))) {
+        if (!(this.typesStack.containsVarName(parameter.getVarName()))) {
             throw new TyperError("Type error: variable "+parameter.getVarName()+" isn't defined", ctx, 6);
         }
-        if (this.types.get(parameter) instanceof FunctionType) {
+        Type paramType = this.typesStack.getLastTypeOfVarName(parameter.getVarName());
+        if (paramType instanceof FunctionType) {
             throw new TyperError("Type error: function type cannot be printed", ctx);
         }
         return null;
