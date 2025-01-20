@@ -1,7 +1,6 @@
 int main(){
-    auto a = 3;
-    if (a==3){
-        auto a = true;
-    }
+    auto z;
+    auto a = {z};
+    z = 2;
     return 0;
 }

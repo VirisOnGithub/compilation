@@ -197,6 +197,25 @@ public class VarStack<K, T> {
 		return result;
 	}
 
+	public UnknownType getLastUTOfVarName(String varName) {
+		UnknownType result = null;
+		int size = this.stack.size();
+		boolean notFound = true;
+
+		for (int i = size-1; i >= 0 && notFound; i--) {
+			Map<K, T> tmp = this.stack.get(i);
+			for (K key : tmp.keySet()) {
+				assert key instanceof UnknownType;
+				UnknownType ut = (UnknownType) key;
+				if (ut.getVarName().equals(varName)) {
+					result = (UnknownType) key;
+					break;
+				}
+			}
+		}
+		return result;
+	}
+
 	public boolean containsVarName(String varName) {
 		return this.getLastStackOfVarName(varName) != null;
 	}

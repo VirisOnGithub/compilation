@@ -47,8 +47,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
                     int indexOfTmp = newTypesStack.indexOf(layer);
                     HashMap<UnknownType, Type> newLayer = new HashMap<>(layer);
                     if (layer.containsKey(variable)) {
-                        Type typeTmp = layer.get(variable);
-                        newLayer.put(variable, typeTmp.substituteAll(constraints));
+                        newLayer.put(variable, variable.substituteAll(constraints));
                     } else {
                         layer.forEach((key, value) -> {
                             if (value.contains(variable)) {
@@ -461,7 +460,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         if(reservedKeywords.contains(firstVariableNode.getText())){
             throw new TyperError("Keyword is not allowed for variable name", ctx, 1);
         }
-        UnknownType firstVariable = new UnknownType(firstVariableNode);
+        UnknownType firstVariable = this.typesStack.getLastUTOfVarName((new UnknownType(firstVariableNode)).getVarName());
         HashMap<UnknownType, Type> constraints = new HashMap<>();
         int nbChildren = ctx.getChildCount();
         if (nbChildren == 4) {
