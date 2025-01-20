@@ -251,7 +251,7 @@ public class AssemblerGenerator {
     public static void main(String[] args) {
         Program program = new Program();
 
-        Instruction instr0 = new Mem( Mem.Op.ST, 0, 1) {};
+        Instruction instr0 = new Mem( Mem.Op.ST, 2, 3) {};
         Instruction instr1 = new UAL(UAL.Op.XOR, 1000, 1000, 1000) {};
         Instruction instr2 = new UALi(UALi.Op.SUB, 1000, 1000, 1) {};
         Instruction instr3 = new IO(IO.Op.PRINT, 1001) {};

@@ -105,10 +105,13 @@ public class ConflictGraph extends UnorientedGraph<String> {
             use.add("R" + ((UALi) instruction).getSr());
         } else if (instruction instanceof Mem) {
             use.add("R" + ((Mem) instruction).getAddress());
+            use.add("R" + ((Mem) instruction).getDest());
         } else if (instruction instanceof CondJump) {
             CondJump condJump = (CondJump) instruction;
             use.add("R" + condJump.getSr1());
             use.add("R" + condJump.getSr2());
+        } else if (instruction instanceof CondJump) {
+            use.add("R" + ((CondJump) instruction).getAddress());
         }
         return use;
     }
@@ -128,6 +131,9 @@ public class ConflictGraph extends UnorientedGraph<String> {
             def.add("R" + ((UALi) instruction).getDest());
         } else if (instruction instanceof Mem) {
             def.add("R" + ((Mem) instruction).getDest());
+            def.add("R" + ((Mem) instruction).getAddress());
+        } else if (instruction instanceof CondJump) {
+            def.add("R" + ((CondJump) instruction).getAddress());
         }
         return def;
     }
@@ -150,7 +156,7 @@ public class ConflictGraph extends UnorientedGraph<String> {
 
     public static void main(String[] args) {
         Program program = new Program();
-        Instruction instr0 = new Mem(Mem.Op.LD, 0, 1) {};
+        Instruction instr0 = new Mem(Mem.Op.ST, 2, 3) {};
         Instruction instr1 = new UAL(UAL.Op.XOR, 1000, 1000, 1000) {};
         Instruction instr2 = new UALi(UALi.Op.SUB, 1000, 1000, 1) {};
         Instruction instr3 = new IO(IO.Op.PRINT, 1001) {};
