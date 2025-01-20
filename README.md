@@ -6,7 +6,7 @@
 - Run compilation/src/Main.java to compile the file into assembly code in compilation/prog.asm
 - Run compilation/simproc.py to execute the assembly code. The result can be seen in compilation/sorties.txt
 
-Note there is two integer at the start of compilation/src/Main.java that serves as options.
+Note that there is two integer at the start of compilation/src/Main.java that serves as options.
 
 ## Generate javadoc
 
