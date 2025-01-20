@@ -16,6 +16,7 @@ import javax.lang.model.type.ReferenceType;
 
 public class AssemblerGenerator {
     private Program program;
+    private ConflictGraph conflictGraph;
     private int dynamicArrayIndex;
 
     /**
@@ -24,10 +25,16 @@ public class AssemblerGenerator {
      */
     public AssemblerGenerator(Program program, ConflictGraph conflictGraph) {
         this.program = program;
+        this.conflictGraph = conflictGraph;
         this.dynamicArrayIndex = 57000 - conflictGraph.color();
     }
 
+    private int getActualRegister(int register) {
+        return conflictGraph.getColor("R" + register);
+    }
+
     private String getRegister(int register, StringBuilder result, int operationRegister) {
+        register = getActualRegister(register);
         if (register < 30) {
             return "R" + register;
         }
@@ -41,6 +48,7 @@ public class AssemblerGenerator {
     }
 
     private String getRegisterNumber(int register) {
+        register = getActualRegister(register);
         if (register < 30) {
             return "R" + register;
         }
@@ -50,6 +58,7 @@ public class AssemblerGenerator {
     }
 
     private void returnRegister(int register, StringBuilder result) {
+        register = getActualRegister(register);
         if (register < 30) return;
         int memLocation = (register - 30) + dynamicArrayIndex;
         result.append("XOR R31 R31 R31\n");
@@ -227,6 +236,14 @@ public class AssemblerGenerator {
 
     public static void main(String[] args) {
         Program program = new Program();
+
+        program.addInstruction(new UAL(UAL.Op.XOR, 0, 0, 0));
+        program.addInstruction(new UALi(UALi.Op.ADD, 0, 0, 10));
+        program.addInstruction(new UAL(UAL.Op.XOR, 1, 1, 1));
+        program.addInstruction(new UALi(UALi.Op.ADD, 1, 1, 10));
+        program.addInstruction(new UAL(UAL.Op.XOR, 2, 2, 2));
+        program.addInstruction(new UALi(UALi.Op.ADD, 2, 2, 10));
+        program.addInstruction(new UAL(UAL.Op.AND, 0, 1, 2));
 
         /*
         for (int i = 0; i < 40; i++) {
