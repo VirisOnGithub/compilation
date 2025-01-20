@@ -27,8 +27,13 @@ public class AssemblerGenerator {
     public AssemblerGenerator(Program program, ConflictGraph conflictGraph, int USE_CONFLICT_GRAPH) {
         this.program = program;
         this.conflictGraph = conflictGraph;
-        this.dynamicArrayIndex = 57000 - conflictGraph.color();
         this.USE_CONFLICT_GRAPH = USE_CONFLICT_GRAPH;
+        if(USE_CONFLICT_GRAPH == 1){
+            this.dynamicArrayIndex = 65535 - conflictGraph.color();
+        }
+        else {
+            this.dynamicArrayIndex = 57000;
+        }
     }
 
     private int getActualRegister(int register) {
