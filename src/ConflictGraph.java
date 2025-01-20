@@ -8,11 +8,6 @@ public class ConflictGraph extends UnorientedGraph<String> {
     private Map<Instruction, Set<String>> in;
     private Map<Instruction, Set<String>> out;
 
-    /**
-     * Constructeur
-     * @param controlGraph
-     * @param program
-     */
     public ConflictGraph(ControlGraph controlGraph, Program program) {
         super();
         this.in = new HashMap<>();
@@ -21,9 +16,6 @@ public class ConflictGraph extends UnorientedGraph<String> {
         buildConflictGraph(controlGraph, program);
     }
 
-    /**
-     * Calcul de la vivacité des registres
-     */
     private void computeLiveness(ControlGraph controlGraph, Program program) {
         boolean changed;
         for (Instruction instruction : controlGraph.getAllVertices(program)) {
@@ -52,14 +44,11 @@ public class ConflictGraph extends UnorientedGraph<String> {
         } while (changed);
     }
 
-    /**
-     * Construit le graphe de conflit en ajoutant des arêtes entre registres en conflit
-     */
     private void buildConflictGraph(ControlGraph controlGraph, Program program) {
         for (Instruction instruction : controlGraph.getAllVertices(program)) {
             Set<String> def = getDef(instruction);
             Set<String> liveOut = this.out.get(instruction);
-
+    
             for (String d : def) {
                 this.addVertex(d);
                 for (String o : liveOut) {
@@ -69,12 +58,22 @@ public class ConflictGraph extends UnorientedGraph<String> {
                     }
                 }
             }
+    
+            for (Instruction succ : controlGraph.getOutNeighbors(instruction)) {
+                Set<String> futureLive = this.out.get(succ);
+                for (String d : def) {
+                    for (String f : futureLive) {
+                        if (!d.equals(f)) {
+                            this.addVertex(f);
+                            this.addEdge(d, f);
+                        }
+                    }
+                }
+            }
         }
     }
+    
 
-    /**
-     * Retourne les registres utilisés (read) par une instruction
-     */
     private Set<String> getUse(Instruction instruction) {
         Set<String> use = new HashSet<>();
         if (instruction instanceof IO) {
@@ -86,8 +85,7 @@ public class ConflictGraph extends UnorientedGraph<String> {
         } else if (instruction instanceof UALi) {
             use.add("R" + ((UALi) instruction).getSr());
         } else if (instruction instanceof Mem) {
-            Mem memInstr = (Mem) instruction;
-            use.add("R" + memInstr.getAddress());
+            use.add("R" + ((Mem) instruction).getAddress());
         } else if (instruction instanceof CondJump) {
             CondJump condJump = (CondJump) instruction;
             use.add("R" + condJump.getSr1());
@@ -96,9 +94,6 @@ public class ConflictGraph extends UnorientedGraph<String> {
         return use;
     }
 
-    /**
-     * Retourne les registres définis (write) par une instruction
-     */
     private Set<String> getDef(Instruction instruction) {
         Set<String> def = new HashSet<>();
         if (instruction instanceof IO) {
@@ -121,7 +116,7 @@ public class ConflictGraph extends UnorientedGraph<String> {
             for (String v : this.adjList.get(u)) {
                 sb.append(v).append(", ");
             }
-            if (this.adjList.get(u).size() > 0) {
+            if (!this.adjList.get(u).isEmpty()) {
                 sb.setLength(sb.length() - 2);
             }
             sb.append("\n");
@@ -132,25 +127,42 @@ public class ConflictGraph extends UnorientedGraph<String> {
     public static void main(String[] args) {
         Program program = new Program();
 
-        Instruction instr0 = new IO(IO.Op.READ, 1);
+        Instruction instr0 = new IO(IO.Op.READ, 10000) {};
         program.addInstruction(instr0);
         
-        for (int i = 1; i < 40; i++) {
-            Instruction instr = new UALi(UALi.Op.ADD, i, i - 1, i + 1);
+        // Instructions utilisant des registres uniques et augmentant progressivement le nombre
+        for (int i = 0; i < 40; i++) {
+            // Exemple d'opérations arithmétiques utilisant des registres R0 à R39
+            Instruction instr = new UAL(UAL.Op.ADD, i, i, (i + 1) % 40) {};
             program.addInstruction(instr);
         }
 
-        Instruction instr5 = new Mem(Mem.Op.LD, 3, 2);
-        Instruction instr6 = new IO(IO.Op.PRINT, 4);
-        Instruction instr7 = new Stop("STOP");
+        // Ajout d'opérations avec des registres existants
+        Instruction instr40 = new UALi(UALi.Op.SUB, 39, 38, 10) {};
+        Instruction instr41 = new CondJump(CondJump.Op.JEQU, 37, 36, "LABEL_EXTRA") {};
+        Instruction instr42 = new JumpCall(JumpCall.Op.CALL, "FUNC_EXTRA") {};
+        Instruction instr43 = new IO(IO.Op.PRINT, 35) {};
+        Instruction instr44 = new Mem(Mem.Op.LD, 34, 33) {};
+        Instruction instr45 = new Mem(Mem.Op.ST, 32, 31) {};
+        Instruction instr46 = new Stop("STOP") {};
 
-        program.addInstruction(instr5);
-        program.addInstruction(instr6);
-        program.addInstruction(instr7);
+        // Ajout des instructions restantes au programme
+        program.addInstruction(instr40);
+        program.addInstruction(instr41);
+        program.addInstruction(instr42);
+        program.addInstruction(instr43);
+        program.addInstruction(instr44);
+        program.addInstruction(instr45);
+        program.addInstruction(instr46);
+
+        // Ajout d'un label et d'une instruction de retour pour valider les sauts
+        Instruction instrLabel = new UAL("LABEL_EXTRA", UAL.Op.MUL, 10, 9, 8) {};
+        Instruction instrReturn = new Ret("FUNC_EXTRA") {};
+        program.addInstruction(instrLabel);
+        program.addInstruction(instrReturn);
 
         ControlGraph controlGraph = new ControlGraph(program);
         ConflictGraph conflictGraph = new ConflictGraph(controlGraph, program);
-
         System.out.println(conflictGraph);
 
         int numColors = conflictGraph.color();
