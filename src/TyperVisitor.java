@@ -20,6 +20,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
     private void enterBlock() {
         System.out.println("enterBlock");
         this.typesStack.enterBlock();
+        System.out.println(this.typesStack);
     }
 
     /**
@@ -153,10 +154,18 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         ParseTree indexNode = ctx.getChild(2);
         Type indexType = visit(indexNode);
 
+        UnknownType exprUT = new UnknownType(exprNode);
+        String exprName = exprUT.getVarName();
+
         HashMap<UnknownType, Type> constraints = new HashMap<>();
         UnknownType contentType = new UnknownType();
         try {
             constraints.putAll(exprType.unify(new ArrayType(contentType)));
+
+            if (this.typesStack.getLastTypeOfVarName(exprName) == null) {
+                constraints.putAll(exprUT.unify(exprType));
+            }
+
             this.substituteTypes(constraints);
 
             constraints.putAll(indexType.unify(new PrimitiveType(Type.Base.INT)));
@@ -165,6 +174,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         }
 
         if (exprType instanceof UnknownType) {
+            System.out.println(new UnknownType(exprNode).getVarName());
             exprType = this.typesStack.getLastTypeOfVarName(new UnknownType(exprNode).getVarName());
             constraints.putAll(exprType.unify(new ArrayType(new UnknownType())));
         }
@@ -406,7 +416,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         ParseTree variableNode = ctx.getChild(1);
         UnknownType variable = new UnknownType(variableNode);
 
-        if (this.typesStack.containsVarName(variable.getVarName())) {
+        if (this.typesStack.isVarNameInLastStack(variable.getVarName())) {
             throw new TyperError("Variable already defined", ctx);
         }
 
@@ -571,6 +581,10 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         System.out.println("visit return : RETURN expr SEMICOL ");
         ParseTree expr = ctx.getChild(1);
         Type exprType = visit(expr);
+
+        if ((exprType instanceof PrimitiveType || exprType instanceof ArrayType) && !exprType.equals(lastReturnType)) {
+            throw new TyperError("Tous les return de la même fonction doivent être du même type", ctx);
+        }
 
         try {
             HashMap<UnknownType, Type> constraints = new HashMap<>(exprType.unify(this.lastReturnType));

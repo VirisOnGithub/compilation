@@ -1,0 +1,1 @@
+On n'autorise pas de nommer une variable comme une fonction, par exemple `auto sum = sum(100)` renverra une erreur

@@ -35,7 +35,7 @@ instr:
 ;
 
 core_fct: 
-	'{' instr* RETURN expr SEMICOL '}';
+	'{' instr* expr SEMICOL '}';
 
 decl_fct:
 	type VAR '(' (type VAR (',' type VAR)*)? ')' core_fct;

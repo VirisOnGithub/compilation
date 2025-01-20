@@ -1,7 +1,7 @@
 package src;
 
 import java.util.*;
-import java.util.function.BiConsumer;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import src.Type.Type;
 import src.Type.UnknownType;
@@ -155,6 +155,21 @@ public class VarStack<K, T> {
 			}
 		}
 		return null;
+	}
+
+	public boolean isVarNameInLastStack (String varName) {
+		AtomicBoolean result = new AtomicBoolean(false);
+		this.stack.peek().forEach((key, value) -> {
+			if (key instanceof UnknownType) {
+				UnknownType ut = (UnknownType) key;
+				if (ut.getVarName().equals(varName)) {
+					result.set(true);
+				}
+			}
+
+		});
+
+		return result.get();
 	}
 
 	/**
