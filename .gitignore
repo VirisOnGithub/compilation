@@ -28,8 +28,8 @@ buildNumber.properties
 ##############################
 ## Gradle
 ##############################
-bin/
-build/
+#bin/
+#build/
 .gradle
 .gradletasknamecache
 gradle-app.setting
@@ -89,4 +89,9 @@ nb-configuration.xml
 ##############################
 *.log
 !libraries/*
-*.txt
+
+prog.asm
+sorties.txt
+
+javadoc/*
+!javadoc/.gitkeep

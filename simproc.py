@@ -38,7 +38,7 @@ def checkSyntaxe(inst,symb):
 
     if inst[0] in opUALi:
         return checkReg(inst[1]) and checkReg(inst[2]) and checkImm(inst[3])
- 
+
     if inst[0] == "LD":
         return checkReg(inst[1]) and checkReg(inst[2])
 
@@ -56,7 +56,7 @@ def checkSyntaxe(inst,symb):
 
     if inst[0] == "IN":
         return checkReg(inst[1])
-    
+
     if inst[0] == "READ":
         return checkReg(inst[1])
 
@@ -124,7 +124,7 @@ NbCycle = 0
 
 # lecture des instructions
 
-ff = open("prog.asm",'r') 
+ff = open("prog.asm",'r')
 MEM_INST = ff.readlines()
 ff.close();
 
@@ -147,7 +147,7 @@ for i in range(len(MEM_INST)):
 
 # ouverture des fichiers d'E/S
 
-fin = open("entrees.txt",'r') 
+fin = open("entrees.txt",'r')
 fout = open("sorties.txt",'w')
 
 # EXECUTION
@@ -161,7 +161,7 @@ while PROG[CO][0] != "STOP":
             print(x,)
         print()
         sys.exit(0)
-        
+
 
     NbCycle = NbCycle + 1
 
@@ -314,10 +314,3 @@ while PROG[CO][0] != "STOP":
         fin.close()
         fout.close()
         sys.exit(0)
-
-
-
-
-
-
-    
