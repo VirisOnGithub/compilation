@@ -1,9 +1,6 @@
-auto f(auto x){
-    return {x};
-}
-
 int main(){
-    auto x = f(0);
-    auto y = f(true);
+    auto z;
+    auto a = {z};
+    z = 2;
     return 0;
 }

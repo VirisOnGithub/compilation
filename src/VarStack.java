@@ -237,12 +237,12 @@ public class VarStack<K, T> {
 	 * @param ut K
 	 * @return boolean
 	 */
-	public boolean contains(K ut) {
+	public boolean contains(UnknownType ut) {
 		int size = this.stack.size();
 		for (int i = size-1; i >= 0; i--) {
-			Map<K, T> tmp = this.stack.get(i);
-			for (Map.Entry<K, T> entry : tmp.entrySet()) {
-                if (entry.getKey().equals(ut) || entry.getValue().equals(ut)) {
+			Map<UnknownType, Type> tmp = (Map<UnknownType, Type>) this.stack.get(i);
+			for (Map.Entry<UnknownType, Type> entry : tmp.entrySet()) {
+                if (entry.getKey().contains(ut) || entry.getValue().contains(ut)) {
                     return true;
                 }
 			}
