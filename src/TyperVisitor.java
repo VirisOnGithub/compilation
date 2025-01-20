@@ -705,6 +705,12 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         visit(core_fctNode);
 
         this.leaveBlock();
+
+        UnknownType oldFunction = this.typesStack.getLastUTOfVarName(functionName.getVarName());
+        FunctionType oldFunctionType = (FunctionType) this.typesStack.getLastTypeOfVarName(functionName.getVarName());
+        HashMap<UnknownType, Type> lastConstraint = (HashMap<UnknownType, Type>) oldFunction.unify(new FunctionType(this.lastReturnType, oldFunctionType.getArgs()));
+        substituteTypes(lastConstraint);
+
         return null;
     }
 
