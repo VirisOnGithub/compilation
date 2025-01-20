@@ -201,4 +201,19 @@ public class VarStack<K, T> {
 	}
 
 
+
+	@Override
+	public String toString() {
+		StringBuilder s = new StringBuilder("TypesStack{");
+
+		int size = this.stack.size();
+		for (int i = size-1; i >= 0; i--) {
+			s.append("\n\tlayer ").append(i).append(" : ");
+			Map<K, T> tmp = this.stack.get(i);
+			s.append(tmp);
+		}
+
+		s.append("\n}");
+		return s.toString();
+	}
 }
