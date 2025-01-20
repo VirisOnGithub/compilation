@@ -156,13 +156,13 @@ public class Main {
 	Instruction instr2 = new UALi(UALi.Op.SUB, 1000, 1000, 1) {};
 	Instruction instr3 = new IO(IO.Op.PRINT, 1001) {};
 	Instruction instr4 = new CondJump(CondJump.Op.JEQU, 1000, 1001, "LABEL2") {};
-	Instruction instr5 = new CondJump(CondJump.Op.JINF, 1000, 1001, "L6") {};
-	Instruction instr6 = new CondJump(CondJump.Op.JSUP, 1000, 1001, "L7") {};
+	Instruction instr5 = new CondJump(CondJump.Op.JINF, 1000, 1001, "FUNC1") {};
+	Instruction instr6 = new CondJump(CondJump.Op.JSUP, 1000, 1001, "LABEL1") {};
 	Instruction instr7 = new JumpCall(JumpCall.Op.CALL, "FUNC1") {};
 	Instruction instr8 = new JumpCall(JumpCall.Op.JMP, "END") {};
 	Instruction instr9 = new Stop("STOP") {};
 	Instruction instr10 = new UAL("LABEL1", UAL.Op.ADD, 1002, 1003, 1004) {};
-	Instruction instr11 = new UAL(UAL.Op.MUL, 1005, 1006, 1007) {};
+	Instruction instr11 = new UAL("FUNC1", UAL.Op.MUL, 1005, 1006, 1007) {};
 	Instruction instr12 = new JumpCall(JumpCall.Op.JMP, "END") {};
 	Instruction instr13 = new UAL("LABEL2", UAL.Op.DIV, 1008, 1009, 1010) {};
 	Instruction instr14 = new IO(IO.Op.PRINT, 1011) {};
