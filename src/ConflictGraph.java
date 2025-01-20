@@ -173,57 +173,5 @@ public class ConflictGraph extends UnorientedGraph<String> {
         }
         return sb.toString();
     }
-
-    public static void main(String[] args) {
-        Program program = new Program();
-
-        Instruction instr0 = new Mem(Mem.Op.ST, 0, 1) {};
-        Instruction instr1 = new UAL(UAL.Op.XOR, 1000, 1000, 1000) {};
-        Instruction instr2 = new UALi(UALi.Op.SUB, 1000, 1000, 1) {};
-        Instruction instr3 = new IO(IO.Op.PRINT, 1001) {};
-        Instruction instr4 = new CondJump(CondJump.Op.JEQU, 1000, 1001, "LABEL2") {};
-        Instruction instr5 = new CondJump(CondJump.Op.JINF, 1000, 1001, "FUNC1") {};
-        Instruction instr6 = new CondJump(CondJump.Op.JSUP, 1000, 1001, "LABEL1") {};
-        Instruction instr7 = new JumpCall(JumpCall.Op.CALL, "FUNC1") {};
-        Instruction instr8 = new JumpCall(JumpCall.Op.JMP, "END") {};
-        Instruction instr9 = new Stop("STOP") {};
-        Instruction instr10 = new UAL("LABEL1", UAL.Op.ADD, 1002, 1000, 1001) {};
-        Instruction instr11 = new UAL("FUNC1", UAL.Op.MUL, 1003, 1002, 1000) {};
-        Instruction instr12 = new JumpCall(JumpCall.Op.JMP, "END") {};
-        Instruction instr13 = new UAL("LABEL2", UAL.Op.DIV, 1004, 1003, 1001) {};
-        Instruction instr14 = new IO(IO.Op.PRINT, 1004) {};
-        Instruction instr15 = new Ret("END") {};
-
-        program.addInstruction(instr0);
-        program.addInstruction(instr1);
-        program.addInstruction(instr2);
-        program.addInstruction(instr3);
-        program.addInstruction(instr4);
-        program.addInstruction(instr5);
-        program.addInstruction(instr6);
-        program.addInstruction(instr7);
-        program.addInstruction(instr8);
-        program.addInstruction(instr9);
-        program.addInstruction(instr10);
-        program.addInstruction(instr11);
-        program.addInstruction(instr12);
-        program.addInstruction(instr13);
-        program.addInstruction(instr14);
-        program.addInstruction(instr15);
-
-        ControlGraph controlGraph = new ControlGraph(program);
-        ConflictGraph conflictGraph = new ConflictGraph(controlGraph, program);
-
-        // Afficher le graphe de conflit
-        System.out.println("Graphe de conflit:");
-        System.out.println(conflictGraph);
-
-        // Colorer le graphe de conflit
-        int numColors = conflictGraph.color();
-        System.out.println("Nombre de couleurs utilisées: " + numColors);
-        for (String var : conflictGraph.vertices) {
-            System.out.println("Variable " + var + " est colorée avec la couleur " + conflictGraph.getColor(var));
-        }
-    }
 }
 
