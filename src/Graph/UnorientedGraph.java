@@ -1,6 +1,7 @@
 package src.Graph;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Set;
 
 public class UnorientedGraph<T> extends Graph<T> {
     private HashMap<T,Integer> colors = new HashMap<T,Integer>(); 
@@ -10,6 +11,8 @@ public class UnorientedGraph<T> extends Graph<T> {
     	this.colors = new HashMap<T,Integer>();
     }
 
+
+    @Override
     /** 
      * Ajout d'une arête
      * @param u sommet 
@@ -71,5 +74,13 @@ public class UnorientedGraph<T> extends Graph<T> {
             }
         }
         return maxCol+1;
+    }
+
+    /**
+     * Getter des sommets du graphe
+     * @return Set<T> ensemble des sommets
+     */
+    public Set<T> getVertices() {
+        return this.adjList.keySet();
     }
 }

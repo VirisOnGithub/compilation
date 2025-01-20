@@ -1,5 +1,6 @@
 package src.Graph;
 import java.util.ArrayList;
+import java.util.Set;
 
 public class OrientedGraph<T> extends Graph<T> {
     
@@ -38,5 +39,13 @@ public class OrientedGraph<T> extends Graph<T> {
             if (this.hasEdge(v, u)) result.add(v);
         }
         return result;
+    }
+
+    /**
+     * Getter des sommets du graphe
+     * @return Set<T> ensemble des sommets
+     */
+    public Set<T> getVertices() {
+        return this.adjList.keySet();
     }
 }
