@@ -26,16 +26,12 @@ public class ConflictGraph extends UnorientedGraph<String> {
      */
     private void computeLiveness(ControlGraph controlGraph, Program program) {
         boolean changed;
-        
-        // Initialisation des ensembles IN et OUT
         for (Instruction instruction : controlGraph.getAllVertices(program)) {
             in.putIfAbsent(instruction, new HashSet<>());
             out.putIfAbsent(instruction, new HashSet<>());
         }
-
         do {
             changed = false;
-
             for (Instruction instruction : controlGraph.getAllVertices(program)) {
                 Set<String> oldIn = new HashSet<>(in.get(instruction));
                 Set<String> oldOut = new HashSet<>(out.get(instruction));
@@ -44,12 +40,9 @@ public class ConflictGraph extends UnorientedGraph<String> {
                 for (Instruction succ : controlGraph.getOutNeighbors(instruction)) {
                     newOut.addAll(in.get(succ));
                 }
-
                 Set<String> newIn = new HashSet<>(newOut);
                 newIn.removeAll(getDef(instruction));
                 newIn.addAll(getUse(instruction));
-
-                // Mise à jour des ensembles et vérification de changement
                 if (!newIn.equals(oldIn) || !newOut.equals(oldOut)) {
                     in.put(instruction, newIn);
                     out.put(instruction, newOut);
