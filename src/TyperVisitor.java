@@ -245,6 +245,7 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
         this.substituteTypes(constraints);
         System.out.println("TEST : SubstituteTypes du call ok");
         System.out.println("Type de la fonction : " + functionType);
+        System.out.println(functionType.getReturnType());
         return functionType.getReturnType();
     }
 
@@ -451,7 +452,6 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
             ParseTree exprNode = ctx.getChild(3);
             Type exprType = visit(exprNode);
             try {
-                constraints.putAll(type.unify(exprType));
                 constraints.putAll(variable.unify(exprType));
             } catch (Error e) {
                 throw new TyperError(e.getMessage(), ctx);
@@ -493,6 +493,9 @@ public class TyperVisitor extends AbstractParseTreeVisitor<Type> implements gram
             ParseTree expressionNode = ctx.getChild(2);
             Type expression = visit(expressionNode);
             try {
+                if (firstVariable == null) {
+                    throw new TyperError("la var à gauche n'est pas défini", ctx);
+                }
                 constraints.putAll(firstVariable.unify(expression));
                 System.out.println("!!!!!!" + constraints);
             } catch (Error e) {

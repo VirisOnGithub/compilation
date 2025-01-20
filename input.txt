@@ -1,10 +1,52 @@
-auto facto(auto n){
-    if (n<=1){
-        return 1;
-    }
-    return n * facto(n - 1);
+bool hanoi_swap(int start, int middle, int end, int rings) {
+    if (rings == 0)
+        return true;
+    auto pass1 = hanoi_swap(start, end, middle, rings - 1);
+    int[] printable = {start, end};
+    print(printable);
+    auto pass2 = hanoi_swap(middle, start, end, rings - 1);
+    return pass1 && pass2;
 }
 
-int main(){
+int hanoi(int number) {
+    auto pass = hanoi_swap(0, 1, 2, number);
+    if (pass)
+        return 1;
+    return 0;
+}
+
+int sum(int n) {
+    if (n == 0) return 0;
+    return (n + sum(n - 1));
+}
+
+int allBinaries(int[] tab, int i, int n) {
+    if (i==n) {
+        print(tab);
+        return 0;
+    }
+    tab[i] = 0;
+    auto b = allBinaries(tab, i + 1, n);
+    tab[i] = 1;
+    b = allBinaries(tab, i + 1, n);
+    return 0;
+}
+
+int testBinaries(int n) {
+    int[] tab = {};
+    auto test = allBinaries(tab, 0, n);
+    return 0;
+}
+
+int main() {
+    int line = 11111111;
+    print(line);
+    print(line);
+    auto test = hanoi(3);
+    print(line);
+    auto sum1 = sum(100);
+    print(sum1);
+    print(line);
+    test = testBinaries(4);
     return 0;
 }
